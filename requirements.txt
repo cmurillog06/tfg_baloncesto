@@ -1,0 +1,21 @@
+# ==============================================================================
+# DEPENDENCIAS BASE Y PRODUCCIÓN - TFG BALONCESTO
+# ==============================================================================
+
+# Core Django & ASGI / WebSockets
+Django>=5.1,<5.2
+channels>=4.1,<4.2
+daphne>=4.1,<4.2
+channels-redis>=4.2.0
+
+# Base de datos (PostgreSQL para producción y soporte para SQLite en local)
+psycopg[binary]>=3.2.0
+dj-database-url>=2.2.0
+
+# Configuración, Seguridad y Archivos Estáticos
+python-decouple>=3.8
+whitenoise>=6.7.0
+gunicorn>=23.0.0
+
+# Procesamiento de imágenes (escudos de equipos, fotos de jugadores)
+Pillow>=10.4.0
