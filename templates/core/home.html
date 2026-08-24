@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Quinto Cuarto | Baloncesto en Tiempo Real, Actas Digitales y Estadísticas{% endblock %}
+
+{% block content %}
+<!-- SECCIÓN HERO DE ALTO IMPACTO (QUINTO CUARTO) -->
+<section style="text-align: center; padding: 3rem 0 4rem; max-width: 900px; margin: 0 auto;">
+  
+  <!-- Pill superior -->
+  <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--gold-light); border: 1px solid var(--gold-border); color: #926004; padding: 0.4rem 1.25rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1.75rem; box-shadow: var(--shadow-subtle);">
+    <span>⚡ SEGUIMIENTO Y GESTIÓN EN TIEMPO REAL</span>
+  </div>
+  
+  <!-- Titular Principal Esbelto -->
+  <h1 style="font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 600; letter-spacing: -0.02em; margin-bottom: 1.35rem; line-height: 1.15; color: var(--text-title);">
+    El control total del baloncesto <br>
+    <span class="gold-text">en vivo, profesional y digital</span>
+  </h1>
+  
+  <!-- Subtítulo -->
+  <p style="font-size: 1.15rem; color: var(--text-secondary); line-height: 1.7; max-width: 700px; margin: 0 auto 2.5rem; font-weight: 400;">
+    Marcadores actualizados segundo a segundo, actas digitales oficiales, salas de chat instantáneas por partido y estadísticas individuales con valoración FIBA.
+  </p>
+
+  <!-- Botones de Acción Hero -->
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="#partidos-en-vivo" class="btn btn-primary" style="font-size: 1rem; padding: 0.8rem 1.85rem;">
+      ⚡ Ver Partidos en Vivo
+    </a>
+    <a href="#modulos" class="btn btn-secondary" style="font-size: 1rem; padding: 0.8rem 1.85rem;">
+      🛡️ Explorar Módulos
+    </a>
+  </div>
+
+  <!-- Barra de Estadísticas Rápidas de la Plataforma -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 3.5rem; padding: 1.5rem 1.75rem; background: #FFFFFF; border: 1px solid var(--platinum-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+    <div>
+      <div style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--gold-primary);">&lt; 200ms</div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">Latencia WebSockets</div>
+    </div>
+    <div>
+      <div style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--obsidian-dark);">100% Digital</div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">Actas y Firmas Arbitrales</div>
+    </div>
+    <div>
+      <div style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--state-green);">FIBA / ACB</div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">Valoración Oficial PIR</div>
+    </div>
+    <div>
+      <div style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--state-blue);">4 Roles</div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">Control de Acceso Granular</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- SECCIÓN: PARTIDOS EN JUEGO (SPOTLIGHT BROADCAST STYLE) -->
+<section id="partidos-en-vivo" style="margin-bottom: 4.5rem; padding-top: 1rem;">
+  
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">RETRANSMISIÓN EN DIRECTO</div>
+      <h2 style="font-size: 1.85rem; font-weight: 600;">Partidos en Juego Ahora</h2>
+    </div>
+    <span class="badge badge-live" style="font-size: 0.8rem; padding: 0.35rem 0.85rem;">
+      <span class="live-dot"></span> EN DIRECTO
+    </span>
+  </div>
+
+  {% if live_matches %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.75rem;">
+      {% for match in live_matches %}
+        <div class="card card-interactive" style="border-top: 3px solid var(--gold-primary); position: relative;">
+          
+          <!-- Cabecera de Competición -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="font-size: 1.1rem;">🏆</span>
+              <strong style="color: var(--text-title); font-size: 0.95rem; font-weight: 600;">{{ match.season.league.name }}</strong>
+              <span style="color: var(--text-secondary); font-size: 0.85rem;">&bull; Jornada {{ match.round_number }}</span>
+            </div>
+            
+            <div style="background: var(--state-red-light); border: 1px solid rgba(220, 38, 38, 0.2); color: var(--state-red); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; font-family: var(--font-display);">
+              ⏱️ {{ match.get_current_period_display }} &bull; {{ match.game_clock }}
+            </div>
+          </div>
+
+          <!-- Marcador Principal -->
+          <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.25rem; margin-bottom: 1.75rem; text-align: center;">
+            
+            <!-- Equipo Local -->
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, {{ match.home_team.primary_color|default:'#090D16' }}, #1E293B); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: #FFFFFF; box-shadow: 0 3px 10px rgba(0,0,0,0.12); margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.2);">
+                {{ match.home_team.acronym }}
+              </div>
+              <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-title); font-family: var(--font-display);">
+                {{ match.home_team.name }}
+              </div>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.1rem;">LOCAL</span>
+            </div>
+
+            <!-- Tablón de Puntos Central -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+              <div style="background: var(--obsidian-dark); padding: 0.55rem 1.15rem; border-radius: var(--radius-lg); box-shadow: 0 4px 14px rgba(9, 13, 22, 0.2); display: flex; align-items: center; gap: 0.75rem; border: 1px solid var(--gold-border);">
+                <span style="font-size: 2rem; font-weight: 600; font-family: var(--font-mono); color: #FFFFFF;">
+                  {{ match.home_score }}
+                </span>
+                <span style="color: var(--gold-primary); font-size: 1.3rem; font-weight: 500;">:</span>
+                <span style="font-size: 2rem; font-weight: 600; font-family: var(--font-mono); color: #FFFFFF;">
+                  {{ match.away_score }}
+                </span>
+              </div>
+              <div style="font-size: 0.7rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.06em;">TIEMPO REAL</div>
+            </div>
+
+            <!-- Equipo Visitante -->
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, {{ match.away_team.primary_color|default:'#090D16' }}, #1E293B); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: #FFFFFF; box-shadow: 0 3px 10px rgba(0,0,0,0.12); margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.2);">
+                {{ match.away_team.acronym }}
+              </div>
+              <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-title); font-family: var(--font-display);">
+                {{ match.away_team.name }}
+              </div>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.1rem;">VISITANTE</span>
+            </div>
+
+          </div>
+
+          <!-- Pie del Partido con Ubicación -->
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.7rem 1rem; border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span>📍</span> <span>{{ match.location|default:"Pabellón Oficial" }}</span>
+            </div>
+            <div style="color: var(--gold-primary); font-weight: 600;">
+              Acta Oficial Abierta ✍️
+            </div>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
+      <p style="font-size: 1.05rem; font-weight: 500; color: var(--text-title); margin-bottom: 0.35rem;">No hay partidos en juego en este momento.</p>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">Los partidos en directo aparecerán automáticamente aquí cuando comience el cronómetro.</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- SECCIÓN: MÓDULOS DE LA PLATAFORMA -->
+<section id="modulos" style="margin-bottom: 3.5rem; padding-top: 1rem;">
+  
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">ARQUITECTURA DE SOFTWARE</div>
+    <h2 style="font-size: 1.95rem; font-weight: 600; margin-bottom: 0.5rem;">Módulos del Sistema</h2>
+    <p style="color: var(--text-secondary); font-size: 1rem; max-width: 600px; margin: 0 auto;">
+      Diseño desacoplado y reactivo para una experiencia fluida y profesional
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+    
+    <div class="card card-interactive">
+      <div style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--gold-light); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        ⏱️
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Mesa Arbitral Digital</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Registro en vivo de puntos (+1, +2, +3), faltas personales, tiempos muertos y firma digital del acta oficial.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--state-blue-light); border: 1px solid rgba(37, 99, 235, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        💬
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Salas de Chat en Vivo</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Canales WebSockets independientes por partido para debatir las jugadas en tiempo real entre aficionados.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--state-green-light); border: 1px solid rgba(5, 150, 105, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        📊
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Estadísticas Avanzadas</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Cálculo en tiempo real de la hoja de anotación (Box Score) y la valoración oficial FIBA/ACB (PIR) para cada jugador.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--obsidian-dark); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        🛡️
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Gestión de Plantillas</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Panel exclusivo para entrenadores con altas/bajas de jugadores, asignación de dorsales por temporada y calendarios.
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

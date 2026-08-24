@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Cuenta | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 580px;">
+  
+  <div class="card" style="box-shadow: 0 10px 30px -5px rgba(9, 13, 22, 0.06); border-top: 3px solid var(--obsidian-dark);">
+    
+    <div class="auth-header">
+      <div class="auth-badge">📝</div>
+      <h1>Crear Cuenta en Quinto Cuarto</h1>
+      <p>Únete a la plataforma de seguimiento y gestión de baloncesto</p>
+    </div>
+
+    <form method="post" action="{% url 'accounts:register' %}" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {% for error in form.non_field_errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="form-group">
+          <label for="id_first_name" class="form-label">Nombre</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div class="form-error">{% for error in form.first_name.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_last_name" class="form-label">Apellidos</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div class="form-error">{% for error in form.last_name.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="id_username" class="form-label">Nombre de Usuario</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="form-error">{% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+        <small class="form-help">Obligatorio. 150 caracteres o menos. Letras, dígitos y @/./+/-/_.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="id_email" class="form-label">Correo Electrónico</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="form-error">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="id_role" class="form-label" style="color: var(--text-title); font-size: 0.88rem; font-weight: 600;">
+          🎯 Tipo de Cuenta / Rol
+        </label>
+        {{ form.role }}
+        {% if form.role.errors %}
+          <div class="form-error">{% for error in form.role.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+        <small class="form-help">{{ form.role.help_text }}</small>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="form-group">
+          <label for="id_password1" class="form-label">Contraseña</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <div class="form-error">{% for error in form.password1.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_password2" class="form-label">Confirmar Contraseña</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <div class="form-error">{% for error in form.password2.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1.5rem;" id="btn-submit-register">
+        Completar Registro &rarr;
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      ¿Ya tienes una cuenta activa? <a href="{% url 'accounts:login' %}" style="font-weight: 600; color: var(--gold-primary);">Inicia sesión aquí &rarr;</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

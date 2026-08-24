@@ -1,0 +1,631 @@
+/* ==========================================================================
+   HOOPLIVE - SISTEMA DE DISEÑO SEDA GRIS CON HALOS CHAMPÁN & MARINO
+   Tipografía Fina, Esbelta y de Máxima Elegancia (Urbanist & Plus Jakarta Sans)
+   Fondo Dinámico en Movimiento (GPU-Accelerated 60 FPS)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+:root {
+  /* Lienzo en Gris Seda Elegante con Profundidad */
+  --bg-page: #EEF2F6;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FAFBFC;
+  --bg-subtle: #E2E8F0;
+  --bg-input: #FFFFFF;
+  
+  /* Obsidiana Profunda y Grafito */
+  --obsidian-dark: #090D16;
+  --obsidian-surface: #0F172A;
+  --obsidian-hover: #1E293B;
+
+  /* Oro Champán y Platino */
+  --gold-primary: #C59B27;
+  --gold-hover: #B0881E;
+  --gold-light: #FDF9EC;
+  --gold-border: rgba(197, 155, 39, 0.35);
+  --gold-glow: rgba(197, 155, 39, 0.2);
+
+  --platinum-border: #E2E8F0;
+  --platinum-border-hover: #CBD5E1;
+  --platinum-subtle: #F1F5F9;
+
+  /* Estados de Color Sobrios */
+  --state-red: #DC2626;
+  --state-red-light: #FEF2F2;
+  --state-green: #059669;
+  --state-green-light: #ECFDF5;
+  --state-blue: #2563EB;
+  --state-blue-light: #EFF6FF;
+  --state-purple: #7C3AED;
+  --state-purple-light: #F5F3FF;
+
+  /* Tipografía Fina y Esbelta */
+  --font-display: 'Urbanist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  /* Textos de Máxima Nitidez y Delicadeza */
+  --text-title: #090D16;
+  --text-body: #334155;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --text-white: #FFFFFF;
+
+  /* Sombras y Elevación Sobre Gris Seda */
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 12px 28px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --shadow-card-hover: 0 20px 40px -10px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.04), 0 0 0 1px var(--gold-border);
+  --shadow-btn: 0 4px 14px rgba(9, 13, 22, 0.18);
+  --shadow-nav: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+
+  /* Radios y Transiciones */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   RESET Y ESTRUCTURA BASE
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  background-color: var(--bg-page);
+  color: var(--text-body);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   FONDO AMBIENTAL DINÁMICO EN MOVIMIENTO (AURA GLOW - 60 FPS GPU)
+   ========================================================================== */
+.ambient-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  will-change: transform;
+}
+
+/* Orbe 1: Oro Champán Luminoso */
+.orb-gold {
+  top: -100px;
+  left: 10%;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.22) 0%, rgba(197, 155, 39, 0.08) 55%, transparent 75%);
+  animation: float-gold 20s infinite ease-in-out alternate;
+}
+
+/* Orbe 2: Azul Zafiro y Marino Profundo */
+.orb-blue {
+  top: 60px;
+  right: 5%;
+  width: 680px;
+  height: 680px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, rgba(15, 23, 42, 0.08) 50%, transparent 75%);
+  animation: float-blue 26s infinite ease-in-out alternate;
+}
+
+/* Orbe 3: Platino y Ámbar Cálido Inferior */
+.orb-slate {
+  bottom: -150px;
+  left: 25%;
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.14) 0%, rgba(15, 23, 42, 0.06) 55%, transparent 75%);
+  animation: float-slate 24s infinite ease-in-out alternate;
+}
+
+@keyframes float-gold {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(90px, 70px, 0) scale(1.15); }
+  100% { transform: translate3d(-60px, 110px, 0) scale(0.92); }
+}
+
+@keyframes float-blue {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-110px, 90px, 0) scale(1.18); }
+  100% { transform: translate3d(70px, -50px, 0) scale(0.88); }
+}
+
+@keyframes float-slate {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-80px, -90px, 0) scale(1.12); }
+  100% { transform: translate3d(100px, -40px, 0) scale(0.95); }
+}
+
+/* ==========================================================================
+   TIPOGRAFÍA ELEGANTE Y FINA
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-title);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  font-weight: 600;
+}
+
+a {
+  color: var(--obsidian-surface);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--gold-hover);
+}
+
+.gold-text {
+  color: var(--gold-primary);
+  font-weight: 500;
+}
+
+.gradient-title {
+  background: linear-gradient(135deg, #090D16 60%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem 0 4.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   BARRA DE NAVEGACIÓN FLOTANTE (FROSTED GLASS ELEVADO)
+   ========================================================================== */
+.navbar {
+  position: sticky;
+  top: 1rem;
+  z-index: 1000;
+  margin: 0.75rem auto 0;
+  width: calc(100% - 2.5rem);
+  max-width: 1240px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-nav);
+  padding: 0.75rem 1.5rem;
+  transition: var(--transition);
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--obsidian-dark);
+  letter-spacing: -0.5px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--obsidian-dark);
+  border: 1px solid rgba(197, 155, 39, 0.4);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(9, 13, 22, 0.18);
+  font-size: 1.2rem;
+  transition: var(--transition);
+}
+
+.brand:hover .brand-icon {
+  transform: rotate(10deg) scale(1.05);
+  border-color: var(--gold-primary);
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  list-style: none;
+}
+
+.nav-link {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-full);
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-link:hover {
+  color: var(--text-title);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ==========================================================================
+   BOTONES ELEGANTES Y FINOS
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.92rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary {
+  background: var(--obsidian-dark);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-btn);
+}
+
+.btn-primary:hover {
+  background: var(--obsidian-hover);
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(9, 13, 22, 0.25);
+  border-color: var(--gold-border);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #C59B27 100%);
+  color: #090D16;
+  font-weight: 600;
+  box-shadow: 0 4px 14px var(--gold-glow);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(197, 155, 39, 0.35);
+  background: linear-gradient(135deg, #DFC04E 0%, #CCA330 100%);
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: var(--text-title);
+  border: 1px solid var(--platinum-border);
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-secondary:hover {
+  background: #FFFFFF;
+  border-color: var(--platinum-border-hover);
+  color: var(--text-title);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.btn-sm {
+  padding: 0.38rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   BADGES Y ROLES
+   ========================================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.28rem 0.72rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-display);
+}
+
+.badge-live {
+  background: var(--state-red-light);
+  color: var(--state-red);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.badge-live .live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--state-red);
+  border-radius: 50%;
+  display: inline-block;
+  animation: radar-pulse 1.6s infinite ease-out;
+}
+
+@keyframes radar-pulse {
+  0% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+  70% { transform: scale(1.1); opacity: 0.8; box-shadow: 0 0 0 7px rgba(220, 38, 38, 0); }
+  100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.badge-admin {
+  background: var(--gold-light);
+  color: #926004;
+  border: 1px solid var(--gold-border);
+}
+
+.badge-table {
+  background: var(--obsidian-dark);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-coach {
+  background: var(--state-blue-light);
+  color: var(--state-blue);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.badge-fan {
+  background: #FFFFFF;
+  color: var(--text-body);
+  border: 1px solid var(--platinum-border);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* ==========================================================================
+   ALERTAS FLASH
+   ========================================================================== */
+.messages-container {
+  margin-bottom: 2rem;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.4rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 0.93rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-subtle);
+  animation: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-success {
+  background: var(--state-green-light);
+  color: #065F46;
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.alert-error, .alert-danger {
+  background: var(--state-red-light);
+  color: #991B1B;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.alert-info {
+  background: var(--state-blue-light);
+  color: #1E40AF;
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.alert-warning {
+  background: var(--gold-light);
+  color: #92400E;
+  border-color: rgba(197, 155, 39, 0.35);
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   TARJETAS BLANCAS CON ELEVACIÓN Y RELIEVE
+   ========================================================================== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-xl);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+}
+
+.card-interactive {
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--platinum-border-hover);
+}
+
+.auth-container {
+  max-width: 500px;
+  margin: 1.5rem auto;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2.25rem;
+}
+
+.auth-header .auth-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  background: var(--obsidian-dark);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(9, 13, 22, 0.15);
+}
+
+.auth-header h1 {
+  font-size: 1.85rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--text-title);
+}
+
+.auth-header p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 400;
+}
+
+.form-group {
+  margin-bottom: 1.35rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-title);
+  margin-bottom: 0.4rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.8rem 1.1rem;
+  background: #FFFFFF;
+  border: 1px solid var(--platinum-border-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-title);
+  font-family: var(--font-body);
+  font-size: 0.93rem;
+  transition: var(--transition);
+  box-shadow: 0 1px 2px rgba(9, 13, 22, 0.03);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--obsidian-dark);
+  box-shadow: 0 0 0 3px rgba(9, 13, 22, 0.08);
+}
+
+.form-help {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.35rem;
+}
+
+.form-error {
+  color: var(--state-red);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-top: 0.35rem;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--platinum-border);
+}
+
+/* ==========================================================================
+   FOOTER MINIMALISTA Y SOBRIO
+   ========================================================================== */
+.footer {
+  background: #FFFFFF;
+  border-top: 1px solid var(--platinum-border);
+  padding: 2.5rem 0 2rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    width: calc(100% - 1.5rem);
+    top: 0.5rem;
+    padding: 0.65rem 1rem;
+  }
+  .nav-menu {
+    display: none;
+  }
+  .card {
+    padding: 1.5rem;
+  }
+}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 1040px; margin: 0 auto;">
+  
+  <div style="margin-bottom: 2.25rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">PANEL DE CONTROL PERSONAL</div>
+    <h1 style="font-size: 2.1rem; font-weight: 600;">Perfil de Usuario</h1>
+    <p style="color: var(--text-secondary); font-size: 1rem;">Gestiona tus datos de acceso, información deportiva y avatar en Quinto Cuarto</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 320px 1fr; gap: 2rem; align-items: start;">
+    
+    <!-- Tarjeta de Identificación / Pasaporte Deportivo -->
+    <div class="card" style="padding: 0; overflow: hidden; border-top: 3px solid var(--obsidian-dark);">
+      
+      <!-- Cabecera Gráfica de la Tarjeta -->
+      <div style="height: 90px; background: linear-gradient(135deg, #090D16 0%, #1E293B 100%); border-bottom: 1px solid var(--platinum-border); position: relative;">
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);"></div>
+      </div>
+
+      <div style="padding: 0 1.5rem 1.75rem; text-align: center; position: relative;">
+        
+        <!-- Avatar Flotante -->
+        <div style="margin-top: -50px; margin-bottom: 1rem;">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 3px solid #FFFFFF; box-shadow: var(--shadow-subtle);">
+          {% else %}
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: #FFFFFF; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto; box-shadow: var(--shadow-subtle); border: 2px solid var(--platinum-border);">
+              👤
+            </div>
+          {% endif %}
+        </div>
+
+        <h2 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 0.25rem; font-family: var(--font-display); color: var(--text-title);">
+          {{ user.get_full_name|default:user.username }}
+        </h2>
+        
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+          @{{ user.username }} &bull; {{ user.email }}
+        </p>
+
+        <!-- Badge de Rol -->
+        <div style="margin-bottom: 1.5rem;">
+          {% if user.role == 'ADMIN' %}
+            <span class="badge badge-admin" style="font-size: 0.78rem; padding: 0.35rem 0.85rem;">👑 Administrador</span>
+          {% elif user.role == 'TABLE_OFFICIAL' %}
+            <span class="badge badge-table" style="font-size: 0.78rem; padding: 0.35rem 0.85rem;">⏱️ Mesa Arbitral</span>
+          {% elif user.role == 'COACH' %}
+            <span class="badge badge-coach" style="font-size: 0.78rem; padding: 0.35rem 0.85rem;">📋 Entrenador</span>
+          {% else %}
+            <span class="badge badge-fan" style="font-size: 0.78rem; padding: 0.35rem 0.85rem;">🏀 Aficionado</span>
+          {% endif %}
+        </div>
+
+        <!-- Metadatos del Perfil -->
+        <div style="border-top: 1px solid var(--platinum-border); padding-top: 1.25rem; text-align: left; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.9;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Miembro desde:</span>
+            <strong style="color: var(--text-title); font-weight: 600;">{{ user.date_joined|date:"d M Y" }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Teléfono:</span>
+            <strong style="color: var(--text-title); font-weight: 600;">{{ profile.phone|default:"No indicado" }}</strong>
+          </div>
+          {% if profile.bio %}
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--platinum-border); color: var(--text-secondary); font-style: italic; line-height: 1.4;">
+              "{{ profile.bio }}"
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Formulario de Edición de Perfil -->
+    <div class="card">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-title);">Editar Datos de Cuenta</h3>
+          <p style="color: var(--text-secondary); font-size: 0.88rem;">Actualiza tu información personal y foto de perfil</p>
+        </div>
+        <span style="font-size: 1.4rem;">⚙️</span>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label for="id_first_name" class="form-label">Nombre</label>
+            {{ user_form.first_name }}
+          </div>
+          <div class="form-group">
+            <label for="id_last_name" class="form-label">Apellidos</label>
+            {{ user_form.last_name }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_email" class="form-label">Correo Electrónico</label>
+          {{ user_form.email }}
+        </div>
+
+        <div class="form-group">
+          <label for="id_phone" class="form-label">Teléfono de Contacto</label>
+          {{ profile_form.phone }}
+        </div>
+
+        <div class="form-group">
+          <label for="id_avatar" class="form-label">Foto de Perfil / Avatar</label>
+          {{ profile_form.avatar }}
+          <small class="form-help">Formatos admitidos: PNG, JPG, WEBP.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="id_bio" class="form-label">Biografía o Presentación</label>
+          {{ profile_form.bio }}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--platinum-border);">
+          <a href="{% url 'core:home' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary" id="btn-save-profile">
+            Guardar Cambios 💾
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

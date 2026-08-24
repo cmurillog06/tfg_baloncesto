@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Quinto Cuarto | Plataforma Profesional de Baloncesto en Tiempo Real{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Quinto Cuarto: Gestión de ligas de baloncesto en tiempo real con actas digitales, chat en vivo por partido y estadísticas avanzadas.{% endblock %}">
+  
+  <!-- Tipografías & Estilos Base -->
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Fondo Ambiental Dinámico en Movimiento (Aura Glow 60 FPS) -->
+  <div class="ambient-background" aria-hidden="true">
+    <div class="ambient-orb orb-gold"></div>
+    <div class="ambient-orb orb-blue"></div>
+    <div class="ambient-orb orb-slate"></div>
+  </div>
+
+  <!-- Barra de Navegación Flotante Pristine (Obsidiana & Platino) -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      
+      <!-- Logotipo / Marca -->
+      <a href="{% url 'core:home' %}" class="brand" id="nav-brand">
+        <div class="brand-icon">
+          🏀
+        </div>
+        <div>Quinto <span class="gold-text">Cuarto</span></div>
+      </a>
+
+      <!-- Enlaces Principales -->
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="{% url 'core:home' %}" class="nav-link">Inicio</a></li>
+          <li>
+            <a href="{% url 'core:home' %}#partidos-en-vivo" class="nav-link">
+              Partidos <span class="badge badge-live"><span class="live-dot"></span> EN VIVO</span>
+            </a>
+          </li>
+          <li><a href="{% url 'core:home' %}#modulos" class="nav-link">Módulos</a></li>
+          <li><a href="/admin/" class="nav-link" target="_blank" style="color: var(--text-secondary);">Admin ↗</a></li>
+        </ul>
+      </nav>
+
+      <!-- Acciones de Usuario / Autenticación -->
+      <div class="nav-actions">
+        {% if user.is_authenticated %}
+          <!-- Usuario Autenticado -->
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            
+            <!-- Badge de Rol Elegante -->
+            {% if user.role == 'ADMIN' %}
+              <span class="badge badge-admin">👑 Admin</span>
+            {% elif user.role == 'TABLE_OFFICIAL' %}
+              <span class="badge badge-table">⏱️ Mesa Arbitral</span>
+            {% elif user.role == 'COACH' %}
+              <span class="badge badge-coach">📋 Entrenador</span>
+            {% else %}
+              <span class="badge badge-fan">🏀 Aficionado</span>
+            {% endif %}
+
+            <!-- Botón de Perfil con Avatar -->
+            <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-sm" id="btn-user-profile" style="padding: 0.35rem 0.85rem; border-radius: var(--radius-full);">
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold-primary);">
+              {% else %}
+                <span style="font-size: 0.95rem;">👤</span>
+              {% endif %}
+              <span style="font-weight: 600;">{{ user.first_name|default:user.username }}</span>
+            </a>
+            
+            <!-- Botón Salir -->
+            <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-sm" id="btn-logout" title="Cerrar Sesión" style="padding: 0.4rem 0.75rem;">
+              Salir 🚪
+            </a>
+          </div>
+        {% else %}
+          <!-- Usuario Invitado -->
+          <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm" id="btn-nav-login">Iniciar Sesión</a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm" id="btn-nav-register">Registrarse</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Mensajes Flash de Django -->
+      {% if messages %}
+        <div class="messages-container" id="django-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                {% if message.tags == 'success' %}✨{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else %}ℹ️{% endif %}
+                <span>{{ message }}</span>
+              </div>
+              <button onclick="this.closest('.alert').remove();" style="background:none; border:none; color:inherit; font-size:1.25rem; cursor:pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Bloque de contenido -->
+      {% block content %}{% endblock %}
+
+    </div>
+  </main>
+
+  <!-- Pie de Página Limpio y Sobrio -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="font-size: 1.35rem;">🏀</div>
+        <div>
+          <strong style="color: var(--obsidian-dark); font-family: var(--font-display); letter-spacing: -0.3px;">Quinto <span class="gold-text">Cuarto</span></strong>
+          <span style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.5rem;">&bull; Plataforma en Tiempo Real para Baloncesto</span>
+        </div>
+      </div>
+      <div style="color: var(--text-secondary); font-size: 0.85rem;">
+        Trabajo de Fin de Grado &bull; Django Channels & WebSockets
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

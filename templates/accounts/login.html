@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  
+  <div class="card" style="box-shadow: 0 10px 30px -5px rgba(9, 13, 22, 0.06); border-top: 3px solid var(--obsidian-dark);">
+    
+    <div class="auth-header">
+      <div class="auth-badge">🏀</div>
+      <h1>Acceso a Quinto Cuarto</h1>
+      <p>Introduce tus credenciales para acceder a la plataforma</p>
+    </div>
+
+    <form method="post" action="{% url 'accounts:login' %}" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {% for error in form.non_field_errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="id_username" class="form-label">Nombre de Usuario</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="form-error">
+            {% for error in form.username.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="id_password" class="form-label">Contraseña</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="form-error">
+            {% for error in form.password.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;" id="btn-submit-login">
+        Iniciar Sesión &rarr;
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      ¿No tienes cuenta aún? <a href="{% url 'accounts:register' %}" style="font-weight: 600; color: var(--gold-primary);">Regístrate aquí &rarr;</a>
+    </div>
+
+    <!-- Caja de credenciales de prueba para el TFG -->
+    <div style="margin-top: 2rem; padding: 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border); font-size: 0.85rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+        <strong style="color: var(--text-title); font-size: 0.88rem; font-weight: 600;">🔑 Usuarios de Demostración (TFG)</strong>
+        <span style="font-size: 0.75rem; color: #926004; font-weight: 600; background: var(--gold-light); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">Pass: Basket2026!</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+          <div style="color: #926004; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">ADMINISTRADOR</div>
+          <code style="color: var(--text-title); font-weight: 600;">admin</code>
+        </div>
+        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+          <div style="color: var(--obsidian-dark); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">MESA ARBITRAL</div>
+          <code style="color: var(--text-title); font-weight: 600;">oficial_mesa</code>
+        </div>
+        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+          <div style="color: var(--state-blue); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">ENTRENADOR</div>
+          <code style="color: var(--text-title); font-weight: 600;">coach_madrid</code>
+        </div>
+        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+          <div style="color: var(--text-secondary); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">AFICIONADO</div>
+          <code style="color: var(--text-title); font-weight: 600;">aficionado_basket</code>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
