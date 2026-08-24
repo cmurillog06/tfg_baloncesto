@@ -99,7 +99,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 # MODELO DE USUARIO PERSONALIZADO
 # ------------------------------------------------------------------------------
-# AUTH_USER_MODEL = "accounts.CustomUser" # Se activará en feature/data-models
+AUTH_USER_MODEL = "accounts.CustomUser"
 
 # ------------------------------------------------------------------------------
 # VALIDACIÓN DE CONTRASEÑAS
