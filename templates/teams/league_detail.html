@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ league.name }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Cabecera de la Liga -->
+  <div class="card" style="margin-bottom: 2.5rem; border-top: 4px solid var(--obsidian-dark); background: #FFFFFF;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div style="width: 64px; height: 64px; border-radius: var(--radius-lg); background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid var(--gold-border);">
+          🏆
+        </div>
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.15rem;">COMPETICIÓN OFICIAL</div>
+          <h1 style="font-size: 2rem; font-weight: 600; margin-bottom: 0.25rem;">{{ league.name }}</h1>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">{{ league.country|default:"Federación Nacional" }} &bull; Temporada {{ current_season.name|default:"2025/2026" }}</span>
+        </div>
+      </div>
+
+      <div>
+        <a href="{% url 'teams:league_list' %}" class="btn btn-secondary btn-sm">
+          &larr; Volver a Ligas
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido en Dos Columnas: Clasificación Oficial y Calendario de Jornadas -->
+  <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: start;">
+    
+    <!-- Columna Izquierda: Tabla de Clasificación Oficial -->
+    <div class="card" style="padding: 1.75rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 600;">Tabla de Clasificación</h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Ordenada por puntos y diferencia de canastas</span>
+        </div>
+        <span style="font-size: 1.25rem;">📊</span>
+      </div>
+
+      {% if standings %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <th style="padding: 0.6rem 0.5rem; text-align: center;">Pos</th>
+                <th style="padding: 0.6rem 0.75rem;">Equipo</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;" title="Partidos Jugados">PJ</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;" title="Partidos Ganados">PG</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;" title="Partidos Perdidos">PP</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;" title="Diferencia de Puntos">DIF</th>
+                <th style="padding: 0.6rem 0.75rem; text-align: center; font-weight: 700; color: var(--obsidian-dark);" title="Puntos en la Liga">PTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for standing in standings %}
+                <tr style="border-bottom: 1px solid var(--platinum-border); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+                  <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: {% if forloop.counter <= 2 %}var(--gold-primary){% else %}var(--text-secondary){% endif %};">
+                    {{ forloop.counter }}
+                  </td>
+                  <td style="padding: 0.75rem 0.75rem;">
+                    <a href="{% url 'teams:team_detail' standing.team.slug %}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-title); font-weight: 600;">
+                      <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ standing.team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700;">
+                        {{ standing.team.acronym }}
+                      </div>
+                      <span>{{ standing.team.name }}</span>
+                    </a>
+                  </td>
+                  <td style="padding: 0.75rem 0.5rem; text-align: center; color: var(--text-body);">{{ standing.played }}</td>
+                  <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--state-green);">{{ standing.won }}</td>
+                  <td style="padding: 0.75rem 0.5rem; text-align: center; color: var(--state-red);">{{ standing.lost }}</td>
+                  <td style="padding: 0.75rem 0.5rem; text-align: center; color: var(--text-secondary); font-weight: 500;">
+                    {% if standing.points_diff > 0 %}+{% endif %}{{ standing.points_diff }}
+                  </td>
+                  <td style="padding: 0.75rem 0.75rem; text-align: center; font-weight: 700; color: var(--obsidian-dark); font-size: 1rem;">
+                    {{ standing.league_points }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+          Aún no se han disputado partidos oficiales para calcular la clasificación.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Columna Derecha: Calendario de Partidos / Jornadas -->
+    <div class="card" style="padding: 1.75rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 600;">Calendario</h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Jornadas programadas y resultados</span>
+        </div>
+        <span style="font-size: 1.25rem;">📅</span>
+      </div>
+
+      {% if matches %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          {% for match in matches %}
+            <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+              
+              <!-- Cabecera del Partido -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; font-size: 0.78rem; color: var(--text-secondary);">
+                <span>Jornada {{ match.round_number }}</span>
+                {% if match.status == 'LIVE' %}
+                  <span class="badge badge-live" style="font-size: 0.7rem; padding: 0.2rem 0.6rem;"><span class="live-dot"></span> EN VIVO</span>
+                {% elif match.status == 'FINISHED' %}
+                  <span style="color: var(--state-green); font-weight: 600;">Finalizado</span>
+                {% else %}
+                  <span>{{ match.scheduled_at|date:"d M - H:i" }}</span>
+                {% endif %}
+              </div>
+
+              <!-- Enfrentamiento y Marcador -->
+              <div style="display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="color: var(--text-title);">{{ match.home_team.acronym }}</span>
+                  <span style="color: var(--text-muted); font-size: 0.85rem;">vs</span>
+                  <span style="color: var(--text-title);">{{ match.away_team.acronym }}</span>
+                </div>
+
+                {% if match.status != 'SCHEDULED' %}
+                  <div style="font-family: var(--font-mono); font-weight: 700; color: var(--obsidian-dark); font-size: 1.05rem;">
+                    {{ match.home_score }} : {{ match.away_score }}
+                  </div>
+                {% else %}
+                  <span style="color: var(--text-muted); font-size: 0.82rem;">Por disputar</span>
+                {% endif %}
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+          No hay partidos programados en esta competición.
+        </p>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

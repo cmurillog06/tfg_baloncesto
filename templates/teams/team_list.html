@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Directorio de Equipos | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Encabezado de Sección -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">CLUBES FEDERADOS</div>
+    <h1 style="font-size: 2.2rem; font-weight: 600;">Directorio de Equipos</h1>
+    <p style="color: var(--text-secondary); font-size: 1.05rem;">Explora las plantillas, cuerpo técnico y pabellones oficiales de cada club</p>
+  </div>
+
+  <!-- Grid de Equipos -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+    {% for team in teams %}
+      <div class="card card-interactive" style="border-top: 4px solid {{ team.primary_color|default:'#090D16' }}; padding: 2rem 1.75rem; text-align: center; position: relative;">
+        
+        <!-- Emblema / Acrónimo del Club -->
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, {{ team.primary_color|default:'#090D16' }}, #1E293B); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin: 0 auto 1.25rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); border: 2px solid #FFFFFF;">
+          {{ team.acronym }}
+        </div>
+
+        <h2 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-title);">
+          {{ team.name }}
+        </h2>
+        
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.25rem;">
+          📍 {{ team.city|default:"España" }}
+        </p>
+
+        <!-- Información Rápida (Pabellón y Entrenador) -->
+        <div style="background: var(--bg-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); font-size: 0.82rem; color: var(--text-secondary); line-height: 1.7; text-align: left; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <span>🏟️ Pabellón:</span>
+            <strong style="color: var(--text-title); margin-left: 0.5rem;">{{ team.arena_name|default:"Pabellón Oficial" }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>📋 Entrenador:</span>
+            <strong style="color: var(--text-title);">
+              {% if team.coach %}
+                {{ team.coach.get_full_name|default:team.coach.username }}
+              {% else %}
+                Por designar
+              {% endif %}
+            </strong>
+          </div>
+        </div>
+
+        <!-- Botón Ver Plantilla -->
+        <a href="{% url 'teams:team_detail' team.slug %}" class="btn btn-primary" style="width: 100%;">
+          Ver Plantilla Completa &rarr;
+        </a>
+
+      </div>
+    {% empty %}
+      <div class="card" style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
+        <p style="color: var(--text-secondary);">No hay equipos dados de alta en este momento.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

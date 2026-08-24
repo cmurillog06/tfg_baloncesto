@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Plantilla | {{ team.name }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Encabezado del Panel de Entrenador -->
+  <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--gold-primary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: {{ team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600;">
+          {{ team.acronym }}
+        </div>
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">PANEL DE CUERPO TÉCNICO</div>
+          <h1 style="font-size: 1.85rem; font-weight: 600; margin-bottom: 0.15rem;">Gestión de Plantilla &bull; {{ team.name }}</h1>
+          <span style="color: var(--text-secondary); font-size: 0.88rem;">Entrenador a cargo: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> &bull; Temporada: <strong>{{ current_season.name }}</strong></span>
+        </div>
+      </div>
+
+      <div>
+        <a href="{% url 'teams:team_detail' team.slug %}" class="btn btn-secondary btn-sm">
+          &larr; Ver Vista Pública
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
+    
+    <!-- Columna Izquierda: Plantilla Activa y Bajas -->
+    <div class="card" style="padding: 1.75rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 600;">Jugadores Inscritos</h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Fichas activas en la temporada</span>
+        </div>
+        <span class="badge badge-admin">{{ memberships.count }} Jugadores</span>
+      </div>
+
+      {% if memberships %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for m in memberships %}
+            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+              
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  #{{ m.jersey_number }}
+                </span>
+                <div>
+                  <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ m.player.full_name }}</strong>
+                  <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ m.player.get_position_display }} &bull; {{ m.player.height_cm }} cm</span>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                {% if m.is_captain %}
+                  <span class="badge badge-admin" style="font-size: 0.68rem;">★ Capitán</span>
+                {% endif %}
+
+                <!-- Botón que activa el Modal Elegante -->
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openBajaModal('{{ m.id }}', '{{ m.player.full_name }}')" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); padding: 0.25rem 0.6rem; font-size: 0.78rem;">
+                  Dar de Baja ✕
+                </button>
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+          No hay jugadores inscritos en este momento. Utiliza los formularios de la derecha para inscribir.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Columna Derecha: Formulario Inscribir Jugador -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      
+      <!-- Inscribir Jugador Existente -->
+      <div class="card" style="padding: 1.75rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.35rem;">Inscribir Jugador</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">Asigna un jugador registrado a tu plantilla con su dorsal</p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_membership">
+
+          <div class="form-group">
+            <label class="form-label">Seleccionar Jugador</label>
+            {{ form.player }}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Dorsal en Camiseta (0 - 99)</label>
+            {{ form.jersey_number }}
+          </div>
+
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+            {{ form.is_captain }}
+            <label for="id_is_captain" style="font-size: 0.88rem; font-weight: 500; cursor: pointer;">Designar como Capitán</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            Inscribir en Plantilla ＋
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL PERSONALIZADO ELEGANTE: CONFIRMACIÓN DE BAJA -->
+<div id="modal-baja-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  
+  <div class="card" style="max-width: 460px; width: 100%; padding: 2rem; border-top: 4px solid var(--state-red); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); text-align: center; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 1.25rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+      ⚠️
+    </div>
+
+    <h3 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-title);">
+      Confirmar Baja de Jugador
+    </h3>
+    
+    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.75rem;">
+      ¿Estás seguro de que deseas dar de baja a <strong id="modal-player-name" style="color: var(--text-title);"></strong> de la plantilla activa? Podrás volver a inscribirlo en cualquier momento.
+    </p>
+
+    <!-- Formulario Oculto que se envía al confirmar -->
+    <form id="form-confirm-baja" method="post" style="display: flex; gap: 1rem; justify-content: center;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="remove_membership">
+      <input type="hidden" name="membership_id" id="modal-membership-id" value="">
+
+      <button type="button" onclick="closeBajaModal()" class="btn btn-secondary" style="flex: 1;">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary" style="background: var(--state-red); border-color: var(--state-red); color: #FFFFFF; flex: 1;">
+        Sí, Dar de Baja ✕
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+</style>
+
+<script>
+function openBajaModal(membershipId, playerName) {
+  document.getElementById('modal-membership-id').value = membershipId;
+  document.getElementById('modal-player-name').innerText = playerName;
+  const modal = document.getElementById('modal-baja-container');
+  modal.style.display = 'flex';
+}
+
+function closeBajaModal() {
+  const modal = document.getElementById('modal-baja-container');
+  modal.style.display = 'none';
+}
+
+// Cerrar si se pulsa fuera del modal
+window.addEventListener('click', function(e) {
+  const modal = document.getElementById('modal-baja-container');
+  if (e.target === modal) {
+    closeBajaModal();
+  }
+});
+</script>
+{% endblock %}

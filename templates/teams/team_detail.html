@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.name }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Cabecera de Presentación del Club (Estilo Banner Oficial de Club) -->
+  <div class="card" style="margin-bottom: 2.5rem; padding: 0; overflow: hidden; border-top: 4px solid {{ team.primary_color|default:'#090D16' }};">
+    
+    <!-- Gran Franja Principal con los Colores Oficiales del Club -->
+    <div style="background: linear-gradient(135deg, {{ team.primary_color|default:'#090D16' }} 0%, #1E293B 100%); padding: 2.5rem 2.25rem; position: relative; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+      
+      <!-- Línea decorativa dorada inferior -->
+      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);"></div>
+
+      <!-- Emblema y Nombre Completo dentro de la franja -->
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        
+        <!-- Emblema Circular con Acrónimo -->
+        <div style="width: 84px; height: 84px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.85rem; font-weight: 700; border: 3px solid rgba(255, 255, 255, 0.35); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); flex-shrink: 0;">
+          {{ team.acronym }}
+        </div>
+        
+        <!-- Nombre y Ubicación en Blanco Nítido -->
+        <div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.2rem;">
+            CLUB OFICIAL FEDERADO
+          </div>
+          
+          <h1 style="font-size: clamp(1.8rem, 3.5vw, 2.35rem); font-weight: 600; color: #FFFFFF; line-height: 1.15; margin-bottom: 0.4rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);">
+            {{ team.name }}
+          </h1>
+          
+          <p style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0;">
+            <span>📍 {{ team.city|default:"España" }}</span>
+            <span style="opacity: 0.5;">&bull;</span>
+            <span>🏟️ {{ team.arena_name|default:"Pabellón Oficial" }}</span>
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Acciones del Club -->
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        {% if can_manage_roster %}
+          <a href="{% url 'teams:roster_manage' team.slug %}" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+            ⚙️ Gestionar Plantilla (Altas / Bajas)
+          </a>
+        {% endif %}
+        <a href="{% url 'teams:team_list' %}" class="btn btn-secondary btn-sm" style="background: rgba(255, 255, 255, 0.15); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px);">
+          &larr; Ver Todos
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Barra Inferior de Metadatos (Área Blanca y Limpia) -->
+    <div style="padding: 1.25rem 2.25rem; background: #FFFFFF; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.88rem; color: var(--text-secondary); align-items: center;">
+      <div>
+        <span>Entrenador Principal:</span>
+        <strong style="color: var(--text-title); margin-left: 0.35rem;">
+          {% if team.coach %}
+            {{ team.coach.get_full_name|default:team.coach.username }}
+          {% else %}
+            Por designar
+          {% endif %}
+        </strong>
+      </div>
+      <div>
+        <span>Jugadores en Plantilla:</span>
+        <strong style="color: var(--text-title); margin-left: 0.35rem;">{{ memberships.count }} jugadores</strong>
+      </div>
+      <div>
+        <span>Acrónimo Oficial:</span>
+        <strong style="color: var(--text-title); margin-left: 0.35rem;">{{ team.acronym }}</strong>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sección: Plantilla Oficial de Jugadores -->
+  <div style="margin-bottom: 3rem;">
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">ROSTER OFICIAL</div>
+        <h2 style="font-size: 1.85rem; font-weight: 600;">Plantilla de Jugadores</h2>
+      </div>
+      <span style="font-size: 0.9rem; color: var(--text-secondary);">Temporada Actual</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+      {% for membership in memberships %}
+        <div class="card card-interactive" style="padding: 1.5rem; position: relative;">
+          
+          <!-- Dorsal e Indicador de Capitán -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="font-family: var(--font-mono); font-size: 1.35rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+              #{{ membership.jersey_number }}
+            </div>
+            
+            {% if membership.is_captain %}
+              <span class="badge badge-admin" style="font-size: 0.72rem; padding: 0.2rem 0.6rem;">
+                ★ Capitán
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Foto / Avatar del Jugador -->
+          <div style="text-align: center; margin-bottom: 1rem;">
+            {% if membership.player.photo %}
+              <img src="{{ membership.player.photo.url }}" alt="{{ membership.player.full_name }}" style="width: 76px; height: 76px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 2px solid var(--platinum-border);">
+            {% else %}
+              <div style="width: 76px; height: 76px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto; border: 1px solid var(--platinum-border);">
+                🏀
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Nombre y Posición (Limpio sin números) -->
+          <div style="text-align: center; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-title);">
+              {{ membership.player.full_name }}
+            </h3>
+            <span class="badge badge-coach" style="font-size: 0.78rem;">
+              {{ membership.player.get_position_display }}
+            </span>
+          </div>
+
+          <!-- Datos Biométricos Rápidos -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: var(--bg-subtle); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.25rem;">
+            <div>
+              <span style="display: block; font-size: 0.7rem; color: var(--text-muted);">ALTURA</span>
+              <strong style="color: var(--text-title);">{{ membership.player.height_cm|default:"-" }} cm</strong>
+            </div>
+            <div>
+              <span style="display: block; font-size: 0.7rem; color: var(--text-muted);">PESO</span>
+              <strong style="color: var(--text-title);">{{ membership.player.weight_kg|default:"-" }} kg</strong>
+            </div>
+          </div>
+
+          <!-- Botón Ver Ficha de Jugador -->
+          <a href="{% url 'teams:player_detail' membership.player.id %}" class="btn btn-secondary btn-sm" style="width: 100%;">
+            Ver Ficha Técnica &rarr;
+          </a>
+
+        </div>
+      {% empty %}
+        <div class="card" style="text-align: center; padding: 2.5rem; grid-column: 1 / -1;">
+          <p style="color: var(--text-secondary);">Aún no hay jugadores inscritos en la plantilla de este equipo.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

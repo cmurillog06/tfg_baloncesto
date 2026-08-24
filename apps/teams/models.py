@@ -97,11 +97,11 @@ class Player(models.Model):
     """
 
     class Position(models.TextChoices):
-        POINT_GUARD = "PG", "Base (1)"
-        SHOOTING_GUARD = "SG", "Escolta (2)"
-        SMALL_FORWARD = "SF", "Alero (3)"
-        POWER_FORWARD = "PF", "Ala-Pívot (4)"
-        CENTER = "C", "Pívot (5)"
+        POINT_GUARD = "PG", "Base"
+        SHOOTING_GUARD = "SG", "Escolta"
+        SMALL_FORWARD = "SF", "Alero"
+        POWER_FORWARD = "PF", "Ala-Pívot"
+        CENTER = "C", "Pívot"
 
     first_name = models.CharField(max_length=100, verbose_name="Nombre")
     last_name = models.CharField(max_length=100, verbose_name="Apellidos")
