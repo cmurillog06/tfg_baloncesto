@@ -1,0 +1,529 @@
+{% extends "base.html" %}
+
+{% block title %}Mesa Arbitral Digital &bull; {{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+  
+  <!-- Cabecera de Mesa Arbitral -->
+  <div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--gold-primary); padding: 1.25rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--gold-border);">
+          ⏱️
+        </div>
+        <div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CONSOLA OFICIAL DE MESA</div>
+          <h1 style="font-size: 1.65rem; font-weight: 600; margin: 0;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Oficial responsable: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div id="ws-status-badge" style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-subtle); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--platinum-border);">
+          <span id="ws-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; display: inline-block;"></span>
+          <span id="ws-text">Conectando...</span>
+        </div>
+
+        <a href="{% url 'matches:match_live' match.id %}" target="_blank" class="btn btn-secondary btn-sm" title="Ver marcador público">
+          👁️ Ver Retransmisión ↗
+        </a>
+
+        <button type="button" onclick="openSignatureModal()" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25);">
+          ✍️ Firmar y Cerrar Acta
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PANEL DE CONTROL DE RELOJ Y PERIODOS -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 2rem; background: var(--obsidian-dark); border: 1px solid var(--gold-border); color: #FFFFFF;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+      
+      <!-- Cronómetro Central -->
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div>
+          <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">RELOJ DE JUEGO</div>
+          <div id="clock-display" style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: #FFFFFF; line-height: 1;">
+            {{ match.game_clock }}
+          </div>
+        </div>
+
+        <!-- Botones de Control de Tiempo -->
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" id="btn-clock-toggle" onclick="toggleClock()" class="btn btn-gold" style="padding: 0.6rem 1.4rem; font-weight: 700;">
+            ▶ Iniciar Reloj
+          </button>
+          <button type="button" onclick="adjustClock(10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            +10s
+          </button>
+          <button type="button" onclick="adjustClock(-10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            -10s
+          </button>
+          <button type="button" onclick="resetClock('10:00')" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            ↺ 10:00
+          </button>
+        </div>
+      </div>
+
+      <!-- Selector Rápido de Periodos (Q1, Q2, HT, Q3, Q4, OT) -->
+      <div>
+        <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">PERIODO / CUARTO</div>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          <button type="button" onclick="setPeriod('Q1', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q1">1Q</button>
+          <button type="button" onclick="setPeriod('Q2', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q2">2Q</button>
+          <button type="button" onclick="setPeriod('HT', '15:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-HT">Descanso</button>
+          <button type="button" onclick="setPeriod('Q3', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q3">3Q</button>
+          <button type="button" onclick="setPeriod('Q4', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q4">4Q</button>
+          <button type="button" onclick="setPeriod('OT1', '05:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-OT1">Prórroga</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONSOLAS DE ANOTACIÓN BIDIRECCIONAL (LOCAL Y VISITANTE) -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+    
+    <!-- 1. CONSOLA EQUIPO LOCAL -->
+    <div class="card" style="border-top: 4px solid {{ match.home_team.primary_color|default:'#090D16' }}; padding: 1.75rem;">
+      
+      <!-- Cabecera y Marcador Local -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
+            {{ match.home_team.acronym }}
+          </div>
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.home_team.name }}</h2>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">EQUIPO LOCAL</span>
+          </div>
+        </div>
+
+        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-home">
+          {{ match.home_score }}
+        </div>
+      </div>
+
+      <!-- Selector Rápido de Jugador Anotador Local -->
+      <div style="margin-bottom: 1.25rem;">
+        <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">
+          Seleccionar Jugador Activo (Opcional):
+        </label>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="roster-home-pills">
+          {% for m in home_roster %}
+            <button type="button" onclick="selectPlayer('home', '{{ m.player.id }}', '{{ m.jersey_number }}', '{{ m.player.full_name }}')" class="btn btn-secondary btn-sm pill-player" id="pill-player-{{ m.player.id }}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-family: var(--font-mono);">
+              #{{ m.jersey_number }} {{ m.player.last_name }}
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Botonera de Anotación Rápida -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 1, '1PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +1 Libre 🏀
+        </button>
+        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 2, '2PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +2 Canasta 🔥
+        </button>
+        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 3, '3PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +3 Triple 🎯
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button type="button" onclick="sendFoul('{{ match.home_team.id }}', 'PF', 'home')" class="btn btn-secondary" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); font-weight: 600;">
+          ⚠️ Falta Personal
+        </button>
+        <button type="button" onclick="sendScore('{{ match.home_team.id }}', -1, 'CORRECTION', 'home')" class="btn btn-secondary" style="font-weight: 600; color: var(--text-secondary);">
+          -1 Corregir ↺
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 2. CONSOLA EQUIPO VISITANTE -->
+    <div class="card" style="border-top: 4px solid {{ match.away_team.primary_color|default:'#090D16' }}; padding: 1.75rem;">
+      
+      <!-- Cabecera y Marcador Visitante -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
+            {{ match.away_team.acronym }}
+          </div>
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.away_team.name }}</h2>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">EQUIPO VISITANTE</span>
+          </div>
+        </div>
+
+        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-away">
+          {{ match.away_score }}
+        </div>
+      </div>
+
+      <!-- Selector Rápido de Jugador Anotador Visitante -->
+      <div style="margin-bottom: 1.25rem;">
+        <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">
+          Seleccionar Jugador Activo (Opcional):
+        </label>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="roster-away-pills">
+          {% for m in away_roster %}
+            <button type="button" onclick="selectPlayer('away', '{{ m.player.id }}', '{{ m.jersey_number }}', '{{ m.player.full_name }}')" class="btn btn-secondary btn-sm pill-player" id="pill-player-{{ m.player.id }}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-family: var(--font-mono);">
+              #{{ m.jersey_number }} {{ m.player.last_name }}
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Botonera de Anotación Rápida -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 1, '1PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +1 Libre 🏀
+        </button>
+        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 2, '2PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +2 Canasta 🔥
+        </button>
+        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 3, '3PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
+          +3 Triple 🎯
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button type="button" onclick="sendFoul('{{ match.away_team.id }}', 'PF', 'away')" class="btn btn-secondary" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); font-weight: 600;">
+          ⚠️ Falta Personal
+        </button>
+        <button type="button" onclick="sendScore('{{ match.away_team.id }}', -1, 'CORRECTION', 'away')" class="btn btn-secondary" style="font-weight: 600; color: var(--text-secondary);">
+          -1 Corregir ↺
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- REGISTRO CRONOLÓGICO DE EVENTOS EN DIRECTO -->
+  <div class="card" style="padding: 1.75rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.2rem; font-weight: 600;">Historial Reciente de la Mesa</h3>
+      <span style="font-size: 0.8rem; color: var(--text-secondary);">Registros oficiales guardados en base de datos</span>
+    </div>
+
+    <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 280px; overflow-y: auto;">
+      {% for ev in recent_events %}
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary);">{{ ev.get_period_display }} &bull; {{ ev.game_clock }}</span>
+            <strong style="color: var(--text-title);">{{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}</strong>
+            <span>&bull; {{ ev.get_event_type_display }}</span>
+          </div>
+          {% if ev.points != 0 %}
+            <strong style="color: var(--gold-primary); font-family: var(--font-mono);">{% if ev.points > 0 %}+{% endif %}{{ ev.points }}</strong>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL PARA FIRMAR Y CERRAR EL ACTA DIGITAL -->
+<div id="modal-scoresheet-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+      <div style="font-size: 1.75rem;">✍️</div>
+      <div>
+        <h3 style="font-size: 1.35rem; font-weight: 600; margin: 0; color: var(--text-title);">Firma y Cierre de Acta Oficial</h3>
+        <span style="font-size: 0.82rem; color: var(--text-secondary);">Esta acción finalizará el partido y bloqueará futuras modificaciones</span>
+      </div>
+    </div>
+
+    <form id="form-close-scoresheet" onsubmit="event.preventDefault(); submitCloseScoresheet();">
+      <div class="form-group">
+        <label class="form-label">Nombre y Firma del Árbitro Principal</label>
+        <input type="text" id="input-referee-sig" class="form-control" placeholder="ej. Juan Carlos García González" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Firma de la Mesa Arbitral</label>
+        <input type="text" id="input-table-sig" class="form-control" value="{{ request.user.get_full_name|default:request.user.username }}" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Informe de Incidencias (Opcional)</label>
+        <textarea id="input-report" class="form-control" rows="2" placeholder="Sin incidencias destacables..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 1.75rem;">
+        <button type="button" onclick="closeSignatureModal()" class="btn btn-secondary" style="flex: 1;">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" style="flex: 1.2; background: var(--gold-primary); border-color: var(--gold-primary); color: #FFFFFF;">
+          Firmar y Concluir Partido ✍️
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.pill-player.active {
+  background: var(--obsidian-dark) !important;
+  color: #FFFFFF !important;
+  border-color: var(--gold-primary) !important;
+}
+.btn-period.active {
+  background: var(--gold-primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--gold-primary) !important;
+}
+</style>
+
+<!-- LÓGICA WEBSOCKET Y CRONÓMETRO DE MESA -->
+<script>
+const matchId = "{{ match.id }}";
+const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
+
+let socket = null;
+let selectedHomePlayerId = null;
+let selectedAwayPlayerId = null;
+let clockInterval = null;
+let isClockRunning = false;
+let currentSeconds = 600; // 10:00 por defecto
+let currentPeriod = "{{ match.current_period|default:'Q1' }}";
+
+function connectWebSocket() {
+  socket = new WebSocket(wsUrl);
+
+  socket.onopen = function() {
+    document.getElementById('ws-dot').style.background = 'var(--state-green)';
+    document.getElementById('ws-text').innerText = 'Mesa Conectada (WS)';
+    document.getElementById('ws-text').style.color = 'var(--state-green)';
+  };
+
+  socket.onmessage = function(e) {
+    const payload = JSON.parse(e.data);
+    const data = payload.data;
+
+    if (payload.type === 'initial_state' && data) {
+      document.getElementById('score-home').innerText = data.home_team.score;
+      document.getElementById('score-away').innerText = data.away_team.score;
+      document.getElementById('clock-display').innerText = data.clock;
+      parseClockStringToSeconds(data.clock);
+      highlightActivePeriod(data.period);
+    } else if (payload.type === 'match_update' && data) {
+      document.getElementById('score-home').innerText = data.home_score;
+      document.getElementById('score-away').innerText = data.away_score;
+      if (data.clock) document.getElementById('clock-display').innerText = data.clock;
+      if (data.period) highlightActivePeriod(data.period);
+      if (data.new_event) prependTimelineEvent(data.new_event);
+    } else if (payload.type === 'clock_update' && data) {
+      if (data.clock) {
+        document.getElementById('clock-display').innerText = data.clock;
+        parseClockStringToSeconds(data.clock);
+      }
+      if (data.period) highlightActivePeriod(data.period);
+    } else if (payload.type === 'event_update' && data && data.new_event) {
+      prependTimelineEvent(data.new_event);
+    } else if (payload.type === 'scoresheet_closed') {
+      window.location.href = "{% url 'matches:scoresheet_detail' match.id %}";
+    }
+  };
+
+  socket.onclose = function() {
+    document.getElementById('ws-dot').style.background = 'var(--state-red)';
+    document.getElementById('ws-text').innerText = 'Reconectando...';
+    setTimeout(connectWebSocket, 2500);
+  };
+}
+
+function selectPlayer(side, playerId, jersey, name) {
+  if (side === 'home') {
+    selectedHomePlayerId = (selectedHomePlayerId === playerId) ? null : playerId;
+    document.querySelectorAll('#roster-home-pills .pill-player').forEach(el => el.classList.remove('active'));
+    if (selectedHomePlayerId) {
+      document.getElementById(`pill-player-${playerId}`).classList.add('active');
+    }
+  } else {
+    selectedAwayPlayerId = (selectedAwayPlayerId === playerId) ? null : playerId;
+    document.querySelectorAll('#roster-away-pills .pill-player').forEach(el => el.classList.remove('active'));
+    if (selectedAwayPlayerId) {
+      document.getElementById(`pill-player-${playerId}`).classList.add('active');
+    }
+  }
+}
+
+function sendScore(teamId, points, eventType, side) {
+  const playerId = side === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'score_point',
+      team_id: teamId,
+      points: points,
+      player_id: playerId,
+      event_type: eventType
+    }));
+  }
+}
+
+function sendFoul(teamId, foulType, side) {
+  const playerId = side === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'record_foul',
+      team_id: teamId,
+      player_id: playerId,
+      foul_type: foulType
+    }));
+  }
+}
+
+function setPeriod(periodCode, initialClock) {
+  currentPeriod = periodCode;
+  resetClock(initialClock);
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'period_change',
+      period: periodCode,
+      game_clock: initialClock
+    }));
+  }
+  highlightActivePeriod(periodCode);
+}
+
+function highlightActivePeriod(periodCode) {
+  document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-p-${periodCode}`);
+  if (btn) btn.classList.add('active');
+}
+
+function toggleClock() {
+  const btn = document.getElementById('btn-clock-toggle');
+  if (isClockRunning) {
+    clearInterval(clockInterval);
+    isClockRunning = false;
+    btn.innerText = '▶ Iniciar Reloj';
+    btn.classList.replace('btn-secondary', 'btn-gold');
+    syncClockToWebSocket(false);
+  } else {
+    isClockRunning = true;
+    btn.innerText = '⏸ Pausar Reloj';
+    btn.classList.replace('btn-gold', 'btn-secondary');
+    syncClockToWebSocket(true);
+    clockInterval = setInterval(() => {
+      if (currentSeconds > 0) {
+        currentSeconds--;
+        updateClockDisplay();
+        syncClockToWebSocket(true);
+      } else {
+        clearInterval(clockInterval);
+        isClockRunning = false;
+        btn.innerText = '▶ Iniciar Reloj';
+        btn.classList.replace('btn-secondary', 'btn-gold');
+        syncClockToWebSocket(false);
+      }
+    }, 1000);
+  }
+}
+
+function adjustClock(deltaSec) {
+  currentSeconds = Math.max(0, currentSeconds + deltaSec);
+  updateClockDisplay();
+  syncClockToWebSocket(isClockRunning);
+}
+
+function resetClock(clockStr) {
+  if (isClockRunning) toggleClock();
+  parseClockStringToSeconds(clockStr);
+  updateClockDisplay();
+  syncClockToWebSocket(false);
+}
+
+function parseClockStringToSeconds(str) {
+  if (!str) return;
+  const parts = str.split(':');
+  if (parts.length === 2) {
+    currentSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  }
+}
+
+function updateClockDisplay() {
+  const m = Math.floor(currentSeconds / 60);
+  const s = currentSeconds % 60;
+  const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  document.getElementById('clock-display').innerText = formatted;
+}
+
+function syncClockToWebSocket(runningState) {
+  const clockStr = document.getElementById('clock-display').innerText;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'clock_update',
+      game_clock: clockStr,
+      is_running: runningState !== undefined ? runningState : isClockRunning,
+      period: currentPeriod,
+      status: 'LIVE'
+    }));
+  }
+}
+
+function prependTimelineEvent(ev) {
+  const timeline = document.getElementById('events-timeline');
+  const div = document.createElement('div');
+  div.style = 'display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04);';
+  
+  const playerText = ev.player_name ? `: ${ev.player_name}` : '';
+  const ptsHtml = ev.points !== 0 ? `<strong style="color: var(--gold-primary); font-family: var(--font-mono);">${ev.points > 0 ? '+' : ''}${ev.points}</strong>` : '';
+
+  div.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary);">${ev.period || ''} &bull; ${ev.clock || ''}</span>
+      <strong style="color: var(--text-title);">${ev.team_acronym || ''}${playerText}</strong>
+      <span>&bull; ${ev.event_type || ''}</span>
+    </div>
+    ${ptsHtml}
+  `;
+  timeline.insertBefore(div, timeline.firstChild);
+}
+
+function openSignatureModal() {
+  document.getElementById('modal-scoresheet-container').style.display = 'flex';
+}
+
+function closeSignatureModal() {
+  document.getElementById('modal-scoresheet-container').style.display = 'none';
+}
+
+function submitCloseScoresheet() {
+  const refereeSig = document.getElementById('input-referee-sig').value;
+  const tableSig = document.getElementById('input-table-sig').value;
+  const report = document.getElementById('input-report').value;
+
+  if (!refereeSig) {
+    alert('Por favor, introduce la firma del árbitro principal.');
+    return;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'close_scoresheet',
+      referee_signature: refereeSig,
+      table_official_signature: tableSig,
+      incidents_report: report
+    }));
+  }
+}
+
+document.addEventListener('DOMContentLoaded', connectWebSocket);
+</script>
+{% endblock %}

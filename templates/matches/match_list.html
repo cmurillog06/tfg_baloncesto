@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Partidos y Resultados | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Encabezado de Sección -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">CALENDARIO Y RETRANSMISIÓN</div>
+    <h1 style="font-size: 2.2rem; font-weight: 600;">Centro de Partidos</h1>
+    <p style="color: var(--text-secondary); font-size: 1.05rem;">Sigue los marcadores en tiempo real por WebSockets y consulta los resultados oficiales</p>
+  </div>
+
+  <!-- SECCIÓN 1: PARTIDOS EN DIRECTO -->
+  {% if live_matches %}
+    <div style="margin-bottom: 3.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <h2 style="font-size: 1.45rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem;">
+          <span class="live-dot" style="width: 10px; height: 10px;"></span> Partidos en Juego Ahora
+        </h2>
+        <span class="badge badge-live">EN VIVO (WebSockets)</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.75rem;">
+        {% for match in live_matches %}
+          <div class="card card-interactive" style="border-top: 4px solid var(--gold-primary); position: relative;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border);">
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-title);">
+                🏆 {{ match.season.league.name }} &bull; Jornada {{ match.round_number }}
+              </div>
+              <span class="badge badge-live" style="font-size: 0.75rem; padding: 0.25rem 0.65rem;">
+                ⏱️ {{ match.get_current_period_display }} &bull; {{ match.game_clock }}
+              </span>
+            </div>
+
+            <!-- Marcador -->
+            <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; text-align: center; margin-bottom: 1.5rem;">
+              
+              <!-- Local -->
+              <div>
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; margin: 0 auto 0.4rem;">
+                  {{ match.home_team.acronym }}
+                </div>
+                <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ match.home_team.name }}</strong>
+              </div>
+
+              <!-- Puntos -->
+              <div style="background: var(--obsidian-dark); padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--gold-border); display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-family: var(--font-mono); font-size: 1.85rem; font-weight: 700; color: #FFFFFF;">{{ match.home_score }}</span>
+                <span style="color: var(--gold-primary); font-size: 1.2rem; font-weight: 700;">:</span>
+                <span style="font-family: var(--font-mono); font-size: 1.85rem; font-weight: 700; color: #FFFFFF;">{{ match.away_score }}</span>
+              </div>
+
+              <!-- Visitante -->
+              <div>
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; margin: 0 auto 0.4rem;">
+                  {{ match.away_team.acronym }}
+                </div>
+                <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ match.away_team.name }}</strong>
+              </div>
+
+            </div>
+
+            <!-- Botones -->
+            <div style="display: flex; gap: 0.75rem;">
+              <a href="{% url 'matches:match_live' match.id %}" class="btn btn-primary" style="flex: 1; text-align: center;">
+                ⚡ Ver Marcador en Vivo
+              </a>
+              {% if user.is_authenticated and user.role in 'ADMIN,TABLE_OFFICIAL' %}
+                <a href="{% url 'matches:scorekeeper' match.id %}" class="btn btn-gold btn-sm" title="Mesa Arbitral">
+                  ⏱️ Mesa
+                </a>
+              {% endif %}
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- SECCIÓN 2: PRÓXIMOS PARTIDOS PROGRAMADOS -->
+  <div style="margin-bottom: 3.5rem;">
+    <h2 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-title);">
+      📅 Próximos Encuentros Programados
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+      {% for match in upcoming_matches %}
+        <div class="card" style="padding: 1.5rem; position: relative;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--platinum-border);">
+            <span>{{ match.season.league.name }} &bull; Jornada {{ match.round_number }}</span>
+            <strong style="color: var(--gold-primary);">{{ match.scheduled_at|date:"d M - H:i" }}</strong>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">
+                {{ match.home_team.acronym }}
+              </div>
+              <strong style="color: var(--text-title); font-size: 0.95rem;">{{ match.home_team.name }}</strong>
+            </div>
+
+            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">VS</span>
+
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-direction: row-reverse;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">
+                {{ match.away_team.acronym }}
+              </div>
+              <strong style="color: var(--text-title); font-size: 0.95rem;">{{ match.away_team.name }}</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'matches:match_live' match.id %}" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center;">
+              Previa del Partido &rarr;
+            </a>
+            {% if user.is_authenticated and user.role in 'ADMIN,TABLE_OFFICIAL' %}
+              <a href="{% url 'matches:scorekeeper' match.id %}" class="btn btn-gold btn-sm">
+                ⏱️ Iniciar Mesa
+              </a>
+            {% endif %}
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="card" style="text-align: center; padding: 2rem; grid-column: 1 / -1;">
+          <p style="color: var(--text-secondary);">No hay partidos programados pendientes.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: PARTIDOS FINALIZADOS -->
+  <div>
+    <h2 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-title);">
+      ✅ Partidos Concluidos (Actas Oficiales)
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+      {% for match in finished_matches %}
+        <div class="card" style="padding: 1.5rem;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--platinum-border);">
+            <span>{{ match.season.league.name }} &bull; Jornada {{ match.round_number }}</span>
+            <span style="color: var(--state-green); font-weight: 600;">Finalizado</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+              <strong style="color: var(--text-title); font-size: 1rem;">{{ match.home_team.acronym }}</strong>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ match.home_team.name }}</div>
+            </div>
+
+            <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.25rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+              {{ match.home_score }} : {{ match.away_score }}
+            </div>
+
+            <div style="text-align: right;">
+              <strong style="color: var(--text-title); font-size: 1rem;">{{ match.away_team.acronym }}</strong>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ match.away_team.name }}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="{% url 'matches:match_live' match.id %}" class="btn btn-secondary btn-sm" style="flex: 1; text-align: center;">
+              Ver Crónica &rarr;
+            </a>
+            {% if user.is_authenticated and user.role in 'ADMIN,TABLE_OFFICIAL,COACH' %}
+              <a href="{% url 'matches:scoresheet_detail' match.id %}" class="btn btn-gold btn-sm">
+                ✍️ Acta Firmada
+              </a>
+            {% endif %}
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="card" style="text-align: center; padding: 2rem; grid-column: 1 / -1;">
+          <p style="color: var(--text-secondary);">Aún no hay partidos concluidos.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

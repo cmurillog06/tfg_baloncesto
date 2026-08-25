@@ -126,14 +126,14 @@
 
           </div>
 
-          <!-- Pie del Partido con Ubicación -->
+          <!-- Pie del Partido con Ubicación y Enlace a Directo -->
           <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.7rem 1rem; border-radius: var(--radius-md);">
             <div style="display: flex; align-items: center; gap: 0.4rem;">
               <span>📍</span> <span>{{ match.location|default:"Pabellón Oficial" }}</span>
             </div>
-            <div style="color: var(--gold-primary); font-weight: 600;">
-              Acta Oficial Abierta ✍️
-            </div>
+            <a href="{% url 'matches:match_live' match.id %}" style="color: var(--gold-primary); font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+              Ver en Directo ⚡ &rarr;
+            </a>
           </div>
 
         </div>

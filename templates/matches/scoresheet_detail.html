@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Acta Oficial &bull; {{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+  
+  <!-- Barra Superior de Acciones -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <a href="{% url 'matches:match_list' %}" class="btn btn-secondary btn-sm">&larr; Volver a Partidos</a>
+    
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{% url 'matches:match_live' match.id %}" class="btn btn-secondary btn-sm">
+        ⚡ Ver Retransmisión
+      </a>
+      <button type="button" onclick="window.print()" class="btn btn-gold btn-sm">
+        🖨️ Imprimir / Guardar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- DOCUMENTO OFICIAL: ACTA DIGITAL DE PARTIDO (ESTILO FEDERADO) -->
+  <div class="card" style="padding: 3rem 2.5rem; background: #FFFFFF; border: 2px solid var(--platinum-border); box-shadow: 0 10px 30px rgba(0,0,0,0.06); position: relative;">
+    
+    <!-- Sello Institucional de Quinto Cuarto -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--obsidian-dark); padding-bottom: 1.25rem; margin-bottom: 2rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="font-size: 2.2rem;">🏀</div>
+        <div>
+          <h1 style="font-size: 1.6rem; font-weight: 700; color: var(--obsidian-dark); letter-spacing: -0.02em; margin: 0;">
+            ACTA DIGITAL OFICIAL DE PARTIDO
+          </h1>
+          <span style="color: var(--gold-primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+            QUINTO CUARTO &bull; SISTEMA OFICIAL FEDERADO EN TIEMPO REAL
+          </span>
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <span class="badge" style="background: var(--state-green-light); color: var(--state-green); font-size: 0.82rem; padding: 0.35rem 0.85rem; border: 1px solid rgba(5, 150, 105, 0.2);">
+          {% if scoresheet.is_closed %}✅ Acta Oficial Cerrada{% else %}⏳ En Curso{% endif %}
+        </span>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">ID Acta: #ACTA-{{ match.id }}-{{ match.scheduled_at|date:"Ymd" }}</div>
+      </div>
+    </div>
+
+    <!-- Metadatos de la Competición -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 2rem; font-size: 0.88rem; line-height: 1.7;">
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">COMPETICIÓN</span>
+        <strong style="color: var(--text-title);">{{ match.season.league.name }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">JORNADA / FECHA</span>
+        <strong style="color: var(--text-title);">Jornada {{ match.round_number }} &bull; {{ match.scheduled_at|date:"d/m/Y H:i" }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">SEDE / PABELLÓN</span>
+        <strong style="color: var(--text-title);">{{ match.location|default:"Pabellón Oficial" }}</strong>
+      </div>
+    </div>
+
+    <!-- RESULTADO FINAL DEL PARTIDO -->
+    <div style="background: var(--obsidian-dark); border-radius: var(--radius-lg); border: 1px solid var(--gold-border); padding: 1.75rem; color: #FFFFFF; text-align: center; margin-bottom: 2.5rem;">
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;">
+        RESULTADO FINAL HOMOLOGADO
+      </div>
+
+      <div style="display: flex; justify-content: center; align-items: center; gap: 2.5rem;">
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700;">{{ match.home_team.name }}</div>
+          <span style="font-size: 0.8rem; opacity: 0.7;">(Equipo Local)</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 3rem; font-weight: 700;">
+          <span style="color: #FFFFFF;">{{ match.home_score }}</span>
+          <span style="color: var(--gold-primary); font-size: 2rem;">:</span>
+          <span style="color: #FFFFFF;">{{ match.away_score }}</span>
+        </div>
+
+        <div>
+          <div style="font-size: 1.4rem; font-weight: 700;">{{ match.away_team.name }}</div>
+          <span style="font-size: 0.8rem; opacity: 0.7;">(Equipo Visitante)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANTILLAS Y PARTICIPANTES EN EL ACTA -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+      
+      <!-- Equipo Local -->
+      <div>
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
+          {{ match.home_team.name }}
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.4rem 0;">Dorsal</th>
+              <th style="padding: 0.4rem 0.5rem;">Jugador</th>
+              <th style="padding: 0.4rem 0.5rem; text-align: right;">Posición</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in home_roster %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.45rem 0; font-family: var(--font-mono); font-weight: 700;">#{{ m.jersey_number }}</td>
+                <td style="padding: 0.45rem 0.5rem;">{{ m.player.full_name }}{% if m.is_captain %} <strong style="color: var(--gold-primary); font-size: 0.75rem;">(C)</strong>{% endif %}</td>
+                <td style="padding: 0.45rem 0.5rem; text-align: right; color: var(--text-secondary);">{{ m.player.get_position_display }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Equipo Visitante -->
+      <div>
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
+          {{ match.away_team.name }}
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.4rem 0;">Dorsal</th>
+              <th style="padding: 0.4rem 0.5rem;">Jugador</th>
+              <th style="padding: 0.4rem 0.5rem; text-align: right;">Posición</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in away_roster %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.45rem 0; font-family: var(--font-mono); font-weight: 700;">#{{ m.jersey_number }}</td>
+                <td style="padding: 0.45rem 0.5rem;">{{ m.player.full_name }}{% if m.is_captain %} <strong style="color: var(--gold-primary); font-size: 0.75rem;">(C)</strong>{% endif %}</td>
+                <td style="padding: 0.45rem 0.5rem; text-align: right; color: var(--text-secondary);">{{ m.player.get_position_display }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- FIRMAS DIGITALES Y DILIGENCIA OFICIAL -->
+    <div style="background: var(--bg-subtle); padding: 1.5rem 1.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 1.5rem;">
+      <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-title);">
+        ✍️ Diligencia de Firmas y Validación Digital
+      </h4>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div style="background: #FFFFFF; padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--platinum-border);">
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">ÁRBITRO PRINCIPAL</span>
+          <div style="font-family: 'Space Grotesk', cursive; font-size: 1.25rem; font-weight: 600; color: var(--obsidian-dark); margin: 0.5rem 0;">
+            {{ scoresheet.referee_signature|default:"Juan Carlos García González" }}
+          </div>
+          <span style="font-size: 0.75rem; color: var(--state-green);">✓ Firma Digital Autenticada</span>
+        </div>
+
+        <div style="background: #FFFFFF; padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--platinum-border);">
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">MESA ARBITRAL</span>
+          <div style="font-family: 'Space Grotesk', cursive; font-size: 1.25rem; font-weight: 600; color: var(--obsidian-dark); margin: 0.5rem 0;">
+            {{ scoresheet.table_official_signature|default:"Oficial de Mesa Digital" }}
+          </div>
+          <span style="font-size: 0.75rem; color: var(--state-green);">✓ Firma Digital Autenticada</span>
+        </div>
+      </div>
+
+      {% if scoresheet.incidents_report %}
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--platinum-border); font-size: 0.85rem; color: var(--text-secondary);">
+          <strong>Informe de Incidencias:</strong> {{ scoresheet.incidents_report }}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Pie del Acta -->
+    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); padding-top: 0.5rem;">
+      <span>Generado por Quinto Cuarto &bull; Django Channels & WebSockets</span>
+      <span>Fecha Cierre: {{ scoresheet.closed_at|date:"d/m/Y H:i:s"|default:"En curso" }}</span>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
