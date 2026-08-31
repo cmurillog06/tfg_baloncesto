@@ -1,4 +1,5 @@
 import json
+import time
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
@@ -6,14 +7,73 @@ from .models import Match, MatchEvent, DigitalScoreSheet
 from apps.teams.models import Player, Team
 
 
+# -----------------------------------------------------------------------------
+# GESTOR DE RELOJ EN TIEMPO REAL DEL SERVIDOR (SERVER-SIDE CLOCK SYNC)
+# -----------------------------------------------------------------------------
+# Guarda el estado del cronómetro en memoria para sincronizar a cualquier
+# usuario que se conecte, recargue o cambie de pestaña en cualquier momento.
+SERVER_MATCH_CLOCKS = {}
+
+
+def get_server_clock(match_id, db_game_clock_str):
+    """
+    Calcula con precisión de servidor el tiempo restante y si está corriendo.
+    """
+    state = SERVER_MATCH_CLOCKS.get(match_id)
+    if not state:
+        try:
+            parts = db_game_clock_str.split(":")
+            sec = int(parts[0]) * 60 + int(parts[1])
+        except Exception:
+            sec = 600
+        state = {
+            "seconds": sec,
+            "is_running": False,
+            "last_start_time": None,
+        }
+        SERVER_MATCH_CLOCKS[match_id] = state
+        return db_game_clock_str, False
+
+    if state["is_running"] and state["last_start_time"]:
+        elapsed = time.time() - state["last_start_time"]
+        remaining = max(0, int(state["seconds"] - elapsed))
+        m = remaining // 60
+        s = remaining % 60
+        clock_str = f"{m:02d}:{s:02d}"
+        return clock_str, (remaining > 0)
+    else:
+        sec = state["seconds"]
+        m = sec // 60
+        s = sec % 60
+        return f"{m:02d}:{s:02d}", False
+
+
+def set_server_clock(match_id, clock_str, is_running):
+    """
+    Actualiza el estado del reloj de servidor cuando la mesa arbitral inicia/pausa/ajusta.
+    """
+    try:
+        parts = clock_str.split(":")
+        sec = int(parts[0]) * 60 + int(parts[1])
+    except Exception:
+        sec = 600
+
+    SERVER_MATCH_CLOCKS[match_id] = {
+        "seconds": sec,
+        "is_running": is_running,
+        "last_start_time": time.time() if is_running else None,
+    }
+    return clock_str, is_running
+
+
 class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
     """
     Consumidor WebSocket para retransmisión en tiempo real del marcador,
-    eventos, reloj y acta digital del partido.
+    eventos, reloj de servidor y acta digital del partido.
     """
 
     async def connect(self):
-        self.match_id = self.scope["url_route"]["kwargs"]["match_id"]
+        self.match_id = int(self.scope["url_route"]["kwargs"]["match_id"])
         self.room_group_name = f"match_{self.match_id}"
 
         # Unirse a la sala del partido
@@ -23,7 +83,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
         )
         await self.accept()
 
-        # Enviar estado inicial del partido al cliente recién conectado
+        # Enviar estado inicial del partido con tiempo de servidor exacto
         match_data = await self.get_match_state(self.match_id)
         if match_data:
             await self.send_json(
@@ -96,15 +156,18 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     },
                 )
 
-        # 3. Actualización de Reloj y Cronómetro
+        # 3. Actualización de Reloj y Cronómetro de Servidor
         elif action == "clock_update":
-            clock_str = content.get("game_clock")
+            clock_str = content.get("game_clock", "10:00")
             period = content.get("period")
             status = content.get("status")
             is_running = bool(content.get("is_running", False))
 
+            # Actualizar gestor de reloj de servidor
+            calc_clock, calc_running = set_server_clock(self.match_id, clock_str, is_running)
+
             result = await self.update_clock_state(
-                self.match_id, clock_str, period, status, is_running
+                self.match_id, calc_clock, period, status, calc_running
             )
             if result:
                 await self.channel_layer.group_send(
@@ -119,6 +182,10 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
         elif action == "period_change":
             period = content.get("period")
             clock_str = content.get("game_clock", "10:00")
+            
+            # Resetear reloj de servidor para el nuevo periodo
+            set_server_clock(self.match_id, clock_str, False)
+
             result = await self.update_period_state(self.match_id, period, clock_str)
             if result:
                 await self.channel_layer.group_send(
@@ -134,6 +201,9 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             referee_sig = content.get("referee_signature", "Árbitro Principal")
             table_sig = content.get("table_official_signature", user.username if user else "Mesa Arbitral")
             report = content.get("incidents_report", "")
+
+            # Detener reloj en servidor
+            set_server_clock(self.match_id, "00:00", False)
 
             result = await self.close_digital_scoresheet(
                 self.match_id, referee_sig, table_sig, report
@@ -206,6 +276,9 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "home_team", "away_team", "season__league"
             ).get(id=match_id)
 
+            # Obtener tiempo de servidor y estado de reloj
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+
             events = list(
                 match.events.select_related("player", "team").order_by("-created_at")[:15]
             )
@@ -233,7 +306,8 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "status_display": match.get_status_display(),
                 "period": match.current_period,
                 "period_display": match.get_current_period_display(),
-                "clock": match.game_clock,
+                "clock": server_clock_str,
+                "is_running": is_running,
                 "home_team": {
                     "id": match.home_team.id,
                     "name": match.home_team.name,
@@ -272,13 +346,15 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 if match.current_period == Match.Period.NOT_STARTED:
                     match.current_period = Match.Period.Q1
 
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+            match.game_clock = server_clock_str
             match.save()
 
             # Registrar el evento en el acta
             event = MatchEvent.objects.create(
                 match=match,
                 period=match.current_period,
-                game_clock=match.game_clock,
+                game_clock=server_clock_str,
                 team=team,
                 player=player,
                 event_type=event_type,
@@ -293,7 +369,8 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "status": match.status,
                 "period": match.current_period,
                 "period_display": match.get_current_period_display(),
-                "clock": match.game_clock,
+                "clock": server_clock_str,
+                "is_running": is_running,
                 "scoring_team_id": team.id,
                 "new_event": {
                     "id": event.id,
@@ -317,10 +394,12 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             team = Team.objects.get(id=team_id)
             player = Player.objects.filter(id=player_id).first() if player_id else None
 
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+
             event = MatchEvent.objects.create(
                 match=match,
                 period=match.current_period,
-                game_clock=match.game_clock,
+                game_clock=server_clock_str,
                 team=team,
                 player=player,
                 event_type=foul_type,
@@ -409,6 +488,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             match = Match.objects.get(id=match_id)
             match.status = Match.Status.FINISHED
             match.current_period = Match.Period.FINISHED
+            match.game_clock = "00:00"
             match.save()
 
             scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)

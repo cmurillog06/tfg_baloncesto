@@ -42,7 +42,7 @@ class LeagueDetailView(LoginRequiredMixin, DetailView):
         league = self.get_object()
 
         # Obtener temporada activa
-        season = league.seasons.filter(is_active=True).first()
+        season = league.seasons.filter(is_current=True).first()
         if not season:
             season = league.seasons.first()
 
@@ -73,7 +73,7 @@ class TeamListView(LoginRequiredMixin, ListView):
     context_object_name = "teams"
 
     def get_queryset(self):
-        return Team.objects.select_related("coach").prefetch_related("memberships")
+        return Team.objects.select_related("coach").prefetch_related("roster_memberships")
 
 
 class TeamDetailView(LoginRequiredMixin, DetailView):
@@ -158,7 +158,7 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             raise PermissionDenied
 
         # Obtener temporada activa
-        self.season = Season.objects.filter(is_active=True).first()
+        self.season = Season.objects.filter(is_current=True).first()
         if not self.season:
             self.season = Season.objects.first()
 

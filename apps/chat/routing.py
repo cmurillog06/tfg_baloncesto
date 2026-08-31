@@ -1,2 +1,6 @@
-# Enrutamiento WebSocket a definir en feature/live-chat-ws
-websocket_urlpatterns = []
+from django.urls import re_path
+from .consumers import MatchChatConsumer
+
+websocket_urlpatterns = [
+    re_path(r"^ws/chat/(?P<match_id>\d+)/$", MatchChatConsumer.as_asgi()),
+]

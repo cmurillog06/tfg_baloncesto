@@ -321,6 +321,29 @@ function connectWebSocket() {
       document.getElementById('clock-display').innerText = data.clock;
       parseClockStringToSeconds(data.clock);
       highlightActivePeriod(data.period);
+      if (data.is_running && !isClockRunning) {
+        isClockRunning = true;
+        const btn = document.getElementById('btn-clock-toggle');
+        if (btn) {
+          btn.innerText = '⏸ Pausar Reloj';
+          btn.classList.replace('btn-gold', 'btn-secondary');
+        }
+        if (!clockInterval) {
+          clockInterval = setInterval(() => {
+            if (currentSeconds > 0) {
+              currentSeconds--;
+              updateClockDisplay();
+            } else {
+              clearInterval(clockInterval);
+              isClockRunning = false;
+              if (btn) {
+                btn.innerText = '▶ Iniciar Reloj';
+                btn.classList.replace('btn-secondary', 'btn-gold');
+              }
+            }
+          }, 1000);
+        }
+      }
     } else if (payload.type === 'match_update' && data) {
       document.getElementById('score-home').innerText = data.home_score;
       document.getElementById('score-away').innerText = data.away_score;
