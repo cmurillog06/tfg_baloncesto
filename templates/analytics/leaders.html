@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Líderes Estadísticos Oficiales | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Cabecera de Sección -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <a href="{% url 'analytics:dashboard' %}" class="btn btn-secondary btn-sm">&larr; Estadísticas</a>
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">RANKINGS OFICIALES</span>
+      </div>
+      <h1 style="font-size: 2.2rem; font-weight: 600;">Tablas de Líderes de la Liga</h1>
+      <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">Top 10 en Anotación, Valoración PIR, Asistencias y Rebotes</p>
+    </div>
+
+    <!-- Selector de Temporada -->
+    {% if all_seasons %}
+      <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="season-select" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Temporada:</label>
+        <select name="season" id="season-select" onchange="this.form.submit()" class="form-control" style="font-size: 0.88rem; padding: 0.4rem 0.85rem;">
+          {% for s in all_seasons %}
+            <option value="{{ s.id }}" {% if current_season and current_season.id == s.id %}selected{% endif %}>
+              {{ s.league.name }} ({{ s.name }})
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- GRID DE LAS 4 CATEGORÍAS ESTADÍSTICAS -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2rem;">
+    
+    <!-- 1. MÁXIMOS ANOTADORES (PUNTOS) -->
+    <div class="card" style="padding: 1.75rem; border-top: 4px solid var(--gold-primary);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <span>🎯</span> Máximos Anotadores
+        </h2>
+        <span class="badge badge-admin" style="font-size: 0.75rem;">PTS / PPP</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+            <th style="padding: 0.5rem 0;">#</th>
+            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">Tot</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: right;">Media (PPP)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leader in leaders.top_scorers %}
+            <tr style="border-bottom: 1px solid var(--platinum-border);">
+              <td style="padding: 0.65rem 0; font-weight: 700; font-family: var(--font-mono); color: {% if forloop.counter == 1 %}var(--gold-primary){% elif forloop.counter == 2 %}#94A3B8{% elif forloop.counter == 3 %}#B45309{% else %}var(--text-muted){% endif %};">
+                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+              </td>
+              <td style="padding: 0.65rem 0.5rem;">
+                <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 600; color: var(--text-title); display: block;">
+                  {{ leader.player__first_name }} {{ leader.player__last_name }}
+                </a>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+              </td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_points }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary);">
+                {{ leader.avg_points|floatformat:1 }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 2. LÍDERES EN VALORACIÓN / MVP (PIR) -->
+    <div class="card" style="padding: 1.75rem; border-top: 4px solid var(--state-blue);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <span>👑</span> Líderes en Valoración (MVP)
+        </h2>
+        <span class="badge badge-table" style="font-size: 0.75rem;">PIR / VPP</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+            <th style="padding: 0.5rem 0;">#</th>
+            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">Tot</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: right;">Media (VPP)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leader in leaders.top_mvp %}
+            <tr style="border-bottom: 1px solid var(--platinum-border);">
+              <td style="padding: 0.65rem 0; font-weight: 700; font-family: var(--font-mono); color: {% if forloop.counter == 1 %}var(--gold-primary){% elif forloop.counter == 2 %}#94A3B8{% elif forloop.counter == 3 %}#B45309{% else %}var(--text-muted){% endif %};">
+                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+              </td>
+              <td style="padding: 0.65rem 0.5rem;">
+                <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 600; color: var(--text-title); display: block;">
+                  {{ leader.player__first_name }} {{ leader.player__last_name }}
+                </a>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+              </td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_pir }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-blue);">
+                {{ leader.avg_pir|floatformat:1 }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. MÁXIMOS ASISTENTES (AST) -->
+    <div class="card" style="padding: 1.75rem; border-top: 4px solid var(--state-green);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <span>🤝</span> Máximos Asistentes
+        </h2>
+        <span class="badge badge-fan" style="font-size: 0.75rem;">AST / APP</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+            <th style="padding: 0.5rem 0;">#</th>
+            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">Tot</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: right;">Media (APP)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leader in leaders.top_assists %}
+            <tr style="border-bottom: 1px solid var(--platinum-border);">
+              <td style="padding: 0.65rem 0; font-weight: 700; font-family: var(--font-mono); color: {% if forloop.counter == 1 %}var(--gold-primary){% elif forloop.counter == 2 %}#94A3B8{% elif forloop.counter == 3 %}#B45309{% else %}var(--text-muted){% endif %};">
+                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+              </td>
+              <td style="padding: 0.65rem 0.5rem;">
+                <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 600; color: var(--text-title); display: block;">
+                  {{ leader.player__first_name }} {{ leader.player__last_name }}
+                </a>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+              </td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_assists }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-green);">
+                {{ leader.avg_assists|floatformat:1 }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. MÁXIMOS REBOTEADORES (REB) -->
+    <div class="card" style="padding: 1.75rem; border-top: 4px solid var(--obsidian-dark);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          <span>🛡️</span> Máximos Reboteadores
+        </h2>
+        <span class="badge badge-coach" style="font-size: 0.75rem;">REB / RPP</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+            <th style="padding: 0.5rem 0;">#</th>
+            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: center;">Tot</th>
+            <th style="padding: 0.5rem 0.5rem; text-align: right;">Media (RPP)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leader in leaders.top_rebounders %}
+            <tr style="border-bottom: 1px solid var(--platinum-border);">
+              <td style="padding: 0.65rem 0; font-weight: 700; font-family: var(--font-mono); color: {% if forloop.counter == 1 %}var(--gold-primary){% elif forloop.counter == 2 %}#94A3B8{% elif forloop.counter == 3 %}#B45309{% else %}var(--text-muted){% endif %};">
+                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+              </td>
+              <td style="padding: 0.65rem 0.5rem;">
+                <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 600; color: var(--text-title); display: block;">
+                  {{ leader.player__first_name }} {{ leader.player__last_name }}
+                </a>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+              </td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_rebounds }}</td>
+              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--obsidian-dark);">
+                {{ leader.avg_rebounds|floatformat:1 }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

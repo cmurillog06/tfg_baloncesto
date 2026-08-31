@@ -362,6 +362,36 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 description=f"+{points} pts" if points > 0 else f"{points} pts",
             )
 
+            # Actualizar hoja estadística individual del jugador en tiempo real
+            if player:
+                try:
+                    from apps.analytics.models import PlayerMatchStat
+                    stat, _ = PlayerMatchStat.objects.get_or_create(
+                        match=match,
+                        player=player,
+                        defaults={"team": team}
+                    )
+                    if event_type == "3PT_MADE":
+                        stat.points += 3
+                        stat.three_points_made += 1
+                        stat.three_points_attempted += 1
+                        stat.field_goals_made += 1
+                        stat.field_goals_attempted += 1
+                    elif event_type == "2PT_MADE":
+                        stat.points += 2
+                        stat.field_goals_made += 1
+                        stat.field_goals_attempted += 1
+                    elif event_type == "1PT_MADE":
+                        stat.points += 1
+                        stat.free_throws_made += 1
+                        stat.free_throws_attempted += 1
+                    elif event_type == "CORRECTION":
+                        stat.points = max(0, stat.points - 1)
+                    stat.compute_pir()
+                    stat.save()
+                except Exception:
+                    pass
+
             return {
                 "match_id": match.id,
                 "home_score": match.home_score,
@@ -406,6 +436,21 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 points=0,
                 description="Falta señalizada",
             )
+
+            # Actualizar faltas en la estadística del jugador y recalcular PIR
+            if player:
+                try:
+                    from apps.analytics.models import PlayerMatchStat
+                    stat, _ = PlayerMatchStat.objects.get_or_create(
+                        match=match,
+                        player=player,
+                        defaults={"team": team}
+                    )
+                    stat.fouls_committed += 1
+                    stat.compute_pir()
+                    stat.save()
+                except Exception:
+                    pass
 
             # Contar faltas de equipo en el periodo actual
             team_fouls_count = MatchEvent.objects.filter(
@@ -498,6 +543,13 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             scoresheet.incidents_report = report
             scoresheet.closed_at = timezone.now()
             scoresheet.save()
+
+            # Recalcular automáticamente la tabla de clasificación
+            try:
+                from apps.analytics.services import recalculate_season_standings
+                recalculate_season_standings(match.season)
+            except Exception:
+                pass
 
             return {
                 "match_id": match.id,
