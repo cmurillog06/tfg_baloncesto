@@ -1,16 +1,19 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Quinto Cuarto | Plataforma Profesional de Baloncesto en Tiempo Real{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Quinto Cuarto: Gestión de ligas de baloncesto en tiempo real con actas digitales, chat en vivo por partido y estadísticas avanzadas.{% endblock %}">
-  
+  <meta name="description"
+    content="{% block meta_description %}Quinto Cuarto: Gestión de ligas de baloncesto en tiempo real con actas digitales, chat en vivo por partido y estadísticas avanzadas.{% endblock %}">
+
   <!-- Tipografías & Estilos Base -->
   <link rel="stylesheet" href="{% static 'css/base.css' %}?v={% now 'U' %}">
   {% block extra_css %}{% endblock %}
 </head>
+
 <body>
 
   <!-- Fondo Ambiental Dinámico en Movimiento (Aura Glow 60 FPS) -->
@@ -23,7 +26,7 @@
   <!-- Barra de Navegación Flotante Pristine (Obsidiana & Platino) -->
   <header class="navbar">
     <div class="navbar-inner">
-      
+
       <!-- Logotipo / Marca -->
       <a href="{% url 'core:home' %}" class="brand" id="nav-brand">
         <div class="brand-icon">
@@ -51,39 +54,50 @@
       <!-- Acciones de Usuario / Autenticación -->
       <div class="nav-actions">
         {% if user.is_authenticated %}
-          <!-- Usuario Autenticado -->
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <!-- Usuario Autenticado -->
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+
+          <!-- Tarjeta de Perfil Unificada con Avatar, Nombre y Rol Debajo -->
+          <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-sm" id="btn-user-profile"
+            style="display: flex; align-items: center; gap: 0.65rem; padding: 0.35rem 0.85rem 0.35rem 0.5rem; border-radius: var(--radius-full); text-align: left; background: #FFFFFF;">
             
-            <!-- Badge de Rol Elegante -->
-            {% if user.role == 'ADMIN' %}
-              <span class="badge badge-admin">👑 Admin</span>
-            {% elif user.role == 'TABLE_OFFICIAL' %}
-              <span class="badge badge-table">⏱️ Mesa Arbitral</span>
-            {% elif user.role == 'COACH' %}
-              <span class="badge badge-coach">📋 Entrenador</span>
+            {% if user.profile.avatar %}
+              <img src="{{ user.profile.avatar.url }}" alt="Avatar"
+                style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold-primary); flex-shrink: 0;">
             {% else %}
-              <span class="badge badge-fan">🏀 Aficionado</span>
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0;">
+                {{ user.first_name|default:user.username|slice:":1"|upper }}
+              </div>
             {% endif %}
 
-            <!-- Botón de Perfil con Avatar -->
-            <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-sm" id="btn-user-profile" style="padding: 0.35rem 0.85rem; border-radius: var(--radius-full);">
-              {% if user.profile.avatar %}
-                <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold-primary);">
-              {% else %}
-                <span style="font-size: 0.95rem;">👤</span>
-              {% endif %}
-              <span style="font-weight: 600;">{{ user.first_name|default:user.username }}</span>
-            </a>
-            
-            <!-- Botón Salir -->
-            <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-sm" id="btn-logout" title="Cerrar Sesión" style="padding: 0.4rem 0.75rem;">
-              Salir 🚪
-            </a>
-          </div>
+            <div style="display: flex; flex-direction: column; line-height: 1.15;">
+              <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-title); white-space: nowrap;">
+                {{ user.get_full_name|default:user.username }}
+              </span>
+              <span style="font-size: 0.7rem; font-weight: 600; color: var(--gold-primary); white-space: nowrap;">
+                {% if user.role == 'ADMIN' %}
+                  👑 Administrador
+                {% elif user.role == 'TABLE_OFFICIAL' %}
+                  ⏱️ Mesa Arbitral
+                {% elif user.role == 'COACH' %}
+                  📋 Entrenador
+                {% else %}
+                  🏀 Aficionado
+                {% endif %}
+              </span>
+            </div>
+          </a>
+
+          <!-- Botón Salir -->
+          <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-sm" id="btn-logout" title="Cerrar Sesión"
+            style="padding: 0.45rem 0.85rem; white-space: nowrap;">
+            Cerrar sesión
+          </a>
+        </div>
         {% else %}
-          <!-- Usuario Invitado -->
-          <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm" id="btn-nav-login">Iniciar Sesión</a>
-          <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm" id="btn-nav-register">Registrarse</a>
+        <!-- Usuario Invitado -->
+        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm" id="btn-nav-login">Iniciar Sesión</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm" id="btn-nav-register">Registrarse</a>
         {% endif %}
       </div>
 
@@ -93,20 +107,23 @@
   <!-- Contenedor Principal -->
   <main class="main-content">
     <div class="container">
-      
+
       <!-- Mensajes Flash de Django -->
       {% if messages %}
-        <div class="messages-container" id="django-messages">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-              <div style="display: flex; align-items: center; gap: 0.65rem;">
-                {% if message.tags == 'success' %}✨{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else %}ℹ️{% endif %}
-                <span>{{ message }}</span>
-              </div>
-              <button onclick="this.closest('.alert').remove();" style="background:none; border:none; color:inherit; font-size:1.25rem; cursor:pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
-            </div>
-          {% endfor %}
+      <div class="messages-container" id="django-messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            {% if message.tags == 'success' %}✨{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else
+            %}ℹ️{% endif %}
+            <span>{{ message }}</span>
+          </div>
+          <button onclick="this.closest('.alert').remove();"
+            style="background:none; border:none; color:inherit; font-size:1.25rem; cursor:pointer; opacity: 0.6; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
         </div>
+        {% endfor %}
+      </div>
       {% endif %}
 
       <!-- Bloque de contenido -->
@@ -119,12 +136,16 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--obsidian-dark); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 2px 8px rgba(9,13,22,0.15);">
+        <div
+          style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--obsidian-dark); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 2px 8px rgba(9,13,22,0.15);">
           🏀
         </div>
         <div>
-          <strong style="color: var(--text-title); font-family: var(--font-display); font-size: 0.98rem; letter-spacing: -0.02em;">Quinto <span class="gold-text">Cuarto</span></strong>
-          <span style="color: var(--text-secondary); font-size: 0.82rem; margin-left: 0.4rem;">&bull; Plataforma en Tiempo Real para Baloncesto</span>
+          <strong
+            style="color: var(--text-title); font-family: var(--font-display); font-size: 0.98rem; letter-spacing: -0.02em;">Quinto
+            <span class="gold-text">Cuarto</span></strong>
+          <span style="color: var(--text-secondary); font-size: 0.82rem; margin-left: 0.4rem;">&bull; Plataforma en
+            Tiempo Real para Baloncesto</span>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
@@ -137,4 +158,5 @@
 
   {% block extra_js %}{% endblock %}
 </body>
+
 </html>

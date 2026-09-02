@@ -52,7 +52,7 @@ class LoginView(DjangoLoginView):
         user = form.get_user()
         messages.info(
             self.request,
-            f"¡Bienvenido de nuevo, {user.get_full_name() or user.username}! ({user.get_role_display()})",
+            f"¡Bienvenido de nuevo, {user.get_full_name() or user.username}!",
         )
         return super().form_valid(form)
 

@@ -311,6 +311,73 @@ a:hover {
 }
 
 /* ==========================================================================
+   BADGES Y DISTINTIVOS EN LÍNEA (NO-WRAP)
+   ========================================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.badge-live {
+  background: var(--state-red-light);
+  color: var(--state-red);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.1);
+  padding: 0.35rem 0.95rem;
+  gap: 0.45rem;
+  letter-spacing: 0.05em;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--state-red);
+  box-shadow: 0 0 6px var(--state-red);
+  animation: pulse-live 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-live {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.badge-admin {
+  background: var(--gold-light);
+  color: #926004;
+  border: 1px solid var(--gold-border);
+}
+
+.badge-table {
+  background: var(--state-blue-light);
+  color: var(--state-blue);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.badge-coach {
+  background: var(--state-green-light);
+  color: var(--state-green);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.badge-fan {
+  background: var(--bg-subtle);
+  color: var(--text-title);
+  border: 1px solid var(--platinum-border);
+}
+
+/* ==========================================================================
    BOTONES ELEGANTES Y FINOS
    ========================================================================== */
 .btn {

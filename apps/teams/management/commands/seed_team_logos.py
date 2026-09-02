@@ -9,11 +9,15 @@ CRESTS_MAP = {
     "BAR": "fc_barcelona_crest.jpg",
     "UNI": "unicaja_malaga_crest.jpg",
     "VBC": "valencia_basket_crest.jpg",
+    "PAO": "pao_crest.jpg",
+    "OLY": "oly_crest.jpg",
+    "FNB": "fnb_crest.jpg",
+    "ASM": "asm_crest.jpg",
 }
 
 
 class Command(BaseCommand):
-    help = "Asigna los escudos oficiales con dimensiones 1:1 homogéneas a los clubes de la plataforma."
+    help = "Asigna los escudos oficiales con dimensiones 1:1 homogéneas a todos los clubes (Liga Endesa y EuroLeague)."
 
     def handle(self, *args, **kwargs):
         media_teams_dir = os.path.join(settings.MEDIA_ROOT, "teams")
@@ -34,6 +38,14 @@ class Command(BaseCommand):
                 filename = CRESTS_MAP["UNI"]
             elif "valencia" in name_lower or acronym in ["VBC", "VAL"]:
                 filename = CRESTS_MAP["VBC"]
+            elif "panathinaikos" in name_lower or acronym == "PAO":
+                filename = CRESTS_MAP["PAO"]
+            elif "olympiacos" in name_lower or acronym == "OLY":
+                filename = CRESTS_MAP["OLY"]
+            elif "fenerbahçe" in name_lower or "fenerbahce" in name_lower or acronym == "FNB":
+                filename = CRESTS_MAP["FNB"]
+            elif "monaco" in name_lower or acronym == "ASM":
+                filename = CRESTS_MAP["ASM"]
 
             if filename:
                 team.logo = f"teams/{filename}"

@@ -18,8 +18,8 @@ class Command(BaseCommand):
 
         madrid = Team.objects.filter(acronym="RMB").first()
         unicaja = Team.objects.filter(acronym="UNI").first()
-        barca = Team.objects.filter(acronym="FCB").first()
-        valencia = Team.objects.filter(acronym="VBC").first()
+        barca = Team.objects.filter(acronym__in=["BAR", "FCB"]).first()
+        valencia = Team.objects.filter(acronym__in=["VAL", "VBC"]).first()
 
         if not (madrid and unicaja):
             self.stdout.write(self.style.ERROR("No se encontraron los equipos de prueba."))
