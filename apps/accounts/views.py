@@ -18,12 +18,13 @@ from .models import CustomUser, Profile
 class RegisterView(CreateView):
     """
     Vista de registro de nuevos usuarios con rol de Entrenador o Aficionado.
+    Inicia sesión automáticamente tras el registro exitoso.
     """
 
     model = CustomUser
     form_class = UserRegisterForm
     template_name = "accounts/register.html"
-    success_url = reverse_lazy("accounts:login")
+    success_url = reverse_lazy("core:home")
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -32,11 +33,12 @@ class RegisterView(CreateView):
 
     def form_valid(self, form):
         user = form.save()
+        login(self.request, user)
         messages.success(
             self.request,
-            f"¡Cuenta creada con éxito para {user.username}! Ya puedes iniciar sesión con tus credenciales.",
+            f"¡Bienvenido/a a Quinto Cuarto, {user.username}! Tu cuenta se ha creado e iniciado sesión con éxito.",
         )
-        return super().form_valid(form)
+        return redirect(self.success_url)
 
 
 class LoginView(DjangoLoginView):
@@ -109,9 +111,6 @@ class ProfileView(LoginRequiredMixin, View):
             )
             return redirect("accounts:profile")
 
-        messages.error(
-            request, "Por favor corrige los errores indicados en el formulario."
-        )
         return render(
             request,
             self.template_name,

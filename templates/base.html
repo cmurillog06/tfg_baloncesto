@@ -27,35 +27,44 @@
   <header class="navbar">
     <div class="navbar-inner">
 
-      <!-- Logotipo / Marca -->
-      <a href="{% url 'core:home' %}" class="brand" id="nav-brand">
-        <div class="brand-icon">
-          🏀
-        </div>
-        <div>Quinto <span class="gold-text">Cuarto</span></div>
-      </a>
+      <!-- Marca y Enlaces de Navegación (Izquierda) -->
+      <div style="display: flex; align-items: center; gap: 1.15rem;">
+        
+        <!-- Logotipo / Marca -->
+        <a href="{% url 'core:home' %}" class="brand" id="nav-brand">
+          <div class="brand-icon">
+            🏀
+          </div>
+          <div>Quinto <span class="gold-text">Cuarto</span></div>
+        </a>
 
-      <!-- Enlaces Principales -->
-      <nav>
-        <ul class="nav-menu">
-          <li><a href="{% url 'core:home' %}" class="nav-link">Inicio</a></li>
-          <li><a href="{% url 'teams:league_list' %}" class="nav-link">Ligas</a></li>
-          <li><a href="{% url 'teams:team_list' %}" class="nav-link">Equipos</a></li>
-          <li>
-            <a href="{% url 'matches:match_list' %}" class="nav-link">
-              Partidos <span class="badge badge-live"><span class="live-dot"></span> EN DIRECTO</span>
-            </a>
-          </li>
-          <li><a href="{% url 'analytics:dashboard' %}" class="nav-link">Estadísticas</a></li>
-          <li><a href="/admin/" class="nav-link" target="_blank" style="color: var(--text-secondary);">Admin ↗</a></li>
-        </ul>
-      </nav>
+        <!-- Enlaces Principales -->
+        <nav>
+          <ul class="nav-menu">
+            <li><a href="{% url 'core:home' %}" class="nav-link">Inicio</a></li>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'teams:league_list' %}" class="nav-link">Ligas</a></li>
+            <li><a href="{% url 'teams:team_list' %}" class="nav-link">Equipos</a></li>
+            <li>
+              <a href="{% url 'matches:match_list' %}" class="nav-link">
+                Partidos <span class="badge badge-live"><span class="live-dot"></span> EN DIRECTO</span>
+              </a>
+            </li>
+            <li><a href="{% url 'analytics:dashboard' %}" class="nav-link">Estadísticas</a></li>
+            {% if user.is_staff or user.role == 'ADMIN' %}
+            <li><a href="/admin/" class="nav-link" target="_blank" style="color: var(--text-secondary);">Panel de Administración</a></li>
+            {% endif %}
+            {% endif %}
+          </ul>
+        </nav>
+
+      </div>
 
       <!-- Acciones de Usuario / Autenticación -->
       <div class="nav-actions">
         {% if user.is_authenticated %}
         <!-- Usuario Autenticado -->
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
 
           <!-- Tarjeta de Perfil Unificada con Avatar, Nombre y Rol Debajo -->
           <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-sm" id="btn-user-profile"
@@ -70,8 +79,8 @@
               </div>
             {% endif %}
 
-            <div style="display: flex; flex-direction: column; line-height: 1.15;">
-              <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-title); white-space: nowrap;">
+            <div style="display: flex; flex-direction: column; line-height: 1.15; max-width: 140px;">
+              <span style="font-weight: 600; font-size: 0.86rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 {{ user.get_full_name|default:user.username }}
               </span>
               <span style="font-size: 0.7rem; font-weight: 600; color: var(--gold-primary); white-space: nowrap;">
@@ -114,8 +123,7 @@
         {% for message in messages %}
         <div class="alert alert-{{ message.tags }}">
           <div style="display: flex; align-items: center; gap: 0.65rem;">
-            {% if message.tags == 'success' %}✨{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else
-            %}ℹ️{% endif %}
+            {% if message.tags == 'success' %}✨{% elif message.tags == 'error' or message.tags == 'danger' %}⚠️{% else %}ℹ️{% endif %}
             <span>{{ message }}</span>
           </div>
           <button onclick="this.closest('.alert').remove();"

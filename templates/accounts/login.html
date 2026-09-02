@@ -3,82 +3,202 @@
 {% block title %}Iniciar Sesión | Quinto Cuarto{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-  
-  <div class="card" style="box-shadow: 0 10px 30px -5px rgba(9, 13, 22, 0.06); border-top: 3px solid var(--obsidian-dark);">
-    
-    <div class="auth-header">
-      <div class="auth-badge">🏀</div>
-      <h1>Acceso a Quinto Cuarto</h1>
-      <p>Introduce tus credenciales para acceder a la plataforma</p>
+<!-- Contenedor con Atmósfera de Alta Gama -->
+<div style="position: relative; max-width: 600px; margin: 1.5rem auto 3.5rem; padding: 1rem;">
+
+  <!-- Resplandores Ambientales de Fondo (Profundidad Visual) -->
+  <div
+    style="position: absolute; top: -50px; right: -50px; width: 320px; height: 320px; background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%); filter: blur(50px); pointer-events: none; z-index: 0;">
+  </div>
+  <div
+    style="position: absolute; bottom: -50px; left: -50px; width: 320px; height: 320px; background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%); filter: blur(50px); pointer-events: none; z-index: 0;">
+  </div>
+
+  <!-- Tarjeta Principal con Acabado Cerámico y Respaldo de Oro -->
+  <div class="card"
+    style="position: relative; z-index: 1; padding: 3.25rem 2.85rem; border-radius: var(--radius-2xl); background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); border: 1px solid rgba(212, 175, 55, 0.35); box-shadow: 0 25px 50px -12px rgba(9, 13, 22, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8); overflow: hidden;">
+
+    <!-- Línea Superior de Destello Dorado -->
+    <div
+      style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);">
     </div>
 
-    <form method="post" action="{% url 'accounts:login' %}" novalidate>
+    <!-- Encabezado con Icono Central -->
+    <div style="text-align: center; margin-bottom: 2.25rem;">
+      <div
+        style="width: 64px; height: 64px; border-radius: var(--radius-lg); background: var(--obsidian-dark); color: #FFFFFF; border: 1.5px solid var(--gold-border); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.25rem; box-shadow: 0 8px 25px rgba(9, 13, 22, 0.2), 0 0 15px rgba(212, 175, 55, 0.25);">
+        🏀
+      </div>
+      <div
+        style="font-size: 0.88rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.35rem;">
+        ACCESO SEGURO</div>
+      <h1
+        style="font-size: 2.35rem; font-weight: 700; color: var(--text-title); margin-bottom: 0.4rem; font-family: var(--font-display); letter-spacing: -0.02em;">
+        Iniciar Sesión</h1>
+      <p style="color: var(--text-secondary); font-size: 1.05rem;">Introduce tus credenciales para acceder a la
+        plataforma</p>
+    </div>
+
+    <!-- Formulario de Acceso -->
+    <form method="post" action="{% url 'accounts:login' %}" novalidate id="login-form">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
-        <div class="alert alert-error">
-          {% for error in form.non_field_errors %}
-            <span>{{ error }}</span>
-          {% endfor %}
-        </div>
+      <div class="alert alert-error" style="margin-bottom: 1.5rem; font-size: 0.98rem;">
+        {% for error in form.non_field_errors %}
+        <span>{{ error }}</span>
+        {% endfor %}
+      </div>
       {% endif %}
 
-      <div class="form-group">
-        <label for="id_username" class="form-label">Nombre de Usuario</label>
-        {{ form.username }}
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label for="id_username" class="form-label"
+          style="font-weight: 600; color: var(--text-title); font-size: 1.02rem; margin-bottom: 0.5rem; display: block;">Nombre
+          de Usuario o Correo Electrónico</label>
+        <div class="input-container-large">
+          {{ form.username }}
+        </div>
         {% if form.username.errors %}
-          <div class="form-error">
-            {% for error in form.username.errors %}{{ error }}{% endfor %}
-          </div>
+        <div class="form-error" style="font-size: 0.9rem;">
+          {% for error in form.username.errors %}{{ error }}{% endfor %}
+        </div>
         {% endif %}
       </div>
 
-      <div class="form-group">
-        <label for="id_password" class="form-label">Contraseña</label>
-        {{ form.password }}
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label for="id_password" class="form-label"
+          style="font-weight: 600; color: var(--text-title); font-size: 1.02rem; margin-bottom: 0.5rem; display: block;">Contraseña</label>
+        <div class="input-container-large">
+          {{ form.password }}
+        </div>
         {% if form.password.errors %}
-          <div class="form-error">
-            {% for error in form.password.errors %}{{ error }}{% endfor %}
-          </div>
+        <div class="form-error" style="font-size: 0.9rem;">
+          {% for error in form.password.errors %}{{ error }}{% endfor %}
+        </div>
         {% endif %}
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;" id="btn-submit-login">
+      <button type="submit" class="btn btn-primary"
+        style="width: 100%; padding: 1rem; font-size: 1.15rem; margin-top: 1rem; border-radius: var(--radius-md); font-weight: 600; background: linear-gradient(135deg, #090D16 0%, #1A2438 100%); border: 1px solid var(--gold-border); box-shadow: 0 4px 16px rgba(9, 13, 22, 0.2); cursor: pointer; transition: var(--transition);"
+        id="btn-submit-login">
         Iniciar Sesión &rarr;
       </button>
     </form>
 
-    <div class="auth-footer">
-      ¿No tienes cuenta aún? <a href="{% url 'accounts:register' %}" style="font-weight: 600; color: var(--gold-primary);">Regístrate aquí &rarr;</a>
+    <!-- Separador y Botón Secundario de Registro -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin: 1.75rem 0 1.25rem;">
+      <div style="flex: 1; height: 1px; background: var(--platinum-border);"></div>
+      <span
+        style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">o
+        si no tienes cuenta</span>
+      <div style="flex: 1; height: 1px; background: var(--platinum-border);"></div>
     </div>
 
-    <!-- Caja de credenciales de prueba para el TFG -->
-    <div style="margin-top: 2rem; padding: 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border); font-size: 0.85rem;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-        <strong style="color: var(--text-title); font-size: 0.88rem; font-weight: 600;">🔑 Usuarios de Demostración (TFG)</strong>
-        <span style="font-size: 0.75rem; color: #926004; font-weight: 600; background: var(--gold-light); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">Pass: Basket2026!</span>
+    <a href="{% url 'accounts:register' %}" class="btn-register-secondary"
+      style="width: 100%; text-align: center; justify-content: center; padding: 0.95rem; font-size: 1.05rem; font-weight: 600; border-radius: var(--radius-md); border: 1.5px solid var(--platinum-border-hover); background: var(--bg-subtle); color: var(--text-title); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: var(--transition);">
+      <span>Crear una Cuenta Nueva</span>
+      <span style="color: var(--gold-primary); font-weight: 700;">&rarr;</span>
+    </a>
+
+    <!-- Selector Rápido de Roles Directo -->
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
+        <span
+          style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
+          ⚡ Acceso Rápido Demo:
+        </span>
+        <span
+          style="font-size: 0.82rem; color: #926004; font-weight: 600; background: var(--gold-light); padding: 0.2rem 0.65rem; border-radius: var(--radius-full); border: 1px solid var(--gold-border);">
+          Clave: Basket2026!
+        </span>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-          <div style="color: #926004; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">ADMINISTRADOR</div>
-          <code style="color: var(--text-title); font-weight: 600;">admin</code>
-        </div>
-        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-          <div style="color: var(--obsidian-dark); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">MESA ARBITRAL</div>
-          <code style="color: var(--text-title); font-weight: 600;">oficial_mesa</code>
-        </div>
-        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-          <div style="color: var(--state-blue); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">ENTRENADOR</div>
-          <code style="color: var(--text-title); font-weight: 600;">coach_madrid</code>
-        </div>
-        <div style="background: #FFFFFF; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-          <div style="color: var(--text-secondary); font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">AFICIONADO</div>
-          <code style="color: var(--text-title); font-weight: 600;">aficionado_basket</code>
-        </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+
+        <button type="button" onclick="fillDemoCredentials('admin', 'Basket2026!', this)" class="btn-role-chip"
+          style="flex-direction: row; justify-content: flex-start; gap: 0.65rem; padding: 0.8rem 1rem;"
+          title="Iniciar como Administrador">
+          <span style="font-size: 1.35rem;">👑</span>
+          <div style="text-align: left; line-height: 1.25;">
+            <div style="font-size: 0.92rem; font-weight: 700; color: #926004; font-family: var(--font-body);">
+              Administrador</div>
+            <span style="font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-body);">admin</span>
+          </div>
+        </button>
+
+        <button type="button" onclick="fillDemoCredentials('oficial_mesa', 'Basket2026!', this)" class="btn-role-chip"
+          style="flex-direction: row; justify-content: flex-start; gap: 0.65rem; padding: 0.8rem 1rem;"
+          title="Iniciar como Mesa Arbitral">
+          <span style="font-size: 1.35rem;">⏱️</span>
+          <div style="text-align: left; line-height: 1.25;">
+            <div style="font-size: 0.92rem; font-weight: 700; color: var(--state-blue); font-family: var(--font-body);">
+              Mesa Arbitral</div>
+            <span
+              style="font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-body);">oficial_mesa</span>
+          </div>
+        </button>
+
+        <button type="button" onclick="fillDemoCredentials('coach_madrid', 'Basket2026!', this)" class="btn-role-chip"
+          style="flex-direction: row; justify-content: flex-start; gap: 0.65rem; padding: 0.8rem 1rem;"
+          title="Iniciar como Entrenador">
+          <span style="font-size: 1.35rem;">📋</span>
+          <div style="text-align: left; line-height: 1.25;">
+            <div
+              style="font-size: 0.92rem; font-weight: 700; color: var(--state-green); font-family: var(--font-body);">
+              Entrenador</div>
+            <span
+              style="font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-body);">coach_madrid</span>
+          </div>
+        </button>
+
+        <button type="button" onclick="fillDemoCredentials('aficionado_basket', 'Basket2026!', this)"
+          class="btn-role-chip"
+          style="flex-direction: row; justify-content: flex-start; gap: 0.65rem; padding: 0.8rem 1rem;"
+          title="Iniciar como Aficionado">
+          <span style="font-size: 1.35rem;">🏀</span>
+          <div style="text-align: left; line-height: 1.25;">
+            <div
+              style="font-size: 0.92rem; font-weight: 700; color: var(--text-secondary); font-family: var(--font-body);">
+              Aficionado</div>
+            <span
+              style="font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-body);">aficionado_basket</span>
+          </div>
+        </button>
+
       </div>
     </div>
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function fillDemoCredentials(username, password, btn) {
+    const userField = document.getElementById('id_username');
+    const passField = document.getElementById('id_password');
+    if (userField && passField) {
+      userField.value = username;
+      passField.value = password;
+      userField.focus();
+
+      // Resaltar el botón seleccionado
+      document.querySelectorAll('.btn-role-chip').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      // Animación sutil de los campos
+      userField.style.borderColor = 'var(--gold-primary)';
+      passField.style.borderColor = 'var(--gold-primary)';
+      userField.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.2)';
+      passField.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.2)';
+
+      setTimeout(() => {
+        userField.style.borderColor = '';
+        passField.style.borderColor = '';
+        userField.style.boxShadow = '';
+        passField.style.boxShadow = '';
+      }, 700);
+    }
+  }
+</script>
 {% endblock %}
