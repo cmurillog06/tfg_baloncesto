@@ -70,12 +70,21 @@
 }
 
 /* ==========================================================================
-   RESET Y ESTRUCTURA BASE
+   RESET Y ESTRUCTURA BASE CON SCROLL COMPENSADO
    ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6.5rem;
+}
+
+section[id], div[id] {
+  scroll-margin-top: 6.5rem;
 }
 
 body {
@@ -208,7 +217,7 @@ a:hover {
 
 .main-content {
   flex: 1;
-  padding: 2rem 0 4.5rem;
+  padding: 1.25rem 0 4rem;
   position: relative;
   z-index: 1;
 }
@@ -596,16 +605,19 @@ a:hover {
 }
 
 /* ==========================================================================
-   FOOTER MINIMALISTA Y SOBRIO
+   FOOTER MINIMALISTA Y REFINADO (FROSTED GLASS)
    ========================================================================== */
 .footer {
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--platinum-border);
-  padding: 2.5rem 0 2rem;
+  padding: 1.35rem 0;
   color: var(--text-secondary);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   position: relative;
-  z-index: 1;
+  z-index: 10;
+  margin-top: auto;
 }
 
 .footer-inner {
@@ -613,7 +625,7 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 @media (max-width: 768px) {

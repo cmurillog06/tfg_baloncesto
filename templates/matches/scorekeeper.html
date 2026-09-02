@@ -93,8 +93,14 @@
       <!-- Cabecera y Marcador Local -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
-            {{ match.home_team.acronym }}
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+            {% if match.home_team.logo %}
+              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));">
+            {% else %}
+              <div style="width: 42px; height: 42px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                {{ match.home_team.acronym }}
+              </div>
+            {% endif %}
           </div>
           <div>
             <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.home_team.name }}</h2>
@@ -102,7 +108,7 @@
           </div>
         </div>
 
-        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-home">
+        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--text-title); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-home">
           {{ match.home_score }}
         </div>
       </div>
@@ -151,8 +157,14 @@
       <!-- Cabecera y Marcador Visitante -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
-            {{ match.away_team.acronym }}
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+            {% if match.away_team.logo %}
+              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));">
+            {% else %}
+              <div style="width: 42px; height: 42px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                {{ match.away_team.acronym }}
+              </div>
+            {% endif %}
           </div>
           <div>
             <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.away_team.name }}</h2>

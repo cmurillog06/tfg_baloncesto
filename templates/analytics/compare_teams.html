@@ -42,8 +42,14 @@
         
         <!-- EQUIPO A -->
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ team_a.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12); margin-bottom: 0.75rem;">
-            {{ team_a.acronym }}
+          <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+            {% if team_a.logo %}
+              <img src="{{ team_a.logo.url }}" alt="{{ team_a.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+            {% else %}
+              <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ team_a.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+                {{ team_a.acronym }}
+              </div>
+            {% endif %}
           </div>
           <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.2rem;">
             <a href="{% url 'teams:team_detail' team_a.slug %}" style="color: inherit;">{{ team_a.name }}</a>
@@ -53,25 +59,30 @@
 
         <!-- BALANCE HISTÓRICO DIRECTO (H2H) -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-          <span class="badge badge-admin" style="font-size: 0.78rem; padding: 0.3rem 0.85rem;">
-            ENFRENTAMIENTOS DIRECTOS
-          </span>
-          <div style="background: var(--obsidian-dark); padding: 0.75rem 1.85rem; border-radius: var(--radius-xl); border: 2px solid var(--gold-border); box-shadow: 0 10px 25px rgba(9, 13, 22, 0.25); display: flex; align-items: center; gap: 1.25rem;">
-            <span style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 700; color: #FFFFFF;">
+          <div style="display: flex; align-items: center; gap: 1rem; padding: 0.2rem 0.5rem;">
+            <span style="font-family: var(--font-mono); font-size: 2.85rem; font-weight: 700; color: var(--text-title); line-height: 1;">
               {{ comparison.team_a_h2h_wins }}
             </span>
-            <span style="font-size: 1.5rem; font-weight: 600; color: var(--gold-primary);">:</span>
-            <span style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 700; color: #FFFFFF;">
+            <span style="font-size: 1.85rem; font-weight: 600; color: var(--gold-primary); line-height: 1;">:</span>
+            <span style="font-family: var(--font-mono); font-size: 2.85rem; font-weight: 700; color: var(--text-title); line-height: 1;">
               {{ comparison.team_b_h2h_wins }}
             </span>
           </div>
-          <span style="font-size: 0.78rem; color: var(--text-muted);">Victorias Directas</span>
+          <span class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.85rem;">
+            🏆 Victorias Directas
+          </span>
         </div>
 
         <!-- EQUIPO B -->
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ team_b.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12); margin-bottom: 0.75rem;">
-            {{ team_b.acronym }}
+          <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+            {% if team_b.logo %}
+              <img src="{{ team_b.logo.url }}" alt="{{ team_b.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+            {% else %}
+              <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ team_b.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+                {{ team_b.acronym }}
+              </div>
+            {% endif %}
           </div>
           <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.2rem;">
             <a href="{% url 'teams:team_detail' team_b.slug %}" style="color: inherit;">{{ team_b.name }}</a>

@@ -39,24 +39,41 @@
             <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; text-align: center; margin-bottom: 1.5rem;">
               
               <!-- Local -->
-              <div>
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; margin: 0 auto 0.4rem;">
-                  {{ match.home_team.acronym }}
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+                  {% if match.home_team.logo %}
+                    <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.1));">
+                  {% else %}
+                    <div style="width: 46px; height: 46px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                      {{ match.home_team.acronym }}
+                    </div>
+                  {% endif %}
                 </div>
                 <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ match.home_team.name }}</strong>
               </div>
 
               <!-- Puntos -->
-              <div style="background: var(--obsidian-dark); padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--gold-border); display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-family: var(--font-mono); font-size: 1.85rem; font-weight: 700; color: #FFFFFF;">{{ match.home_score }}</span>
-                <span style="color: var(--gold-primary); font-size: 1.2rem; font-weight: 700;">:</span>
-                <span style="font-family: var(--font-mono); font-size: 1.85rem; font-weight: 700; color: #FFFFFF;">{{ match.away_score }}</span>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 0.35rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                  <span style="font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; color: var(--text-title);">{{ match.home_score }}</span>
+                  <span style="color: var(--gold-primary); font-size: 1.4rem; font-weight: 700;">:</span>
+                  <span style="font-family: var(--font-mono); font-size: 2.2rem; font-weight: 700; color: var(--text-title);">{{ match.away_score }}</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 700; background: var(--bg-subtle); padding: 0.15rem 0.5rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border);">
+                  ⏱️ {{ match.get_current_period_display }} &bull; {{ match.game_clock }}
+                </div>
               </div>
 
               <!-- Visitante -->
-              <div>
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; margin: 0 auto 0.4rem;">
-                  {{ match.away_team.acronym }}
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+                  {% if match.away_team.logo %}
+                    <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.1));">
+                  {% else %}
+                    <div style="width: 46px; height: 46px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                      {{ match.away_team.acronym }}
+                    </div>
+                  {% endif %}
                 </div>
                 <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ match.away_team.name }}</strong>
               </div>

@@ -62,9 +62,13 @@
                   </td>
                   <td style="padding: 0.75rem 0.75rem;">
                     <a href="{% url 'teams:team_detail' standing.team.slug %}" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-title); font-weight: 600;">
-                      <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ standing.team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700;">
-                        {{ standing.team.acronym }}
-                      </div>
+                      {% if standing.team.logo %}
+                        <img src="{{ standing.team.logo.url }}" alt="{{ standing.team.name }}" style="width: 26px; height: 26px; object-fit: contain;">
+                      {% else %}
+                        <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ standing.team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700;">
+                          {{ standing.team.acronym }}
+                        </div>
+                      {% endif %}
                       <span>{{ standing.team.name }}</span>
                     </a>
                   </td>
@@ -117,16 +121,28 @@
               </div>
 
               <!-- Enfrentamiento y Marcador -->
-              <div style="display: flex; align-items: center; justify-content: space-between; font-weight: 600;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span style="color: var(--text-title);">{{ match.home_team.acronym }}</span>
-                  <span style="color: var(--text-muted); font-size: 0.85rem;">vs</span>
-                  <span style="color: var(--text-title);">{{ match.away_team.acronym }}</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; font-weight: 600; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    {% if match.home_team.logo %}
+                      <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="width: 22px; height: 22px; object-fit: contain;">
+                    {% endif %}
+                    <span style="color: var(--text-title); font-size: 0.9rem;">{{ match.home_team.name }}</span>
+                  </div>
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">vs</span>
+                  <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    {% if match.away_team.logo %}
+                      <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="width: 22px; height: 22px; object-fit: contain;">
+                    {% endif %}
+                    <span style="color: var(--text-title); font-size: 0.9rem;">{{ match.away_team.name }}</span>
+                  </div>
                 </div>
 
                 {% if match.status != 'SCHEDULED' %}
-                  <div style="font-family: var(--font-mono); font-weight: 700; color: var(--obsidian-dark); font-size: 1.05rem;">
-                    {{ match.home_score }} : {{ match.away_score }}
+                  <div style="font-family: var(--font-mono); font-weight: 700; color: var(--text-title); font-size: 1.1rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>{{ match.home_score }}</span>
+                    <span style="color: var(--gold-primary);">:</span>
+                    <span>{{ match.away_score }}</span>
                   </div>
                 {% else %}
                   <span style="color: var(--text-muted); font-size: 0.82rem;">Por disputar</span>

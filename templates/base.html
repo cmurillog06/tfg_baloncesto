@@ -8,7 +8,7 @@
   <meta name="description" content="{% block meta_description %}Quinto Cuarto: Gestión de ligas de baloncesto en tiempo real con actas digitales, chat en vivo por partido y estadísticas avanzadas.{% endblock %}">
   
   <!-- Tipografías & Estilos Base -->
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v={% now 'U' %}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -40,11 +40,10 @@
           <li><a href="{% url 'teams:team_list' %}" class="nav-link">Equipos</a></li>
           <li>
             <a href="{% url 'matches:match_list' %}" class="nav-link">
-              Partidos <span class="badge badge-live"><span class="live-dot"></span> EN VIVO</span>
+              Partidos <span class="badge badge-live"><span class="live-dot"></span> EN DIRECTO</span>
             </a>
           </li>
           <li><a href="{% url 'analytics:dashboard' %}" class="nav-link">Estadísticas</a></li>
-          <li><a href="{% url 'core:home' %}#modulos" class="nav-link">Módulos</a></li>
           <li><a href="/admin/" class="nav-link" target="_blank" style="color: var(--text-secondary);">Admin ↗</a></li>
         </ul>
       </nav>
@@ -116,18 +115,22 @@
     </div>
   </main>
 
-  <!-- Pie de Página Limpio y Sobrio -->
+  <!-- Pie de Página Elegante y Limpio -->
   <footer class="footer">
     <div class="container footer-inner">
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="font-size: 1.35rem;">🏀</div>
+        <div style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--obsidian-dark); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 2px 8px rgba(9,13,22,0.15);">
+          🏀
+        </div>
         <div>
-          <strong style="color: var(--obsidian-dark); font-family: var(--font-display); letter-spacing: -0.3px;">Quinto <span class="gold-text">Cuarto</span></strong>
-          <span style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.5rem;">&bull; Plataforma en Tiempo Real para Baloncesto</span>
+          <strong style="color: var(--text-title); font-family: var(--font-display); font-size: 0.98rem; letter-spacing: -0.02em;">Quinto <span class="gold-text">Cuarto</span></strong>
+          <span style="color: var(--text-secondary); font-size: 0.82rem; margin-left: 0.4rem;">&bull; Plataforma en Tiempo Real para Baloncesto</span>
         </div>
       </div>
-      <div style="color: var(--text-secondary); font-size: 0.85rem;">
-        Trabajo de Fin de Grado &bull; Django Channels & WebSockets
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+        <span>Trabajo de Fin de Grado</span>
+        <span style="color: var(--gold-primary); font-weight: 700;">&bull;</span>
+        <strong style="color: var(--text-title); font-weight: 600;">Carolina Murillo Gómez</strong>
       </div>
     </div>
   </footer>

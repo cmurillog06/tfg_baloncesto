@@ -61,27 +61,55 @@
     </div>
 
     <!-- RESULTADO FINAL DEL PARTIDO -->
-    <div style="background: var(--obsidian-dark); border-radius: var(--radius-lg); border: 1px solid var(--gold-border); padding: 1.75rem; color: #FFFFFF; text-align: center; margin-bottom: 2.5rem;">
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;">
+    <div class="card" style="border-top: 4px solid var(--gold-primary); padding: 1.75rem; text-align: center; margin-bottom: 2.5rem;">
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.25rem;">
         RESULTADO FINAL HOMOLOGADO
       </div>
 
-      <div style="display: flex; justify-content: center; align-items: center; gap: 2.5rem;">
-        <div>
-          <div style="font-size: 1.4rem; font-weight: 700;">{{ match.home_team.name }}</div>
-          <span style="font-size: 0.8rem; opacity: 0.7;">(Equipo Local)</span>
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem;">
+        
+        <!-- Local -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+            {% if match.home_team.logo %}
+              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">
+            {% else %}
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                {{ match.home_team.acronym }}
+              </div>
+            {% endif %}
+          </div>
+          <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-title);">{{ match.home_team.name }}</div>
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">LOCAL</span>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 3rem; font-weight: 700;">
-          <span style="color: #FFFFFF;">{{ match.home_score }}</span>
-          <span style="color: var(--gold-primary); font-size: 2rem;">:</span>
-          <span style="color: #FFFFFF;">{{ match.away_score }}</span>
+        <!-- Tanteo Central -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem;">
+          <div style="display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 3.2rem; font-weight: 700; color: var(--text-title); line-height: 1;">
+            <span>{{ match.home_score }}</span>
+            <span style="color: var(--gold-primary); font-size: 2rem;">:</span>
+            <span>{{ match.away_score }}</span>
+          </div>
+          <span class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.8rem; font-family: var(--font-mono);">
+            FINALIZADO
+          </span>
         </div>
 
-        <div>
-          <div style="font-size: 1.4rem; font-weight: 700;">{{ match.away_team.name }}</div>
-          <span style="font-size: 0.8rem; opacity: 0.7;">(Equipo Visitante)</span>
+        <!-- Visitante -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+            {% if match.away_team.logo %}
+              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">
+            {% else %}
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                {{ match.away_team.acronym }}
+              </div>
+            {% endif %}
+          </div>
+          <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-title);">{{ match.away_team.name }}</div>
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">VISITANTE</span>
         </div>
+
       </div>
     </div>
 

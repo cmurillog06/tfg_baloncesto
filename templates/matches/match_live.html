@@ -36,8 +36,14 @@
       
       <!-- EQUIPO LOCAL -->
       <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.home_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12); margin-bottom: 0.75rem;">
-          {{ match.home_team.acronym }}
+        <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          {% if match.home_team.logo %}
+            <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+          {% else %}
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.home_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+              {{ match.home_team.acronym }}
+            </div>
+          {% endif %}
         </div>
         <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
           <a href="{% url 'teams:team_detail' match.home_team.slug %}" style="color: inherit;">{{ match.home_team.name }}</a>
@@ -46,39 +52,41 @@
       </div>
 
       <!-- MARCADOR Y RELOJ CENTRAL -->
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
         
-        <!-- Estado y Periodo -->
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span id="badge-period" class="badge badge-live" style="font-size: 0.82rem; padding: 0.35rem 0.9rem;">
-            <span class="live-dot"></span> <span id="text-period">{{ match.get_current_period_display }}</span>
-          </span>
-        </div>
-
-        <!-- Dígitos de Puntuación -->
-        <div style="background: var(--obsidian-dark); padding: 0.85rem 2rem; border-radius: var(--radius-xl); border: 2px solid var(--gold-border); box-shadow: 0 10px 25px rgba(9, 13, 22, 0.25); display: flex; align-items: center; gap: 1.5rem;">
-          <span id="score-home" style="font-family: var(--font-mono); font-size: 3.5rem; font-weight: 700; color: #FFFFFF; min-width: 60px; text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <!-- Dígitos de Puntuación Limpios y Grandes -->
+        <div style="display: flex; align-items: center; gap: 1.25rem; padding: 0.2rem 0.5rem;">
+          <span id="score-home" style="font-family: var(--font-mono); font-size: 3.8rem; font-weight: 700; color: var(--text-title); line-height: 1; min-width: 65px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
             {{ match.home_score }}
           </span>
           
-          <span style="font-size: 2.2rem; font-weight: 600; color: var(--gold-primary); opacity: 0.85;">:</span>
+          <span style="font-size: 2.2rem; font-weight: 600; color: var(--gold-primary); line-height: 1; opacity: 0.85;">:</span>
           
-          <span id="score-away" style="font-family: var(--font-mono); font-size: 3.5rem; font-weight: 700; color: #FFFFFF; min-width: 60px; text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+          <span id="score-away" style="font-family: var(--font-mono); font-size: 3.8rem; font-weight: 700; color: var(--text-title); line-height: 1; min-width: 65px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
             {{ match.away_score }}
           </span>
         </div>
 
-        <!-- Reloj de Juego Sincronizado Segundo a Segundo -->
-        <div style="display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--text-title); background: var(--bg-subtle); padding: 0.3rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-          <span>⏱️</span> <span id="clock-display">{{ match.game_clock }}</span>
+        <!-- Cuarto y Tiempo de Juego Debajo del Marcador -->
+        <div style="display: inline-flex; align-items: center; gap: 0.45rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.4rem 1.15rem; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+          <span>⏱️</span>
+          <strong id="text-period" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
+          <span>&bull;</span>
+          <span id="clock-display" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
         </div>
 
       </div>
 
       <!-- EQUIPO VISITANTE -->
       <div style="display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.away_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12); margin-bottom: 0.75rem;">
-          {{ match.away_team.acronym }}
+        <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          {% if match.away_team.logo %}
+            <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+          {% else %}
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.away_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+              {{ match.away_team.acronym }}
+            </div>
+          {% endif %}
         </div>
         <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
           <a href="{% url 'teams:team_detail' match.away_team.slug %}" style="color: inherit;">{{ match.away_team.name }}</a>

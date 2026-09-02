@@ -17,9 +17,15 @@
     {% for team in teams %}
       <div class="card card-interactive" style="border-top: 4px solid {{ team.primary_color|default:'#090D16' }}; padding: 2rem 1.75rem; text-align: center; position: relative;">
         
-        <!-- Emblema / Acrónimo del Club -->
-        <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, {{ team.primary_color|default:'#090D16' }}, #1E293B); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin: 0 auto 1.25rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12); border: 2px solid #FFFFFF;">
-          {{ team.acronym }}
+        <!-- Emblema / Escudo Oficial del Club -->
+        <div style="width: 76px; height: 76px; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center;">
+          {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));">
+          {% else %}
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, {{ team.primary_color|default:'#090D16' }}, #1E293B); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
+              {{ team.acronym }}
+            </div>
+          {% endif %}
         </div>
 
         <h2 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-title);">
