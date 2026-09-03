@@ -39,9 +39,15 @@
           </h1>
           
           <p style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0;">
-            <span>📍 {{ team.city|default:"España" }}</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              {{ team.city|default:"España" }}
+            </span>
             <span style="opacity: 0.5;">&bull;</span>
-            <span>🏟️ {{ team.arena_name|default:"Pabellón Oficial" }}</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"></path></svg>
+              {{ team.arena_name|default:"Pabellón Oficial" }}
+            </span>
           </p>
         </div>
 
@@ -50,8 +56,14 @@
       <!-- Acciones del Club -->
       <div style="display: flex; gap: 0.75rem; align-items: center;">
         {% if can_manage_roster %}
-          <a href="{% url 'teams:roster_manage' team.slug %}" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-            ⚙️ Gestionar Plantilla (Altas / Bajas)
+          <a href="{% url 'teams:roster_manage' team.slug %}" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); display: inline-flex; align-items: center; gap: 0.45rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Gestionar Plantilla
           </a>
         {% endif %}
         <a href="{% url 'teams:team_list' %}" class="btn btn-secondary btn-sm" style="background: rgba(255, 255, 255, 0.15); color: #FFFFFF; border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px);">
@@ -90,7 +102,7 @@
     
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
       <div>
-        <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">ROSTER OFICIAL</div>
+        <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">PLANTILLA OFICIAL</div>
         <h2 style="font-size: 1.85rem; font-weight: 600;">Plantilla de Jugadores</h2>
       </div>
       <span style="font-size: 0.9rem; color: var(--text-secondary);">Temporada Actual</span>
@@ -116,10 +128,10 @@
           <!-- Foto / Avatar del Jugador -->
           <div style="text-align: center; margin-bottom: 1rem;">
             {% if membership.player.photo %}
-              <img src="{{ membership.player.photo.url }}" alt="{{ membership.player.full_name }}" style="width: 76px; height: 76px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 2px solid var(--platinum-border);">
+              <img src="{{ membership.player.photo.url }}" alt="{{ membership.player.full_name }}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.08); background: #FFFFFF;">
             {% else %}
-              <div style="width: 76px; height: 76px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto; border: 1px solid var(--platinum-border);">
-                🏀
+              <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, {{ team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0 auto; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                {{ membership.player.first_name|slice:":1" }}{{ membership.player.last_name|slice:":1" }}
               </div>
             {% endif %}
           </div>

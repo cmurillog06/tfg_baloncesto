@@ -154,5 +154,27 @@ class TeamMembership(models.Model):
             ("team", "season", "player"),
         ]
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+
+        if self.is_active and self.player_id and self.season_id:
+            # Un jugador no puede tener más de una ficha activa en la misma temporada (en ningún equipo)
+            existing_active = TeamMembership.objects.filter(
+                player_id=self.player_id,
+                season_id=self.season_id,
+                is_active=True
+            ).exclude(pk=self.pk).select_related("team").first()
+
+            if existing_active:
+                if existing_active.team_id == self.team_id:
+                    raise ValidationError(
+                        f"El jugador {self.player.full_name} ya tiene una ficha activa en este equipo para esta temporada."
+                    )
+                else:
+                    raise ValidationError(
+                        f"El jugador {self.player.full_name} ya está dado de alta en {existing_active.team.name} para esta temporada. Un jugador no puede estar activo simultáneamente en dos equipos."
+                    )
+
     def __str__(self):
         return f"#{self.jersey_number} {self.player.full_name} - {self.team.name} ({self.season.name})"

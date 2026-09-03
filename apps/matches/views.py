@@ -53,6 +53,16 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
             team=match.away_team, is_active=True
         ).select_related("player").order_by("jersey_number")
 
+        # Estadísticas individuales oficiales de este partido (Box Score)
+        from apps.analytics.models import PlayerMatchStat
+        context["home_player_stats"] = PlayerMatchStat.objects.filter(
+            match=match, team=match.home_team
+        ).select_related("player").order_by("-points", "-valuation_pir")
+
+        context["away_player_stats"] = PlayerMatchStat.objects.filter(
+            match=match, team=match.away_team
+        ).select_related("player").order_by("-points", "-valuation_pir")
+
         # Eventos recientes
         context["recent_events"] = match.events.select_related(
             "player", "team"

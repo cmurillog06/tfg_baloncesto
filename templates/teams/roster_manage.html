@@ -3,65 +3,72 @@
 {% block title %}Gestión de Plantilla | {{ team.name }} | Quinto Cuarto{% endblock %}
 
 {% block content %}
-<div>
+<div style="max-width: 1120px; margin: 0 auto;">
   
   <!-- Encabezado del Panel de Entrenador -->
-  <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--gold-primary);">
+  <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--gold-primary); padding: 1.75rem 2rem; box-shadow: var(--shadow-card);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <div style="width: 56px; height: 56px; border-radius: 50%; background: {{ team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600;">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: {{ team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; box-shadow: var(--shadow-subtle);">
           {{ team.acronym }}
         </div>
         <div>
-          <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">PANEL DE CUERPO TÉCNICO</div>
-          <h1 style="font-size: 1.85rem; font-weight: 600; margin-bottom: 0.15rem;">Gestión de Plantilla &bull; {{ team.name }}</h1>
-          <span style="color: var(--text-secondary); font-size: 0.88rem;">Entrenador a cargo: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong> &bull; Temporada: <strong>{{ current_season.name }}</strong></span>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">PANEL DE CUERPO TÉCNICO</div>
+          <h1 style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-display); margin-bottom: 0.25rem; color: var(--text-title);">
+            Gestión de Plantilla &bull; {{ team.name }}
+          </h1>
+          <span style="color: var(--text-secondary); font-size: 0.88rem;">
+            Entrenador a cargo: <strong style="color: var(--text-title);">{{ request.user.get_full_name|default:request.user.username }}</strong> &bull; Temporada: <strong style="color: var(--gold-primary);">{{ current_season.name|default:season.name }}</strong>
+          </span>
         </div>
       </div>
 
       <div>
-        <a href="{% url 'teams:team_detail' team.slug %}" class="btn btn-secondary btn-sm">
+        <a href="{% url 'teams:team_detail' team.slug %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
           &larr; Ver Vista Pública
         </a>
       </div>
     </div>
   </div>
 
-  <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
+  <div style="display: grid; grid-template-columns: 1.25fr 0.85fr; gap: 2rem; align-items: start;">
     
     <!-- Columna Izquierda: Plantilla Activa y Bajas -->
-    <div class="card" style="padding: 1.75rem;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+    <div class="card" style="padding: 1.75rem; box-shadow: var(--shadow-card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
         <div>
-          <h2 style="font-size: 1.3rem; font-weight: 600;">Jugadores Inscritos</h2>
-          <span style="font-size: 0.82rem; color: var(--text-secondary);">Fichas activas en la temporada</span>
+          <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--text-title); margin: 0 0 0.2rem 0;">Jugadores Inscritos</h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Fichas activas en la temporada oficial</span>
         </div>
-        <span class="badge badge-admin">{{ memberships.count }} Jugadores</span>
+        <span class="badge badge-admin" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+          {{ memberships.count }} Jugadores
+        </span>
       </div>
 
       {% if memberships %}
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           {% for m in memberships %}
-            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.85rem 1.15rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
               
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <span style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.15rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                   #{{ m.jersey_number }}
                 </span>
                 <div>
-                  <strong style="color: var(--text-title); font-size: 0.95rem; display: block;">{{ m.player.full_name }}</strong>
+                  <strong style="color: var(--text-title); font-size: 0.96rem; display: block; font-weight: 600;">{{ m.player.full_name }}</strong>
                   <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ m.player.get_position_display }} &bull; {{ m.player.height_cm }} cm</span>
                 </div>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
                 {% if m.is_captain %}
-                  <span class="badge badge-admin" style="font-size: 0.68rem;">★ Capitán</span>
+                  <span class="badge badge-admin" style="font-size: 0.7rem; padding: 0.2rem 0.55rem;">★ Capitán</span>
                 {% endif %}
 
-                <!-- Botón que activa el Modal Elegante -->
-                <button type="button" class="btn btn-secondary btn-sm" onclick="openBajaModal('{{ m.id }}', '{{ m.player.full_name }}')" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); padding: 0.25rem 0.6rem; font-size: 0.78rem;">
-                  Dar de Baja ✕
+                <!-- Botón Dar de Baja -->
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openBajaModal('{{ m.id }}', '{{ m.player.full_name }}')" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); padding: 0.3rem 0.65rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Dar de Baja
                 </button>
               </div>
 
@@ -69,8 +76,8 @@
           {% endfor %}
         </div>
       {% else %}
-        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
-          No hay jugadores inscritos en este momento. Utiliza los formularios de la derecha para inscribir.
+        <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 2rem 0;">
+          No hay jugadores inscritos en este momento. Utiliza el formulario lateral para inscribir jugadores.
         </p>
       {% endif %}
     </div>
@@ -79,31 +86,44 @@
     <div style="display: flex; flex-direction: column; gap: 2rem;">
       
       <!-- Inscribir Jugador Existente -->
-      <div class="card" style="padding: 1.75rem;">
-        <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.35rem;">Inscribir Jugador</h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">Asigna un jugador registrado a tu plantilla con su dorsal</p>
+      <div class="card" style="padding: 1.75rem; box-shadow: var(--shadow-card);">
+        <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-title);">Inscribir Jugador</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">Asigna un jugador disponible a tu plantilla con su dorsal</p>
 
         <form method="post" novalidate>
           {% csrf_token %}
           <input type="hidden" name="action" value="add_membership">
 
-          <div class="form-group">
-            <label class="form-label">Seleccionar Jugador</label>
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; display: block;">Seleccionar Jugador</label>
             {{ form.player }}
+            {% if form.player.errors %}
+              <div style="color: var(--state-red); font-size: 0.8rem; margin-top: 0.3rem;">{{ form.player.errors.0 }}</div>
+            {% endif %}
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Dorsal en Camiseta (0 - 99)</label>
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; display: block;">Dorsal en Camiseta (0 - 99)</label>
             {{ form.jersey_number }}
+            {% if form.jersey_number.errors %}
+              <div style="color: var(--state-red); font-size: 0.8rem; margin-top: 0.3rem;">{{ form.jersey_number.errors.0 }}</div>
+            {% endif %}
           </div>
 
-          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin: 1.25rem 0;">
             {{ form.is_captain }}
-            <label for="id_is_captain" style="font-size: 0.88rem; font-weight: 500; cursor: pointer;">Designar como Capitán</label>
+            <label for="id_is_captain" style="font-size: 0.88rem; font-weight: 500; cursor: pointer; color: var(--text-title); margin: 0;">Designar como Capitán</label>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-            Inscribir en Plantilla ＋
+          {% if form.non_field_errors %}
+            <div style="background: var(--state-red-light); color: var(--state-red); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+              {{ form.non_field_errors.0 }}
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Inscribir en Plantilla
           </button>
         </form>
       </div>
@@ -119,8 +139,8 @@
   
   <div class="card" style="max-width: 460px; width: 100%; padding: 2rem; border-top: 4px solid var(--state-red); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); text-align: center; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
     
-    <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 1.25rem; border: 1px solid rgba(220, 38, 38, 0.2);">
-      ⚠️
+    <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
     </div>
 
     <h3 style="font-size: 1.35rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-title);">
@@ -141,8 +161,9 @@
         Cancelar
       </button>
 
-      <button type="submit" class="btn btn-primary" style="background: var(--state-red); border-color: var(--state-red); color: #FFFFFF; flex: 1;">
-        Sí, Dar de Baja ✕
+      <button type="submit" class="btn btn-primary" style="background: var(--state-red); border-color: var(--state-red); color: #FFFFFF; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Sí, Dar de Baja
       </button>
     </form>
 
@@ -169,7 +190,6 @@ function closeBajaModal() {
   modal.style.display = 'none';
 }
 
-// Cerrar si se pulsa fuera del modal
 window.addEventListener('click', function(e) {
   const modal = document.getElementById('modal-baja-container');
   if (e.target === modal) {

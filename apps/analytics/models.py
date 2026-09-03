@@ -92,6 +92,14 @@ class PlayerMatchStat(models.Model):
     def total_rebounds(self):
         return self.rebounds_off + self.rebounds_def
 
+    @property
+    def two_points_made(self):
+        return max(0, self.field_goals_made - self.three_points_made)
+
+    @property
+    def two_points_attempted(self):
+        return max(0, self.field_goals_attempted - self.three_points_attempted)
+
     def compute_pir(self):
         """
         Cálculo oficial de Valoración ACB/FIBA:

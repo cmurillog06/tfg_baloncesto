@@ -35,14 +35,56 @@ class TeamMembershipForm(forms.ModelForm):
         self.team = team
         self.season = season
 
-        if team and season:
-            # Excluir a los jugadores que ya están en activo en este equipo para esta temporada
+        if season:
+            # Excluir a los jugadores que ya tienen una ficha activa en CUALQUIER equipo para esta temporada
             active_player_ids = TeamMembership.objects.filter(
-                team=team, season=season, is_active=True
+                season=season, is_active=True
             ).values_list("player_id", flat=True)
-            self.fields["player"].queryset = Player.objects.exclude(
+
+            self.fields["player"].queryset = Player.objects.filter(
+                is_active=True
+            ).exclude(
                 id__in=active_player_ids
             ).order_by("last_name", "first_name")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        player = cleaned_data.get("player")
+        jersey_number = cleaned_data.get("jersey_number")
+
+        if player and self.season:
+            # Comprobar si el jugador ya está dado de alta en otro club para esta temporada
+            existing_active = TeamMembership.objects.filter(
+                player=player,
+                season=self.season,
+                is_active=True
+            ).exclude(pk=self.instance.pk if self.instance else None).select_related("team").first()
+
+            if existing_active:
+                if existing_active.team == self.team:
+                    raise forms.ValidationError(
+                        f"El jugador {player.full_name} ya está dado de alta en la plantilla de este equipo para esta temporada."
+                    )
+                else:
+                    raise forms.ValidationError(
+                        f"El jugador {player.full_name} no puede ser inscrito porque ya tiene ficha activa en {existing_active.team.name} para esta temporada."
+                    )
+
+        if jersey_number is not None and self.team and self.season:
+            # Comprobar si el dorsal ya está ocupado en este equipo
+            dorsal_taken = TeamMembership.objects.filter(
+                team=self.team,
+                season=self.season,
+                jersey_number=jersey_number,
+                is_active=True
+            ).exclude(pk=self.instance.pk if self.instance else None).exists()
+
+            if dorsal_taken:
+                raise forms.ValidationError(
+                    f"El dorsal #{jersey_number} ya está asignado a otro jugador activo en este equipo."
+                )
+
+        return cleaned_data
 
 
 class PlayerForm(forms.ModelForm):

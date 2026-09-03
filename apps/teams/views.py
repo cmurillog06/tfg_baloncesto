@@ -90,22 +90,27 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         team = self.get_object()
 
-        # Plantilla activa ordenada por dorsal
-        memberships = TeamMembership.objects.filter(
+        # Obtener temporada oficial activa
+        from apps.teams.models import Season
+        current_season = Season.objects.filter(is_current=True).first()
+        if not current_season:
+            current_season = Season.objects.order_by("-start_date").first()
+
+        # Plantilla activa de la temporada actual ordenada por dorsal
+        memberships_qs = TeamMembership.objects.filter(
             team=team,
             is_active=True
-        ).select_related("player").order_by("jersey_number")
+        )
+        if current_season:
+            memberships_qs = memberships_qs.filter(season=current_season)
 
-        context["memberships"] = memberships
+        context["memberships"] = memberships_qs.select_related("player", "season").order_by("jersey_number")
+        context["current_season"] = current_season
 
-        # Comprobar si el usuario actual es entrenador de este equipo o administrador
+        # Comprobar si el usuario actual es estrictamente el entrenador asignado a este equipo
         user = self.request.user
         context["can_manage_roster"] = (
-            user.is_authenticated and (
-                user.is_superuser or
-                user.role == "ADMIN" or
-                (user.role == "COACH" and team.coach == user)
-            )
+            user.is_authenticated and user.role == "COACH" and team.coach == user
         )
 
         return context
@@ -125,16 +130,43 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         player = self.get_object()
 
-        # Historial de equipos del jugador
-        context["history"] = TeamMembership.objects.filter(
+        # Historial de membresías
+        memberships = TeamMembership.objects.filter(
             player=player
-        ).select_related("team", "season").order_by("-season__start_date", "-is_active")
+        ).select_related("team", "season", "season__league").order_by("-season__start_date", "-is_active")
+        context["memberships"] = memberships
 
         # Equipo actual activo
-        context["current_membership"] = TeamMembership.objects.filter(
-            player=player,
-            is_active=True
-        ).select_related("team", "season").first()
+        current_membership = memberships.filter(is_active=True).first()
+        context["current_membership"] = current_membership
+
+        # Estadísticas agregadas del jugador en partidos oficiales
+        from apps.analytics.models import PlayerMatchStat
+        from django.db.models import Avg, Sum
+        stats = PlayerMatchStat.objects.filter(player=player)
+        games_played = stats.count()
+        if games_played > 0:
+            agg = stats.aggregate(
+                avg_pts=Avg("points"),
+                avg_reb_off=Avg("rebounds_off"),
+                avg_reb_def=Avg("rebounds_def"),
+                avg_ast=Avg("assists"),
+                avg_pir=Avg("valuation_pir"),
+                avg_min=Avg("minutes_played"),
+                total_pts=Sum("points"),
+            )
+            avg_reb = round((agg["avg_reb_off"] or 0) + (agg["avg_reb_def"] or 0), 1)
+            context["stats_summary"] = {
+                "games_played": games_played,
+                "avg_points": round(agg["avg_pts"] or 0, 1),
+                "avg_rebounds": avg_reb,
+                "avg_assists": round(agg["avg_ast"] or 0, 1),
+                "avg_pir": round(agg["avg_pir"] or 0, 1),
+                "avg_minutes": round(agg["avg_min"] or 0, 1),
+                "total_points": agg["total_pts"] or 0,
+            }
+        else:
+            context["stats_summary"] = None
 
         return context
 
@@ -142,19 +174,19 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
 class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
     """
     Panel de gestión de plantilla para entrenadores: Altas, Bajas y Asignación de Dorsales.
-    Solo accesible por el entrenador asignado al equipo o administradores.
+    Solo accesible por el entrenador oficial asignado a este equipo.
     """
 
-    allowed_roles = ["COACH", "ADMIN"]
+    allowed_roles = ["COACH"]
     template_name = "teams/roster_manage.html"
 
     def dispatch(self, request, *args, **kwargs):
         self.team = get_object_or_404(Team, slug=kwargs.get("slug"))
         user = request.user
 
-        # Verificar que sea el entrenador de este equipo o un administrador
-        if not (user.is_superuser or user.role == "ADMIN" or self.team.coach == user):
-            messages.error(request, "No tienes permisos para gestionar la plantilla de este equipo.")
+        # Verificar que sea estrictamente el entrenador oficial asignado a este equipo
+        if not (user.role == "COACH" and self.team.coach == user):
+            messages.error(request, "Solo el entrenador oficial asignado a este club puede gestionar su plantilla.")
             raise PermissionDenied
 
         # Obtener temporada activa
@@ -166,7 +198,7 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = TeamMembershipForm(team=self.team, season=self.season)
-        active_memberships = TeamMembership.objects.filter(
+        memberships = TeamMembership.objects.filter(
             team=self.team,
             season=self.season,
             is_active=True
@@ -178,8 +210,10 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             {
                 "team": self.team,
                 "season": self.season,
+                "current_season": self.season,
                 "form": form,
-                "active_memberships": active_memberships,
+                "memberships": memberships,
+                "active_memberships": memberships,
             },
         )
 
@@ -187,7 +221,7 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
         action = request.POST.get("action")
 
         # 1. Dar de baja a un jugador de la plantilla activa
-        if action == "deactivate":
+        if action in ["deactivate", "remove_membership"]:
             membership_id = request.POST.get("membership_id")
             membership = get_object_or_404(
                 TeamMembership,
@@ -207,12 +241,23 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             jersey_number = form.cleaned_data["jersey_number"]
             is_captain = form.cleaned_data.get("is_captain", False)
 
-            # Comprobar si ya existe un registro histórico para este jugador en este equipo y temporada
+            # Comprobar si ya existe un registro para este jugador en este equipo y temporada
             existing_membership = TeamMembership.objects.filter(
                 team=self.team,
                 season=self.season,
                 player=player
             ).first()
+
+            # Comprobar si el jugador ya está activo en otro equipo para esta temporada
+            active_in_other = TeamMembership.objects.filter(
+                season=self.season,
+                player=player,
+                is_active=True
+            ).exclude(team=self.team).select_related("team").first()
+
+            if active_in_other:
+                messages.error(request, f"{player.full_name} no puede ser inscrito porque ya tiene ficha activa en {active_in_other.team.name} para esta temporada.")
+                return redirect("teams:roster_manage", slug=self.team.slug)
 
             # Comprobar si el dorsal ya está ocupado por otro jugador ACTIVO
             dorsal_busy = TeamMembership.objects.filter(
@@ -227,7 +272,6 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                 return redirect("teams:roster_manage", slug=self.team.slug)
 
             if existing_membership:
-                # Reactivar membresía existente
                 existing_membership.jersey_number = jersey_number
                 existing_membership.is_captain = is_captain
                 existing_membership.is_active = True
@@ -242,7 +286,7 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.success(request, f"{player.full_name} ha sido inscrito en la plantilla con el dorsal #{jersey_number}.")
             return redirect("teams:roster_manage", slug=self.team.slug)
 
-        active_memberships = TeamMembership.objects.filter(
+        memberships = TeamMembership.objects.filter(
             team=self.team,
             season=self.season,
             is_active=True
@@ -254,7 +298,9 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             {
                 "team": self.team,
                 "season": self.season,
+                "current_season": self.season,
                 "form": form,
-                "active_memberships": active_memberships,
+                "memberships": memberships,
+                "active_memberships": memberships,
             },
         )

@@ -127,6 +127,10 @@
       <!-- Barra de Pestañas Superiores -->
       <div style="display: flex; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
         
+        <button type="button" onclick="switchLiveTab('boxscore')" id="tab-btn-boxscore" class="tab-live-btn" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
+          <span>📊</span> Estadísticas (Box Score)
+        </button>
+
         <button type="button" onclick="switchLiveTab('play-by-play')" id="tab-btn-pbp" class="tab-live-btn active" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: #FFFFFF; cursor: pointer; color: var(--text-title); border-bottom: 3px solid var(--gold-primary); transition: all 0.2s ease;">
           <span>⚡</span> Jugada a Jugada
         </button>
@@ -134,6 +138,127 @@
         <button type="button" onclick="switchLiveTab('live-chat')" id="tab-btn-chat" class="tab-live-btn" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
           <span>💬</span> Chat en Vivo <span id="chat-count-badge" class="badge badge-fan" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">0</span>
         </button>
+
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 0: ESTADÍSTICAS (BOX SCORE OFICIAL) -->
+      <div id="tab-content-boxscore" style="display: none; padding: 1.5rem;">
+        
+        <!-- Box Score Equipo Local -->
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
+            </div>
+            <strong style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="table" style="font-size: 0.8rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.5rem 0.75rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in home_player_stats %}
+                  <tr style="border-bottom: 1px solid var(--platinum-border);">
+                    <td style="text-align: left; padding: 0.5rem 0.75rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td>{{ stat.minutes_played }}'</td>
+                    <td><strong style="color: var(--obsidian-dark); font-size: 0.95rem;">{{ stat.points }}</strong></td>
+                    <td style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong>{{ stat.total_rebounds }}</strong></td>
+                    <td>{{ stat.assists }}</td>
+                    <td>{{ stat.steals }}</td>
+                    <td>{{ stat.turnovers }}</td>
+                    <td>{{ stat.blocks_made }}</td>
+                    <td>{{ stat.fouls_committed }}</td>
+                    <td style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Box Score Equipo Visitante -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
+            </div>
+            <strong style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="table" style="font-size: 0.8rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.5rem 0.75rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in away_player_stats %}
+                  <tr style="border-bottom: 1px solid var(--platinum-border);">
+                    <td style="text-align: left; padding: 0.5rem 0.75rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td>{{ stat.minutes_played }}'</td>
+                    <td><strong style="color: var(--obsidian-dark); font-size: 0.95rem;">{{ stat.points }}</strong></td>
+                    <td style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong>{{ stat.total_rebounds }}</strong></td>
+                    <td>{{ stat.assists }}</td>
+                    <td>{{ stat.steals }}</td>
+                    <td>{{ stat.turnovers }}</td>
+                    <td>{{ stat.blocks_made }}</td>
+                    <td>{{ stat.fouls_committed }}</td>
+                    <td style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
 
@@ -326,43 +451,60 @@ let totalChatMessages = 0;
 let pendingDeleteMessageId = null;
 
 // -----------------------------------------------------------------------------
-// CONTROL DE PESTAÑAS (Jugada a Jugada vs Chat)
+// CONTROL DE PESTAÑAS (Box Score vs Jugada a Jugada vs Chat)
 // -----------------------------------------------------------------------------
 function switchLiveTab(tab) {
+  const boxscoreBtn = document.getElementById('tab-btn-boxscore');
   const pbpBtn = document.getElementById('tab-btn-pbp');
   const chatBtn = document.getElementById('tab-btn-chat');
+
+  const boxscoreContent = document.getElementById('tab-content-boxscore');
   const pbpContent = document.getElementById('tab-content-pbp');
   const chatContent = document.getElementById('tab-content-chat');
 
-  if (tab === 'play-by-play') {
+  // Reset todos los botones
+  [boxscoreBtn, pbpBtn, chatBtn].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('active');
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--text-secondary)';
+      btn.style.borderBottom = '3px solid transparent';
+    }
+  });
+
+  // Ocultar todos los paneles
+  if (boxscoreContent) boxscoreContent.style.display = 'none';
+  if (pbpContent) pbpContent.style.display = 'none';
+  if (chatContent) chatContent.style.display = 'none';
+
+  if (tab === 'boxscore' && boxscoreBtn && boxscoreContent) {
+    boxscoreBtn.classList.add('active');
+    boxscoreBtn.style.background = '#FFFFFF';
+    boxscoreBtn.style.color = 'var(--text-title)';
+    boxscoreBtn.style.borderBottom = '3px solid var(--gold-primary)';
+    boxscoreContent.style.display = 'block';
+  } else if (tab === 'play-by-play' && pbpBtn && pbpContent) {
     pbpBtn.classList.add('active');
     pbpBtn.style.background = '#FFFFFF';
     pbpBtn.style.color = 'var(--text-title)';
     pbpBtn.style.borderBottom = '3px solid var(--gold-primary)';
-
-    chatBtn.classList.remove('active');
-    chatBtn.style.background = 'transparent';
-    chatBtn.style.color = 'var(--text-secondary)';
-    chatBtn.style.borderBottom = '3px solid transparent';
-
     pbpContent.style.display = 'block';
-    chatContent.style.display = 'none';
-  } else {
+  } else if (tab === 'live-chat' && chatBtn && chatContent) {
     chatBtn.classList.add('active');
     chatBtn.style.background = '#FFFFFF';
     chatBtn.style.color = 'var(--text-title)';
     chatBtn.style.borderBottom = '3px solid var(--gold-primary)';
-
-    pbpBtn.classList.remove('active');
-    pbpBtn.style.background = 'transparent';
-    pbpBtn.style.color = 'var(--text-secondary)';
-    pbpBtn.style.borderBottom = '3px solid transparent';
-
-    pbpContent.style.display = 'none';
     chatContent.style.display = 'block';
     scrollChatToBottom();
   }
 }
+
+// Si el partido ya ha finalizado, mostrar por defecto la pestaña de Estadísticas (Box Score)
+{% if match.status == 'FINISHED' %}
+  document.addEventListener('DOMContentLoaded', function() {
+    switchLiveTab('boxscore');
+  });
+{% endif %}
 
 // -----------------------------------------------------------------------------
 // 1. WEBSOCKET DE MARCADOR Y RELOJ EN VIVO
