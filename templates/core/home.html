@@ -137,14 +137,14 @@
 
           <!-- Dígitos del Marcador Limpios y Elegantes -->
           <div style="display: flex; align-items: center; gap: 1rem; padding: 0.2rem 0.5rem;">
-            <span
-              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em;">
+            <span id="home-live-home-score-{{ match.id }}"
+              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
               {{ match.home_score }}
             </span>
             <span
               style="color: var(--gold-primary); font-size: 1.85rem; font-weight: 600; line-height: 1; opacity: 0.85;">:</span>
-            <span
-              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em;">
+            <span id="home-live-away-score-{{ match.id }}"
+              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
               {{ match.away_score }}
             </span>
           </div>
@@ -153,9 +153,9 @@
           <div
             style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.35rem 0.95rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
             <span>⏱️</span>
-            <strong style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
+            <strong id="home-live-period-{{ match.id }}" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
             <span>&bull;</span>
-            <span style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
+            <span id="home-live-clock-{{ match.id }}" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
           </div>
 
         </div>
@@ -187,11 +187,12 @@
       <!-- Pie del Partido con Ubicación y Enlace a Directo -->
       <div
         style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.75rem 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
-        <div style="display: flex; align-items: center; gap: 0.4rem;">
-          <span>📍</span> <span>{{ match.location|default:"Pabellón Oficial" }}</span>
+        <div style="display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-secondary);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}</span>
         </div>
         <a href="{% url 'matches:match_live' match.id %}"
-          style="color: var(--gold-primary); font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+          style="color: var(--gold-primary); font-weight: 600; display: flex; align-items: center; gap: 0.25rem; text-decoration: none;">
           Ver en Directo ⚡ &rarr;
         </a>
       </div>
@@ -270,4 +271,116 @@
 
   </div>
 </section>
+
+<!-- SINCRONIZACIÓN WEBSOCKET EN TIEMPO REAL DE PARTIDOS EN JUEGO (HOME PAGE) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const liveMatchIds = [{% for m in live_matches %}{{ m.id }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  if (liveMatchIds && liveMatchIds.length > 0) {
+    liveMatchIds.forEach(id => initLiveMatchCardSync(id, 'home-live'));
+  }
+});
+
+function initLiveMatchCardSync(matchId, prefix) {
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
+  let socket = null;
+  let timerInterval = null;
+  let currentSec = 600;
+
+  function parseClock(str) {
+    if (!str) return;
+    const p = str.split(':');
+    if (p.length === 2) {
+      currentSec = parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    }
+  }
+
+  function renderClock() {
+    const m = Math.floor(currentSec / 60);
+    const s = currentSec % 60;
+    const str = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    const el = document.getElementById(`${prefix}-clock-${matchId}`);
+    if (el) el.innerText = str;
+  }
+
+  function handleClock(isRunning, clockStr) {
+    if (clockStr) {
+      parseClock(clockStr);
+      renderClock();
+    }
+    if (isRunning) {
+      if (!timerInterval) {
+        timerInterval = setInterval(() => {
+          if (currentSec > 0) {
+            currentSec--;
+            renderClock();
+          } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+        }, 1000);
+      }
+    } else {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+  }
+
+  function flashScore(el, val) {
+    if (!el) return;
+    if (el.innerText.trim() !== String(val)) {
+      el.innerText = val;
+      el.style.color = 'var(--gold-primary)';
+      el.style.transform = 'scale(1.18)';
+      setTimeout(() => {
+        el.style.color = 'var(--text-title)';
+        el.style.transform = 'scale(1)';
+      }, 450);
+    }
+  }
+
+  function updateMatchUI(data) {
+    if (!data) return;
+    const hScore = data.home_score !== undefined ? data.home_score : (data.home_team ? data.home_team.score : undefined);
+    const aScore = data.away_score !== undefined ? data.away_score : (data.away_team ? data.away_team.score : undefined);
+    const pDisplay = data.period_display;
+    const clock = data.clock;
+    const isRunning = data.is_running;
+
+    const homeEl = document.getElementById(`${prefix}-home-score-${matchId}`);
+    const awayEl = document.getElementById(`${prefix}-away-score-${matchId}`);
+    const periodEl = document.getElementById(`${prefix}-period-${matchId}`);
+
+    if (hScore !== undefined && homeEl) flashScore(homeEl, hScore);
+    if (aScore !== undefined && awayEl) flashScore(awayEl, aScore);
+    if (pDisplay && periodEl) periodEl.innerText = pDisplay;
+    if (clock !== undefined) handleClock(isRunning, clock);
+  }
+
+  function connect() {
+    socket = new WebSocket(wsUrl);
+    socket.onmessage = function(e) {
+      const payload = JSON.parse(e.data);
+      if (payload.type === 'initial_state' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'match_update' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'clock_update' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'scoresheet_closed') {
+        location.reload();
+      }
+    };
+    socket.onclose = function() {
+      if (timerInterval) clearInterval(timerInterval);
+      setTimeout(connect, 3000);
+    };
+  }
+
+  connect();
+}
+</script>
 {% endblock %}

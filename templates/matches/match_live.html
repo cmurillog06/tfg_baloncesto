@@ -15,15 +15,10 @@
     </div>
 
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <!-- Indicador de Conexión WebSockets -->
-      <div id="ws-status-indicator" style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-subtle); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--platinum-border);">
-        <span id="ws-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; display: inline-block;"></span>
-        <span id="ws-text">Conectando...</span>
-      </div>
-
-      {% if can_manage_table %}
-        <a href="{% url 'matches:scorekeeper' match.id %}" class="btn btn-gold btn-sm">
-          ⏱️ Consola de Mesa Arbitral
+      {% if can_manage_table and match.status != 'FINISHED' %}
+        <a href="{% url 'matches:scorekeeper' match.id %}" class="btn btn-gold btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Consola de Mesa Arbitral
         </a>
       {% endif %}
     </div>
@@ -46,7 +41,7 @@
           {% endif %}
         </div>
         <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
-          <a href="{% url 'teams:team_detail' match.home_team.slug %}" style="color: inherit;">{{ match.home_team.name }}</a>
+          <a href="{% url 'teams:team_detail' match.home_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.home_team.name }}</a>
         </h2>
         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">LOCAL</span>
       </div>
@@ -68,11 +63,23 @@
         </div>
 
         <!-- Cuarto y Tiempo de Juego Debajo del Marcador -->
-        <div style="display: inline-flex; align-items: center; gap: 0.45rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.4rem 1.15rem; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-          <span>⏱️</span>
-          <strong id="text-period" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
-          <span>&bull;</span>
-          <span id="clock-display" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.4rem 1.15rem; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+          {% if match.status == 'LIVE' %}
+            <span class="live-dot" style="width: 8px; height: 8px; margin: 0;"></span>
+            <strong id="text-period" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
+          {% elif match.status == 'SCHEDULED' %}
+            <span style="font-size: 0.9rem;">🕒</span>
+            <strong id="text-period" style="color: var(--text-title);">Por Comenzar</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--text-secondary); font-weight: 600;">10:00</span>
+          {% else %}
+            <span style="font-size: 0.9rem;">🏁</span>
+            <strong id="text-period" style="color: var(--text-title);">Finalizado</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--text-secondary); font-weight: 600;">00:00</span>
+          {% endif %}
         </div>
 
       </div>
@@ -89,7 +96,7 @@
           {% endif %}
         </div>
         <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
-          <a href="{% url 'teams:team_detail' match.away_team.slug %}" style="color: inherit;">{{ match.away_team.name }}</a>
+          <a href="{% url 'teams:team_detail' match.away_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.away_team.name }}</a>
         </h2>
         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">VISITANTE</span>
       </div>
@@ -98,20 +105,39 @@
 
     <!-- Ubicación y Acceso al Acta Oficial -->
     <div style="margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--platinum-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap; gap: 0.5rem;">
-      <div>📍 <strong>{{ match.location|default:"Pabellón Oficial" }}</strong></div>
+      <div style="display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span style="font-weight: 600; color: var(--text-title);">{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if not match.location and match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
+      </div>
       <div>
-        {% if match.scoresheet and match.scoresheet.is_closed %}
-          {% if can_view_scoresheet %}
-            <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--state-green); font-weight: 600;">
-              ✅ Ver Acta Oficial Firmada (Mesa & Entrenadores) &rarr;
-            </a>
+        {% if match.status == 'FINISHED' %}
+          {% if match.scoresheet and match.scoresheet.is_closed %}
+            {% if can_view_scoresheet %}
+              <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--state-green); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Ver Acta Oficial Firmada &rarr;
+              </a>
+            {% else %}
+              <span style="color: var(--state-green); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Partido Concluido &bull; Acta Oficial Homologada
+              </span>
+            {% endif %}
           {% else %}
-            <span style="color: var(--state-green); font-weight: 600;">
-              ✅ Partido Concluido &bull; Acta Oficial Homologada
+            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+              Acta en proceso de cierre
             </span>
           {% endif %}
+        {% elif match.status == 'LIVE' %}
+          <span style="color: var(--gold-primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Partido en Directo
+          </span>
         {% else %}
-          <span style="color: var(--gold-primary); font-weight: 600;">✍️ Acta Digital en Transmisión</span>
+          <span style="color: var(--text-secondary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-blue);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Encuentro Programado &bull; {{ match.scheduled_at|date:"d M - H:i"|default:"Horario Oficial" }}
+          </span>
         {% endif %}
       </div>
     </div>
@@ -119,223 +145,242 @@
   </div>
 
   <!-- SECCIÓN INTERACTIVA: PESTAÑAS (JUGADA A JUGADA vs CHAT EN VIVO) + PLANTILLAS -->
-  <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 2rem; align-items: start;">
+  <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 1.75rem; align-items: stretch; margin-bottom: 2rem;">
     
-    <!-- COLUMNA IZQUIERDA: PANEL DINÁMICO CON PESTAÑAS -->
-    <div class="card" style="padding: 0; overflow: hidden;">
+    <!-- COLUMNA IZQUIERDA: PANEL DINÁMICO CON PESTAÑAS (ALTURA FIJA UNIFORME) -->
+    <div class="card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
       
       <!-- Barra de Pestañas Superiores -->
-      <div style="display: flex; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
+      <div style="display: flex; height: 57px; flex-shrink: 0; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
         
-        <button type="button" onclick="switchLiveTab('boxscore')" id="tab-btn-boxscore" class="tab-live-btn" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
-          <span>📊</span> Estadísticas (Box Score)
+        <button type="button" onclick="switchLiveTab('boxscore')" id="tab-btn-boxscore" class="tab-live-btn" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
+          Estadísticas
         </button>
 
-        <button type="button" onclick="switchLiveTab('play-by-play')" id="tab-btn-pbp" class="tab-live-btn active" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: #FFFFFF; cursor: pointer; color: var(--text-title); border-bottom: 3px solid var(--gold-primary); transition: all 0.2s ease;">
-          <span>⚡</span> Jugada a Jugada
+        <button type="button" onclick="switchLiveTab('play-by-play')" id="tab-btn-pbp" class="tab-live-btn active" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; border: none; background: #FFFFFF; cursor: pointer; color: var(--text-title); border-bottom: 3px solid var(--gold-primary); transition: all 0.2s ease;">
+          Jugada a Jugada
         </button>
         
-        <button type="button" onclick="switchLiveTab('live-chat')" id="tab-btn-chat" class="tab-live-btn" style="flex: 1; padding: 1.1rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
-          <span>💬</span> Chat en Vivo <span id="chat-count-badge" class="badge badge-fan" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">0</span>
+        <button type="button" onclick="switchLiveTab('live-chat')" id="tab-btn-chat" class="tab-live-btn" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.45rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
+          Chat en Vivo <span id="chat-count-badge" class="badge badge-fan" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">0</span>
         </button>
 
       </div>
 
-      <!-- CONTENIDO PESTAÑA 0: ESTADÍSTICAS (BOX SCORE OFICIAL) -->
-      <div id="tab-content-boxscore" style="display: none; padding: 1.5rem;">
+      <!-- CONTENIDO PESTAÑA 0: ESTADÍSTICAS -->
+      <div id="tab-content-boxscore" style="display: none; height: calc(610px - 57px); max-height: calc(610px - 57px); overflow-y: auto; padding: 1.25rem; box-sizing: border-box;">
         
-        <!-- Box Score Equipo Local -->
-        <div style="margin-bottom: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
-              <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
+        {% if match.status == 'SCHEDULED' or not home_player_stats and not away_player_stats %}
+          <div style="text-align: center; padding: 4.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; box-sizing: border-box;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
+              📊
             </div>
-            <strong style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
+            <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Estadísticas en Espera</h4>
+            <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
+              Las estadísticas individuales, puntos, rebotes y valoraciones de cada jugador se registrarán en tiempo real una vez comience el encuentro.
+            </p>
           </div>
-
-          <div style="overflow-x: auto;">
-            <table class="table" style="font-size: 0.8rem; text-align: center; width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
-                  <th style="text-align: left; padding: 0.5rem 0.75rem;">JUGADOR</th>
-                  <th>MIN</th>
-                  <th>PTS</th>
-                  <th>T2</th>
-                  <th>T3</th>
-                  <th>TL</th>
-                  <th>REB</th>
-                  <th>AST</th>
-                  <th>ROB</th>
-                  <th>PER</th>
-                  <th>TAP</th>
-                  <th>FAL</th>
-                  <th style="color: #926004; font-weight: 700;">PIR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for stat in home_player_stats %}
-                  <tr style="border-bottom: 1px solid var(--platinum-border);">
-                    <td style="text-align: left; padding: 0.5rem 0.75rem; font-weight: 600;">
-                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
-                        {{ stat.player.full_name }}
-                      </a>
-                    </td>
-                    <td>{{ stat.minutes_played }}'</td>
-                    <td><strong style="color: var(--obsidian-dark); font-size: 0.95rem;">{{ stat.points }}</strong></td>
-                    <td style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
-                    <td style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
-                    <td style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
-                    <td><strong>{{ stat.total_rebounds }}</strong></td>
-                    <td>{{ stat.assists }}</td>
-                    <td>{{ stat.steals }}</td>
-                    <td>{{ stat.turnovers }}</td>
-                    <td>{{ stat.blocks_made }}</td>
-                    <td>{{ stat.fouls_committed }}</td>
-                    <td style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
-                  </tr>
-                {% empty %}
-                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Box Score Equipo Visitante -->
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
-              <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
+        {% else %}
+          <!-- Box Score Equipo Local -->
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
+                <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
+              </div>
+              <strong id="boxscore-home-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
             </div>
-            <strong style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
+
+            <div style="overflow-x: auto;">
+              <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                    <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                    <th>MIN</th>
+                    <th>PTS</th>
+                    <th>T2</th>
+                    <th>T3</th>
+                    <th>TL</th>
+                    <th>REB</th>
+                    <th>AST</th>
+                    <th>ROB</th>
+                    <th>PER</th>
+                    <th>TAP</th>
+                    <th>FAL</th>
+                    <th style="color: #926004; font-weight: 700;">PIR</th>
+                  </tr>
+                </thead>
+                <tbody id="boxscore-home-tbody">
+                  {% for stat in home_player_stats %}
+                    <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                      <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                        <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                          {{ stat.player.full_name }}
+                        </a>
+                      </td>
+                      <td class="stat-min">{{ stat.minutes_played }}'</td>
+                      <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                      <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                      <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                      <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                      <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                      <td class="stat-ast">{{ stat.assists }}</td>
+                      <td class="stat-rob">{{ stat.steals }}</td>
+                      <td class="stat-per">{{ stat.turnovers }}</td>
+                      <td class="stat-tap">{{ stat.blocks_made }}</td>
+                      <td class="stat-fal">{{ stat.fouls_committed }}</td>
+                      <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div style="overflow-x: auto;">
-            <table class="table" style="font-size: 0.8rem; text-align: center; width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
-                  <th style="text-align: left; padding: 0.5rem 0.75rem;">JUGADOR</th>
-                  <th>MIN</th>
-                  <th>PTS</th>
-                  <th>T2</th>
-                  <th>T3</th>
-                  <th>TL</th>
-                  <th>REB</th>
-                  <th>AST</th>
-                  <th>ROB</th>
-                  <th>PER</th>
-                  <th>TAP</th>
-                  <th>FAL</th>
-                  <th style="color: #926004; font-weight: 700;">PIR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for stat in away_player_stats %}
-                  <tr style="border-bottom: 1px solid var(--platinum-border);">
-                    <td style="text-align: left; padding: 0.5rem 0.75rem; font-weight: 600;">
-                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
-                        {{ stat.player.full_name }}
-                      </a>
-                    </td>
-                    <td>{{ stat.minutes_played }}'</td>
-                    <td><strong style="color: var(--obsidian-dark); font-size: 0.95rem;">{{ stat.points }}</strong></td>
-                    <td style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
-                    <td style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
-                    <td style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
-                    <td><strong>{{ stat.total_rebounds }}</strong></td>
-                    <td>{{ stat.assists }}</td>
-                    <td>{{ stat.steals }}</td>
-                    <td>{{ stat.turnovers }}</td>
-                    <td>{{ stat.blocks_made }}</td>
-                    <td>{{ stat.fouls_committed }}</td>
-                    <td style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+          <!-- Box Score Equipo Visitante -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
+                <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
+              </div>
+              <strong id="boxscore-away-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                    <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                    <th>MIN</th>
+                    <th>PTS</th>
+                    <th>T2</th>
+                    <th>T3</th>
+                    <th>TL</th>
+                    <th>REB</th>
+                    <th>AST</th>
+                    <th>ROB</th>
+                    <th>PER</th>
+                    <th>TAP</th>
+                    <th>FAL</th>
+                    <th style="color: #926004; font-weight: 700;">PIR</th>
                   </tr>
-                {% empty %}
-                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody id="boxscore-away-tbody">
+                  {% for stat in away_player_stats %}
+                    <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                      <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                        <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                          {{ stat.player.full_name }}
+                        </a>
+                      </td>
+                      <td class="stat-min">{{ stat.minutes_played }}'</td>
+                      <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                      <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                      <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                      <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                      <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                      <td class="stat-ast">{{ stat.assists }}</td>
+                      <td class="stat-rob">{{ stat.steals }}</td>
+                      <td class="stat-per">{{ stat.turnovers }}</td>
+                      <td class="stat-tap">{{ stat.blocks_made }}</td>
+                      <td class="stat-fal">{{ stat.fouls_committed }}</td>
+                      <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        {% endif %}
 
       </div>
 
       <!-- CONTENIDO PESTAÑA 1: JUGADA A JUGADA -->
-      <div id="tab-content-pbp" style="padding: 1.75rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-          <h3 style="font-size: 1.15rem; font-weight: 600; margin: 0;">Feed de Acciones Oficiales</h3>
+      <div id="tab-content-pbp" style="display: flex; flex-direction: column; height: calc(610px - 57px); max-height: calc(610px - 57px); padding: 1.25rem; box-sizing: border-box; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-shrink: 0;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-title); margin: 0;">Cronología del Partido</h3>
           <span style="font-size: 0.78rem; color: var(--text-muted);">Sincronización en tiempo real</span>
         </div>
 
-        <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 480px; overflow-y: auto; padding-right: 0.5rem;">
-          {% for ev in recent_events %}
-            <div class="event-item" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.3s ease;">
-              
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-                  {{ ev.get_period_display }} &bull; {{ ev.game_clock }}
-                </span>
+        {% if match.status == 'SCHEDULED' or not recent_events %}
+          <div style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
+              ⏱️
+            </div>
+            <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Partido Aún No Comenzado</h4>
+            <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
+              La cronología de jugadas y canastas se retransmitirá aquí en directo en cuanto la mesa arbitral inicie el encuentro.
+            </p>
+          </div>
+        {% else %}
+          <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; min-height: 0;">
+            {% for ev in recent_events %}
+              <div class="event-item" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.7rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.3s ease;">
                 
-                <div>
-                  <strong style="color: var(--text-title); font-size: 0.9rem;">
-                    {{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}
-                  </strong>
-                  <div style="font-size: 0.78rem; color: var(--text-secondary);">
-                    {{ ev.get_event_type_display }}
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                    {{ ev.get_period_display }} &bull; {{ ev.game_clock }}
+                  </span>
+                  
+                  <div>
+                    <strong style="color: var(--text-title); font-size: 0.9rem;">
+                      {{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}
+                    </strong>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary);">
+                      {{ ev.get_event_type_display }}
+                    </div>
                   </div>
                 </div>
+
+                {% if ev.points > 0 %}
+                  <div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary); background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">
+                    +{{ ev.points }}
+                  </div>
+                {% endif %}
+
               </div>
-
-              {% if ev.points > 0 %}
-                <div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary); background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">
-                  +{{ ev.points }}
-                </div>
-              {% endif %}
-
-            </div>
-          {% empty %}
-            <p id="no-events-text" style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 2.5rem 0;">
-              Esperando el inicio del encuentro o las primeras canastas de la mesa arbitral...
-            </p>
-          {% endfor %}
-        </div>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
       <!-- CONTENIDO PESTAÑA 2: SALA DE CHAT EN VIVO -->
-      <div id="tab-content-chat" style="display: none; padding: 1.75rem;">
+      <div id="tab-content-chat" style="display: none; height: calc(610px - 57px); max-height: calc(610px - 57px); padding: 1.25rem; box-sizing: border-box; overflow: hidden; flex-direction: column;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-shrink: 0;">
           <div>
-            <h3 style="font-size: 1.15rem; font-weight: 600; margin: 0;">Sala de Debate en Directo</h3>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">Comenta el partido con otros aficionados</span>
+            <h3 style="font-size: 1.05rem; font-weight: 600; margin: 0;">Sala de Debate en Directo</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Comenta el partido con otros aficionados</span>
           </div>
-          <span class="badge badge-fan" style="font-size: 0.75rem;">💬 Canal Oficial</span>
         </div>
 
         <!-- Flujo de Mensajes de Chat -->
-        <div id="chat-messages-container" style="display: flex; flex-direction: column; gap: 0.85rem; height: 380px; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1.25rem;">
+        <div id="chat-messages-container" style="display: flex; flex-direction: column; gap: 0.75rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; margin-bottom: 0.75rem; min-height: 0;">
           <!-- Los mensajes se cargan automáticamente por WebSocket -->
         </div>
 
         <!-- Barra de Reacciones Rápidas con Emojis -->
-        <div style="display: flex; gap: 0.4rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
-          <button type="button" onclick="insertEmoji('🏀 ¡Canasta!')" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">🏀 ¡Canasta!</button>
-          <button type="button" onclick="insertEmoji('🔥 ¡Increíble jugada!')" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">🔥 ¡Increíble!</button>
-          <button type="button" onclick="insertEmoji('🎯 ¡Tripleee!')" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">🎯 ¡Tripleee!</button>
-          <button type="button" onclick="insertEmoji('👏 ¡Gran defensa!')" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">👏 ¡Defensa!</button>
-          <button type="button" onclick="insertEmoji('📣 ¡Vamos equipo!')" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">📣 ¡Vamos!</button>
+        <div style="display: flex; gap: 0.35rem; margin-bottom: 0.6rem; flex-wrap: wrap; flex-shrink: 0;">
+          <button type="button" onclick="insertEmoji('🏀 ¡Canasta!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🏀 ¡Canasta!</button>
+          <button type="button" onclick="insertEmoji('🔥 ¡Increíble jugada!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🔥 ¡Increíble!</button>
+          <button type="button" onclick="insertEmoji('🎯 ¡Tripleee!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🎯 ¡Tripleee!</button>
+          <button type="button" onclick="insertEmoji('👏 ¡Gran defensa!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">👏 ¡Defensa!</button>
+          <button type="button" onclick="insertEmoji('📣 ¡Vamos equipo!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">📣 ¡Vamos!</button>
         </div>
 
         <!-- Formulario de Envío de Mensaje -->
-        <form id="form-chat-send" onsubmit="event.preventDefault(); submitChatMessage();" style="display: flex; gap: 0.6rem; align-items: center;">
-          <input type="text" id="chat-input-text" class="form-control" placeholder="Escribe tu mensaje en directo..." maxlength="500" required autocomplete="off" style="font-size: 0.9rem; padding: 0.7rem 1rem;">
-          <button type="submit" class="btn btn-primary" id="btn-chat-send" style="padding: 0.7rem 1.35rem; font-weight: 700; white-space: nowrap;">
-            Enviar 🚀
+        <form id="form-chat-send" onsubmit="event.preventDefault(); submitChatMessage();" style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+          <input type="text" id="chat-input-text" class="form-control" placeholder="Escribe tu mensaje en directo..." maxlength="500" required autocomplete="off" style="font-size: 0.88rem; padding: 0.6rem 0.9rem;">
+          <button type="submit" class="btn btn-primary" id="btn-chat-send" style="padding: 0.6rem 1.25rem; font-weight: 700; white-space: nowrap;">
+            Enviar
           </button>
         </form>
-        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; text-align: right;" id="chat-char-counter">
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; text-align: right;" id="chat-char-counter">
           0 / 500
         </div>
 
@@ -343,47 +388,69 @@
 
     </div>
 
-    <!-- COLUMNA DERECHA: PLANTILLAS OFICIALES -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- COLUMNA DERECHA: PLANTILLAS OFICIALES (ALTURA FIJA UNIFORME DE 610px) -->
+    <div class="card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
       
-      <!-- Plantilla Local -->
-      <div class="card" style="padding: 1.5rem;">
-        <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-title); display: flex; align-items: center; gap: 0.5rem;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
-          {{ match.home_team.name }}
-        </h4>
-
-        <div style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 220px; overflow-y: auto;">
-          {% for m in home_roster %}
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm);">
-              <div>
-                <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
-                <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem;">{{ m.player.full_name }}</a>
-              </div>
-              <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
-            </div>
-          {% endfor %}
-        </div>
+      <!-- Cabecera de Plantillas -->
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 57px; flex-shrink: 0; padding: 0 1.25rem; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-title); margin: 0; display: flex; align-items: center; gap: 0.45rem;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Plantilla de los Equipos
+        </h3>
+        <span class="badge" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; background: #FFFFFF; color: var(--text-secondary); border: 1px solid var(--platinum-border);">
+          Convocatoria
+        </span>
       </div>
 
-      <!-- Plantilla Visitante -->
-      <div class="card" style="padding: 1.5rem;">
-        <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-title); display: flex; align-items: center; gap: 0.5rem;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
-          {{ match.away_team.name }}
-        </h4>
-
-        <div style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 220px; overflow-y: auto;">
-          {% for m in away_roster %}
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm);">
-              <div>
-                <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
-                <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem;">{{ m.player.full_name }}</a>
-              </div>
-              <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+      <!-- Cuerpo con las dos plantillas perfectamente cuadradas -->
+      <div style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; height: calc(610px - 57px); box-sizing: border-box;">
+        
+        <!-- Plantilla Local -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; gap: 0.45rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+              <strong style="font-size: 0.88rem; color: var(--text-title);">{{ match.home_team.name }}</strong>
             </div>
-          {% endfor %}
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">LOCAL</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.35rem; height: 200px; max-height: 200px; overflow-y: auto; padding-right: 0.25rem;">
+            {% for m in home_roster %}
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                <div>
+                  <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
+                </div>
+                <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
+
+        <!-- Plantilla Visitante -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; gap: 0.45rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+              <strong style="font-size: 0.88rem; color: var(--text-title);">{{ match.away_team.name }}</strong>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">VISITANTE</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.35rem; height: 200px; max-height: 200px; overflow-y: auto; padding-right: 0.25rem;">
+            {% for m in away_roster %}
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                <div>
+                  <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
+                </div>
+                <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -488,13 +555,13 @@ function switchLiveTab(tab) {
     pbpBtn.style.background = '#FFFFFF';
     pbpBtn.style.color = 'var(--text-title)';
     pbpBtn.style.borderBottom = '3px solid var(--gold-primary)';
-    pbpContent.style.display = 'block';
+    pbpContent.style.display = 'flex';
   } else if (tab === 'live-chat' && chatBtn && chatContent) {
     chatBtn.classList.add('active');
     chatBtn.style.background = '#FFFFFF';
     chatBtn.style.color = 'var(--text-title)';
     chatBtn.style.borderBottom = '3px solid var(--gold-primary)';
-    chatContent.style.display = 'block';
+    chatContent.style.display = 'flex';
     scrollChatToBottom();
   }
 }
@@ -513,9 +580,13 @@ function connectMatchWebSocket() {
   matchSocket = new WebSocket(matchWsUrl);
 
   matchSocket.onopen = function() {
-    document.getElementById('ws-dot').style.background = 'var(--state-green)';
-    document.getElementById('ws-text').innerText = 'En Directo (WebSocket)';
-    document.getElementById('ws-text').style.color = 'var(--state-green)';
+    const wsDot = document.getElementById('ws-dot');
+    const wsText = document.getElementById('ws-text');
+    if (wsDot) wsDot.style.background = 'var(--state-green)';
+    if (wsText) {
+      wsText.innerText = 'En Directo';
+      wsText.style.color = 'var(--state-green)';
+    }
   };
 
   matchSocket.onmessage = function(e) {
@@ -528,8 +599,10 @@ function connectMatchWebSocket() {
     } else if (payload.type === 'match_update' && data) {
       updateScoreboard(data.home_score, data.away_score, data.period_display, data.clock);
       if (data.new_event) addEventToTimeline(data.new_event);
-    } else if (payload.type === 'event_update' && data && data.new_event) {
-      addEventToTimeline(data.new_event);
+      if (data.player_stat) updatePlayerBoxScore(data.player_stat);
+    } else if (payload.type === 'event_update' && data) {
+      if (data.new_event) addEventToTimeline(data.new_event);
+      if (data.player_stat) updatePlayerBoxScore(data.player_stat);
     } else if (payload.type === 'clock_update' && data) {
       handleRunningClock(data.is_running, data.clock);
       if (data.period_display) document.getElementById('text-period').innerText = data.period_display;
@@ -591,27 +664,90 @@ function handleRunningClock(isRunning, clockStr) {
 function updateScoreboard(homeScore, awayScore, periodDisplay, clock) {
   const scoreHomeEl = document.getElementById('score-home');
   const scoreAwayEl = document.getElementById('score-away');
+  const boxHomeTotal = document.getElementById('boxscore-home-total');
+  const boxAwayTotal = document.getElementById('boxscore-away-total');
 
-  if (homeScore !== undefined && scoreHomeEl.innerText !== String(homeScore)) {
-    scoreHomeEl.innerText = homeScore;
-    flashEffect(scoreHomeEl);
+  if (homeScore !== undefined && scoreHomeEl) {
+    if (scoreHomeEl.innerText.trim() !== String(homeScore)) {
+      scoreHomeEl.innerText = homeScore;
+      flashEffect(scoreHomeEl);
+    }
   }
-  if (awayScore !== undefined && scoreAwayEl.innerText !== String(awayScore)) {
-    scoreAwayEl.innerText = awayScore;
-    flashEffect(scoreAwayEl);
+  if (homeScore !== undefined && boxHomeTotal) {
+    boxHomeTotal.innerText = `${homeScore} PTS`;
   }
-  if (periodDisplay) document.getElementById('text-period').innerText = periodDisplay;
+  if (awayScore !== undefined && scoreAwayEl) {
+    if (scoreAwayEl.innerText.trim() !== String(awayScore)) {
+      scoreAwayEl.innerText = awayScore;
+      flashEffect(scoreAwayEl);
+    }
+  }
+  if (awayScore !== undefined && boxAwayTotal) {
+    boxAwayTotal.innerText = `${awayScore} PTS`;
+  }
+  if (periodDisplay) {
+    const pEl = document.getElementById('text-period');
+    if (pEl) pEl.innerText = periodDisplay;
+  }
   if (clock) {
-    document.getElementById('clock-display').innerText = clock;
+    const clkEl = document.getElementById('clock-display');
+    if (clkEl) clkEl.innerText = clock;
     parseClock(clock);
   }
 }
 
+function updatePlayerBoxScore(st) {
+  if (!st || !st.player_id) return;
+  const row = document.getElementById(`player-stat-row-${st.player_id}`);
+  if (!row) return;
+
+  const minEl = row.querySelector('.stat-min');
+  const ptsEl = row.querySelector('.stat-pts');
+  const t2El = row.querySelector('.stat-t2');
+  const t3El = row.querySelector('.stat-t3');
+  const tlEl = row.querySelector('.stat-tl');
+  const rebEl = row.querySelector('.stat-reb');
+  const astEl = row.querySelector('.stat-ast');
+  const robEl = row.querySelector('.stat-rob');
+  const perEl = row.querySelector('.stat-per');
+  const tapEl = row.querySelector('.stat-tap');
+  const falEl = row.querySelector('.stat-fal');
+  const pirEl = row.querySelector('.stat-pir');
+
+  if (minEl && st.minutes_played !== undefined) minEl.innerText = `${st.minutes_played}'`;
+  if (ptsEl && st.points !== undefined) ptsEl.innerText = st.points;
+  if (t2El && st.two_points_made !== undefined && st.two_points_attempted !== undefined) {
+    t2El.innerText = `${st.two_points_made}/${st.two_points_attempted}`;
+  }
+  if (t3El && st.three_points_made !== undefined && st.three_points_attempted !== undefined) {
+    t3El.innerText = `${st.three_points_made}/${st.three_points_attempted}`;
+  }
+  if (tlEl && st.free_throws_made !== undefined && st.free_throws_attempted !== undefined) {
+    tlEl.innerText = `${st.free_throws_made}/${st.free_throws_attempted}`;
+  }
+  if (rebEl && st.total_rebounds !== undefined) rebEl.innerText = st.total_rebounds;
+  if (astEl && st.assists !== undefined) astEl.innerText = st.assists;
+  if (robEl && st.steals !== undefined) robEl.innerText = st.steals;
+  if (perEl && st.turnovers !== undefined) perEl.innerText = st.turnovers;
+  if (tapEl && st.blocks_made !== undefined) tapEl.innerText = st.blocks_made;
+  if (falEl && st.fouls_committed !== undefined) falEl.innerText = st.fouls_committed;
+  if (pirEl && st.valuation_pir !== undefined) {
+    pirEl.innerText = st.valuation_pir;
+  }
+
+  // Animación de pulso dorado sobre la fila actualizada
+  const origBg = row.style.backgroundColor || '';
+  row.style.backgroundColor = 'rgba(197, 155, 39, 0.22)';
+  setTimeout(() => {
+    row.style.backgroundColor = origBg;
+  }, 1200);
+}
+
 function flashEffect(element) {
   element.style.color = 'var(--gold-primary)';
-  element.style.transform = 'scale(1.25)';
+  element.style.transform = 'scale(1.2)';
   setTimeout(() => {
-    element.style.color = '#FFFFFF';
+    element.style.color = 'var(--text-title)';
     element.style.transform = 'scale(1)';
   }, 450);
 }
@@ -705,16 +841,7 @@ function appendChatMessage(msg, animate) {
   div.id = `chat-msg-${msg.id}`;
   div.style = `display: flex; gap: 0.75rem; align-items: flex-start; ${animate ? 'animation: slideDown 0.25s ease;' : ''} ${isMe ? 'flex-direction: row-reverse;' : ''}`;
 
-  let badgeRole = '';
-  if (msg.role === 'ADMIN') {
-    badgeRole = '<span class="badge badge-admin" style="font-size: 0.68rem; padding: 0.1rem 0.4rem;">👑 Admin</span>';
-  } else if (msg.role === 'TABLE_OFFICIAL') {
-    badgeRole = '<span class="badge badge-table" style="font-size: 0.68rem; padding: 0.1rem 0.4rem;">⏱️ Mesa</span>';
-  } else if (msg.role === 'COACH') {
-    badgeRole = '<span class="badge badge-coach" style="font-size: 0.68rem; padding: 0.1rem 0.4rem;">📋 Entrenador</span>';
-  } else {
-    badgeRole = '<span class="badge badge-fan" style="font-size: 0.68rem; padding: 0.1rem 0.4rem;">🏀 Aficionado</span>';
-  }
+  const displayName = msg.username || msg.full_name;
 
   const avatarHtml = msg.avatar_url 
     ? `<img src="${msg.avatar_url}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">`
@@ -727,9 +854,8 @@ function appendChatMessage(msg, animate) {
   div.innerHTML = `
     ${avatarHtml}
     <div style="max-width: 80%; display: flex; flex-direction: column; ${isMe ? 'align-items: flex-end;' : 'align-items: flex-start;'}">
-      <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; font-size: 0.78rem;">
-        <strong style="color: var(--text-title);">${msg.full_name}</strong>
-        ${badgeRole}
+      <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem; font-size: 0.78rem;">
+        <strong style="color: var(--text-title);">${displayName}</strong>
         <span style="color: var(--text-muted); font-size: 0.72rem;">${msg.created_at}</span>
         ${deleteBtn}
       </div>
@@ -821,13 +947,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeDeleteChatModal();
-    }
-  });
-
-  connectMatchWebSocket();
+  const matchStatus = "{{ match.status }}";
+  if (matchStatus !== 'FINISHED') {
+    connectMatchWebSocket();
+  }
   connectChatWebSocket();
 });
 </script>

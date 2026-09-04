@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from apps.teams.models import Team, Player, TeamMembership, Season, League
-from apps.matches.models import Match
+from apps.matches.models import Match, MatchEvent
 from apps.analytics.models import PlayerMatchStat
 
 
@@ -13,6 +13,152 @@ def normalize_str(s):
         return ""
     norm = unicodedata.normalize("NFKD", str(s)).encode("ASCII", "ignore").decode("utf-8")
     return norm.strip().lower()
+
+
+def generate_match_events_from_stats(match):
+    """
+    Genera la secuencia cronológica completa e isomórfica de eventos (MatchEvent)
+    a partir de las estadísticas exactas (PlayerMatchStat) de cada jugador del partido.
+    Garantiza una correlación matemática y narrativa del 100% entre la tabla de Estadísticas y la Jugada a Jugada.
+    """
+    MatchEvent.objects.filter(match=match).delete()
+
+    stats = PlayerMatchStat.objects.filter(match=match).select_related("player", "team")
+    if not stats.exists():
+        return
+
+    # Determinamos los periodos disputados según el estado del partido
+    if match.status == Match.Status.FINISHED:
+        periods = [Match.Period.Q1, Match.Period.Q2, Match.Period.Q3, Match.Period.Q4]
+    elif match.current_period == Match.Period.Q4:
+        periods = [Match.Period.Q1, Match.Period.Q2, Match.Period.Q3, Match.Period.Q4]
+    elif match.current_period == Match.Period.Q3:
+        periods = [Match.Period.Q1, Match.Period.Q2, Match.Period.Q3]
+    elif match.current_period == Match.Period.Q2:
+        periods = [Match.Period.Q1, Match.Period.Q2]
+    else:
+        periods = [Match.Period.Q1]
+
+    raw_actions = []
+
+    for s in stats:
+        p = s.player
+        t = s.team
+
+        # Canastas de 3
+        for _ in range(s.three_points_made):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_3_MADE, "pts": 3, "player": p, "team": t})
+        # Triples fallados
+        for _ in range(max(0, s.three_points_attempted - s.three_points_made)):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_3_MISSED, "pts": 0, "player": p, "team": t})
+
+        # Canastas de 2
+        for _ in range(s.two_points_made):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_2_MADE, "pts": 2, "player": p, "team": t})
+        # Tiros de 2 fallados
+        for _ in range(max(0, s.two_points_attempted - s.two_points_made)):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_2_MISSED, "pts": 0, "player": p, "team": t})
+
+        # Tiros libres
+        for _ in range(s.free_throws_made):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_1_MADE, "pts": 1, "player": p, "team": t})
+        for _ in range(max(0, s.free_throws_attempted - s.free_throws_made)):
+            raw_actions.append({"type": MatchEvent.EventType.POINT_1_MISSED, "pts": 0, "player": p, "team": t})
+
+        # Rebotes ofensivos y defensivos
+        for _ in range(s.rebounds_off):
+            raw_actions.append({"type": MatchEvent.EventType.REBOUND_OFF, "pts": 0, "player": p, "team": t})
+        for _ in range(s.rebounds_def):
+            raw_actions.append({"type": MatchEvent.EventType.REBOUND_DEF, "pts": 0, "player": p, "team": t})
+
+        # Asistencias, Robos, Pérdidas, Tapones, Faltas
+        for _ in range(s.assists):
+            raw_actions.append({"type": MatchEvent.EventType.ASSIST, "pts": 0, "player": p, "team": t})
+        for _ in range(s.steals):
+            raw_actions.append({"type": MatchEvent.EventType.STEAL, "pts": 0, "player": p, "team": t})
+        for _ in range(s.turnovers):
+            raw_actions.append({"type": MatchEvent.EventType.TURNOVER, "pts": 0, "player": p, "team": t})
+        for _ in range(s.blocks_made):
+            raw_actions.append({"type": MatchEvent.EventType.BLOCK, "pts": 0, "player": p, "team": t})
+        for _ in range(s.fouls_committed):
+            raw_actions.append({"type": MatchEvent.EventType.FOUL_PERSONAL, "pts": 0, "player": p, "team": t})
+
+        # Sustituciones (cambios de jugadores según rotación de minutos)
+        if s.minutes_played > 8:
+            raw_actions.append({"type": MatchEvent.EventType.SUBSTITUTION, "pts": 0, "player": p, "team": t})
+
+    # Tiempos muertos de cada equipo
+    raw_actions.append({"type": MatchEvent.EventType.TIMEOUT, "pts": 0, "player": None, "team": match.home_team})
+    raw_actions.append({"type": MatchEvent.EventType.TIMEOUT, "pts": 0, "player": None, "team": match.away_team})
+
+    # Barajamos de manera determinista con la semilla del partido
+    rng = random.Random(match.id * 77)
+    rng.shuffle(raw_actions)
+
+    # Calcular el tiempo real disputado en cada cuarto
+    period_info = []
+    for period in periods:
+        if match.status == Match.Status.FINISHED or period != match.current_period:
+            # Cuarto completo (10 minutos jugados)
+            period_info.append((period, 600, 595, 5))
+        else:
+            # Cuarto en juego actual (solo se han disputado los segundos hasta game_clock)
+            try:
+                parts = match.game_clock.split(":")
+                current_sec_remaining = int(parts[0]) * 60 + int(parts[1])
+            except Exception:
+                current_sec_remaining = 590
+            elapsed_sec = max(10, 600 - current_sec_remaining)
+            period_info.append((period, elapsed_sec, 595, current_sec_remaining))
+
+    total_elapsed = sum(p[1] for p in period_info)
+
+    # Asignar a cada cuarto exactamente su cuota de acciones garantizando que sumen len(raw_actions)
+    allocated_counts = []
+    remaining_actions = len(raw_actions)
+    for i, (period, elapsed, start_sec, end_sec) in enumerate(period_info):
+        if i == len(period_info) - 1:
+            count = remaining_actions
+        else:
+            count = max(1, int(len(raw_actions) * (elapsed / total_elapsed)))
+            count = min(count, remaining_actions - (len(period_info) - 1 - i))
+        allocated_counts.append(count)
+        remaining_actions -= count
+
+    events_to_create = []
+    action_idx = 0
+
+    # Iteramos estrictamente en orden cronológico: 1º Cuarto -> 2º Cuarto -> 3º Cuarto -> 4º Cuarto
+    for (period, elapsed, start_sec, end_sec), count_in_period in zip(period_info, allocated_counts):
+        period_actions = raw_actions[action_idx : action_idx + count_in_period]
+        action_idx += count_in_period
+
+        if not period_actions:
+            continue
+
+        step = (start_sec - end_sec) / max(len(period_actions), 1)
+
+        # En el cuarto, el tiempo avanza hacia adelante (reloj baja de start_sec a end_sec)
+        for i, act in enumerate(period_actions):
+            sec_left = int(start_sec - (i * step))
+            sec_left = max(end_sec, min(start_sec, sec_left))
+            m = sec_left // 60
+            s = sec_left % 60
+            clock_str = f"{m:02d}:{s:02d}"
+
+            events_to_create.append(
+                MatchEvent(
+                    match=match,
+                    period=period,
+                    game_clock=clock_str,
+                    team=act["team"],
+                    player=act["player"],
+                    event_type=act["type"],
+                    points=act["pts"]
+                )
+            )
+
+    MatchEvent.objects.bulk_create(events_to_create)
 
 
 ALL_TEAMS_ROSTERS = {
@@ -404,8 +550,21 @@ class Command(BaseCommand):
         # Asegurar que todas las membresías de temporadas pasadas queden formalmente inactivas
         TeamMembership.objects.exclude(season=current_season).update(is_active=False)
 
-        # 6. Generar estadísticas de partido matemáticamente coherentes para TODOS los partidos finalizados
-        matches = Match.objects.filter(status=Match.Status.FINISHED)
+        # 6. Limpieza formal de partidos programados (no deben tener eventos, estadísticas ni actas firmadas)
+        from apps.matches.models import DigitalScoreSheet
+        scheduled_matches = Match.objects.filter(status=Match.Status.SCHEDULED)
+        for sm in scheduled_matches:
+            MatchEvent.objects.filter(match=sm).delete()
+            PlayerMatchStat.objects.filter(match=sm).delete()
+            DigitalScoreSheet.objects.filter(match=sm).delete()
+            sm.home_score = 0
+            sm.away_score = 0
+            sm.current_period = Match.Period.NOT_STARTED
+            sm.game_clock = "10:00"
+            sm.save()
+
+        # 7. Generar estadísticas de partido matemáticamente coherentes para partidos finalizados y en directo
+        matches = Match.objects.filter(status__in=[Match.Status.FINISHED, Match.Status.LIVE])
         total_stats = 0
         for match in matches:
             PlayerMatchStat.objects.filter(match=match).delete()
@@ -424,7 +583,7 @@ class Command(BaseCommand):
                 seen_player_ids.add(m.player_id)
 
                 p_pts = home_points_dist[idx] if idx < len(home_points_dist) else random.randint(4, 16)
-                p_mins = random.randint(14, 34)
+                p_mins = random.randint(8, 23) if match.status == Match.Status.LIVE else random.randint(14, 34)
                 p_reb_off = random.randint(0, 3)
                 p_reb_def = random.randint(1, 6)
                 p_ast = random.randint(1, 8)
@@ -470,7 +629,7 @@ class Command(BaseCommand):
                 seen_player_ids.add(m.player_id)
 
                 p_pts = away_points_dist[idx] if idx < len(away_points_dist) else random.randint(4, 16)
-                p_mins = random.randint(12, 32)
+                p_mins = random.randint(8, 23) if match.status == Match.Status.LIVE else random.randint(12, 32)
                 p_reb_off = random.randint(0, 3)
                 p_reb_def = random.randint(1, 5)
                 p_ast = random.randint(0, 7)
@@ -502,6 +661,9 @@ class Command(BaseCommand):
                     **exact_stat
                 )
                 total_stats += 1
+
+            # Generar cronología completa de jugadas (MatchEvents) sincronizada al 100% con las estadísticas
+            generate_match_events_from_stats(match)
 
         # 7. Obtener y asignar fotografías reales de alta definición para todos los jugadores
         from django.core.management import call_command

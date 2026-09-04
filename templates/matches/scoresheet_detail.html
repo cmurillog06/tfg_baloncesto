@@ -3,139 +3,168 @@
 {% block title %}Acta Oficial &bull; {{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Quinto Cuarto{% endblock %}
 
 {% block content %}
-<div style="max-width: 960px; margin: 0 auto;">
+<div style="max-width: 980px; margin: 0 auto; padding-bottom: 3rem;">
   
-  <!-- Barra Superior de Acciones -->
+  <!-- Barra Superior de Acciones Limpia -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <a href="{% url 'matches:match_list' %}" class="btn btn-secondary btn-sm">&larr; Volver a Partidos</a>
+    <a href="{% url 'matches:match_list' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Volver a Partidos
+    </a>
     
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="{% url 'matches:match_live' match.id %}" class="btn btn-secondary btn-sm">
-        ⚡ Ver Retransmisión
-      </a>
-      <button type="button" onclick="window.print()" class="btn btn-gold btn-sm">
-        🖨️ Imprimir / Guardar PDF
+    <div>
+      <button type="button" onclick="window.print()" class="btn btn-gold btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Imprimir / Guardar PDF
       </button>
     </div>
   </div>
 
-  <!-- DOCUMENTO OFICIAL: ACTA DIGITAL DE PARTIDO (ESTILO FEDERADO) -->
-  <div class="card" style="padding: 3rem 2.5rem; background: #FFFFFF; border: 2px solid var(--platinum-border); box-shadow: 0 10px 30px rgba(0,0,0,0.06); position: relative;">
+  <!-- DOCUMENTO OFICIAL: ACTA DIGITAL DE PARTIDO (ESTILO FEDERATIVO PROFESIONAL) -->
+  <div class="card" style="padding: 2.75rem 2.5rem; background: #FFFFFF; border-top: 4px solid var(--gold-primary); box-shadow: var(--shadow-card); position: relative; border-radius: var(--radius-lg);">
     
-    <!-- Sello Institucional de Quinto Cuarto -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--obsidian-dark); padding-bottom: 1.25rem; margin-bottom: 2rem;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="font-size: 2.2rem;">🏀</div>
+    <!-- Cabecera Institucional del Acta -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--platinum-border); padding-bottom: 1.5rem; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
+      
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--gold-light); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; color: var(--gold-primary); flex-shrink: 0;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </div>
         <div>
-          <h1 style="font-size: 1.6rem; font-weight: 700; color: var(--obsidian-dark); letter-spacing: -0.02em; margin: 0;">
-            ACTA DIGITAL OFICIAL DE PARTIDO
+          <h1 style="font-size: 1.45rem; font-weight: 700; color: var(--text-title); letter-spacing: -0.01em; margin: 0 0 0.2rem 0;">
+            Acta Oficial de Encuentro
           </h1>
-          <span style="color: var(--gold-primary); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
-            QUINTO CUARTO &bull; SISTEMA OFICIAL FEDERADO EN TIEMPO REAL
-          </span>
+          <div style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 500;">
+            Quinto Cuarto &bull; Sistema Oficial de Mesa Arbitral y Actas Digitales
+          </div>
         </div>
       </div>
 
-      <div style="text-align: right;">
-        <span class="badge" style="background: var(--state-green-light); color: var(--state-green); font-size: 0.82rem; padding: 0.35rem 0.85rem; border: 1px solid rgba(5, 150, 105, 0.2);">
-          {% if scoresheet.is_closed %}✅ Acta Oficial Cerrada{% else %}⏳ En Curso{% endif %}
+      <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
+        {% if scoresheet.is_closed %}
+          <span class="badge" style="background: var(--state-green-light); color: var(--state-green); font-size: 0.8rem; padding: 0.35rem 0.75rem; border: 1px solid rgba(5, 150, 105, 0.2); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Acta Oficial Homologada
+          </span>
+        {% endif %}
+        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">
+          ID: #ACTA-{{ match.id }}-{{ match.scheduled_at|date:"Ymd" }}
         </span>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">ID Acta: #ACTA-{{ match.id }}-{{ match.scheduled_at|date:"Ymd" }}</div>
+      </div>
+
+    </div>
+
+    <!-- Metadatos del Encuentro -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; background: var(--bg-subtle); padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 2rem;">
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.2rem;">COMPETICIÓN</span>
+        <strong style="color: var(--text-title); font-size: 0.9rem;">{{ match.season.league.name }}</strong>
+        <div style="font-size: 0.78rem; color: var(--text-secondary);">Temporada {{ match.season.name }}</div>
+      </div>
+      
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.2rem;">JORNADA Y FECHA</span>
+        <strong style="color: var(--text-title); font-size: 0.9rem;">Jornada {{ match.round_number }}</strong>
+        <div style="font-size: 0.78rem; color: var(--text-secondary);">{{ match.scheduled_at|date:"d/m/Y - H:i" }}</div>
+      </div>
+
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.2rem;">SEDE Y PABELLÓN</span>
+        <strong style="color: var(--text-title); font-size: 0.9rem;">{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}</strong>
+        <div style="font-size: 0.78rem; color: var(--text-secondary);">{{ match.home_team.city|default:"España" }}</div>
       </div>
     </div>
 
-    <!-- Metadatos de la Competición -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 2rem; font-size: 0.88rem; line-height: 1.7;">
-      <div>
-        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">COMPETICIÓN</span>
-        <strong style="color: var(--text-title);">{{ match.season.league.name }}</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">JORNADA / FECHA</span>
-        <strong style="color: var(--text-title);">Jornada {{ match.round_number }} &bull; {{ match.scheduled_at|date:"d/m/Y H:i" }}</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: block;">SEDE / PABELLÓN</span>
-        <strong style="color: var(--text-title);">{{ match.location|default:"Pabellón Oficial" }}</strong>
-      </div>
-    </div>
-
-    <!-- RESULTADO FINAL DEL PARTIDO -->
-    <div class="card" style="border-top: 4px solid var(--gold-primary); padding: 1.75rem; text-align: center; margin-bottom: 2.5rem;">
-      <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.25rem;">
-        RESULTADO FINAL HOMOLOGADO
+    <!-- TANTEO Y RESULTADO OFICIAL -->
+    <div style="background: #FFFFFF; border: 1px solid var(--platinum-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+      <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; margin-bottom: 1.15rem;">
+        RESULTADO FINAL
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; text-align: center;">
         
         <!-- Local -->
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+          <div style="width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
             {% if match.home_team.logo %}
-              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">
+              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08));">
             {% else %}
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
                 {{ match.home_team.acronym }}
               </div>
             {% endif %}
           </div>
-          <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-title);">{{ match.home_team.name }}</div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">LOCAL</span>
+          <strong style="font-size: 1.05rem; color: var(--text-title);">{{ match.home_team.name }}</strong>
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">LOCAL</span>
         </div>
 
         <!-- Tanteo Central -->
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem;">
-          <div style="display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 3.2rem; font-weight: 700; color: var(--text-title); line-height: 1;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.35rem;">
+          <div style="display: flex; align-items: center; gap: 0.85rem; font-family: var(--font-mono); font-size: 2.75rem; font-weight: 700; color: var(--text-title); line-height: 1;">
             <span>{{ match.home_score }}</span>
-            <span style="color: var(--gold-primary); font-size: 2rem;">:</span>
+            <span style="color: var(--gold-primary); font-size: 1.75rem; opacity: 0.85;">:</span>
             <span>{{ match.away_score }}</span>
           </div>
-          <span class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.8rem; font-family: var(--font-mono);">
-            FINALIZADO
+          <span class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.72rem; font-weight: 600; text-transform: uppercase;">
+            {{ match.get_status_display }}
           </span>
         </div>
 
         <!-- Visitante -->
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
+          <div style="width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.4rem;">
             {% if match.away_team.logo %}
-              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">
+              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08));">
             {% else %}
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;">
                 {{ match.away_team.acronym }}
               </div>
             {% endif %}
           </div>
-          <div style="font-size: 1.2rem; font-weight: 600; color: var(--text-title);">{{ match.away_team.name }}</div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">VISITANTE</span>
+          <strong style="font-size: 1.05rem; color: var(--text-title);">{{ match.away_team.name }}</strong>
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">VISITANTE</span>
         </div>
 
       </div>
     </div>
 
-    <!-- PLANTILLAS Y PARTICIPANTES EN EL ACTA -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+    <!-- CONVOCATORIAS OFICIALES INSCRITAS EN EL ACTA -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.25rem;">
       
       <!-- Equipo Local -->
       <div>
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
-          {{ match.home_team.name }}
-        </h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+            <strong style="font-size: 0.92rem; color: var(--text-title);">{{ match.home_team.name }}</strong>
+          </div>
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">LOCAL</span>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
           <thead>
-            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-              <th style="padding: 0.4rem 0;">Dorsal</th>
-              <th style="padding: 0.4rem 0.5rem;">Jugador</th>
-              <th style="padding: 0.4rem 0.5rem; text-align: right;">Posición</th>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-muted); text-align: left; font-size: 0.72rem; text-transform: uppercase;">
+              <th style="padding: 0.35rem 0.25rem;">Nº</th>
+              <th style="padding: 0.35rem 0.5rem;">Jugador Inscrito</th>
+              <th style="padding: 0.35rem 0.25rem; text-align: right;">Posición</th>
             </tr>
           </thead>
           <tbody>
             {% for m in home_roster %}
               <tr style="border-bottom: 1px solid var(--platinum-border);">
-                <td style="padding: 0.45rem 0; font-family: var(--font-mono); font-weight: 700;">#{{ m.jersey_number }}</td>
-                <td style="padding: 0.45rem 0.5rem;">{{ m.player.full_name }}{% if m.is_captain %} <strong style="color: var(--gold-primary); font-size: 0.75rem;">(C)</strong>{% endif %}</td>
-                <td style="padding: 0.45rem 0.5rem; text-align: right; color: var(--text-secondary);">{{ m.player.get_position_display }}</td>
+                <td style="padding: 0.4rem 0.25rem; font-family: var(--font-mono); font-weight: 700; color: var(--text-title);">#{{ m.jersey_number }}</td>
+                <td style="padding: 0.4rem 0.5rem; font-weight: 600; color: var(--text-title);">
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: inherit; text-decoration: none;">
+                    {{ m.player.full_name }}
+                  </a>
+                  {% if m.is_captain %}
+                    <span style="color: var(--gold-primary); font-size: 0.7rem; font-weight: 700; margin-left: 0.25rem;">(C)</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.4rem 0.25rem; text-align: right; color: var(--text-secondary); font-size: 0.78rem;">{{ m.player.get_position_display }}</td>
               </tr>
+            {% empty %}
+              <tr><td colspan="3" style="padding: 1rem; color: var(--text-muted); text-align: center;">Sin jugadores inscritos</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -143,24 +172,38 @@
 
       <!-- Equipo Visitante -->
       <div>
-        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
-          {{ match.away_team.name }}
-        </h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.4rem;">
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+            <strong style="font-size: 0.92rem; color: var(--text-title);">{{ match.away_team.name }}</strong>
+          </div>
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">VISITANTE</span>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
           <thead>
-            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-              <th style="padding: 0.4rem 0;">Dorsal</th>
-              <th style="padding: 0.4rem 0.5rem;">Jugador</th>
-              <th style="padding: 0.4rem 0.5rem; text-align: right;">Posición</th>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-muted); text-align: left; font-size: 0.72rem; text-transform: uppercase;">
+              <th style="padding: 0.35rem 0.25rem;">Nº</th>
+              <th style="padding: 0.35rem 0.5rem;">Jugador Inscrito</th>
+              <th style="padding: 0.35rem 0.25rem; text-align: right;">Posición</th>
             </tr>
           </thead>
           <tbody>
             {% for m in away_roster %}
               <tr style="border-bottom: 1px solid var(--platinum-border);">
-                <td style="padding: 0.45rem 0; font-family: var(--font-mono); font-weight: 700;">#{{ m.jersey_number }}</td>
-                <td style="padding: 0.45rem 0.5rem;">{{ m.player.full_name }}{% if m.is_captain %} <strong style="color: var(--gold-primary); font-size: 0.75rem;">(C)</strong>{% endif %}</td>
-                <td style="padding: 0.45rem 0.5rem; text-align: right; color: var(--text-secondary);">{{ m.player.get_position_display }}</td>
+                <td style="padding: 0.4rem 0.25rem; font-family: var(--font-mono); font-weight: 700; color: var(--text-title);">#{{ m.jersey_number }}</td>
+                <td style="padding: 0.4rem 0.5rem; font-weight: 600; color: var(--text-title);">
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: inherit; text-decoration: none;">
+                    {{ m.player.full_name }}
+                  </a>
+                  {% if m.is_captain %}
+                    <span style="color: var(--gold-primary); font-size: 0.7rem; font-weight: 700; margin-left: 0.25rem;">(C)</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.4rem 0.25rem; text-align: right; color: var(--text-secondary); font-size: 0.78rem;">{{ m.player.get_position_display }}</td>
               </tr>
+            {% empty %}
+              <tr><td colspan="3" style="padding: 1rem; color: var(--text-muted); text-align: center;">Sin jugadores inscritos</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -168,44 +211,75 @@
 
     </div>
 
-    <!-- FIRMAS DIGITALES Y DILIGENCIA OFICIAL -->
-    <div style="background: var(--bg-subtle); padding: 1.5rem 1.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 1.5rem;">
-      <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-title);">
-        ✍️ Diligencia de Firmas y Validación Digital
+    <!-- FIRMAS OFICIALES DEL ENCUENTRO -->
+    <div style="background: var(--bg-subtle); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 1.5rem;">
+      <h4 style="font-size: 0.92rem; font-weight: 700; margin: 0 0 1rem 0; color: var(--text-title); display: flex; align-items: center; gap: 0.45rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        Firmas Oficiales del Encuentro
       </h4>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        <div style="background: #FFFFFF; padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--platinum-border);">
-          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">ÁRBITRO PRINCIPAL</span>
-          <div style="font-family: 'Space Grotesk', cursive; font-size: 1.25rem; font-weight: 600; color: var(--obsidian-dark); margin: 0.5rem 0;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        
+        <!-- Firma Árbitro -->
+        <div style="background: #FFFFFF; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            ÁRBITRO PRINCIPAL
+          </span>
+          <div style="font-family: 'Space Grotesk', serif; font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem; letter-spacing: -0.01em;">
             {{ scoresheet.referee_signature|default:"Juan Carlos García González" }}
           </div>
-          <span style="font-size: 0.75rem; color: var(--state-green);">✓ Firma Digital Autenticada</span>
+          <div style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--state-green); font-weight: 600;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Firma Digital Autenticada
+          </div>
         </div>
 
-        <div style="background: #FFFFFF; padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--platinum-border);">
-          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">MESA ARBITRAL</span>
-          <div style="font-family: 'Space Grotesk', cursive; font-size: 1.25rem; font-weight: 600; color: var(--obsidian-dark); margin: 0.5rem 0;">
-            {{ scoresheet.table_official_signature|default:"Oficial de Mesa Digital" }}
+        <!-- Firma Mesa Arbitral -->
+        <div style="background: #FFFFFF; padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            OFICIAL DE MESA ARBITRAL
+          </span>
+          <div style="font-family: 'Space Grotesk', serif; font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem; letter-spacing: -0.01em;">
+            {{ scoresheet.table_official_signature|default:"Oficial de Mesa Certificado" }}
           </div>
-          <span style="font-size: 0.75rem; color: var(--state-green);">✓ Firma Digital Autenticada</span>
+          <div style="display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--state-green); font-weight: 600;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Firma Digital Autenticada
+          </div>
         </div>
+
       </div>
 
       {% if scoresheet.incidents_report %}
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--platinum-border); font-size: 0.85rem; color: var(--text-secondary);">
-          <strong>Informe de Incidencias:</strong> {{ scoresheet.incidents_report }}
+        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--platinum-border); font-size: 0.82rem; color: var(--text-secondary);">
+          <strong style="color: var(--text-title);">Informe de Incidencias:</strong> {{ scoresheet.incidents_report }}
         </div>
       {% endif %}
     </div>
 
-    <!-- Pie del Acta -->
-    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); padding-top: 0.5rem;">
-      <span>Generado por Quinto Cuarto &bull; Django Channels & WebSockets</span>
-      <span>Fecha Cierre: {{ scoresheet.closed_at|date:"d/m/Y H:i:s"|default:"En curso" }}</span>
+    <!-- Pie del Acta Institucional -->
+    <div style="text-align: center; font-size: 0.78rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--platinum-border);">
+      Generado por Quinto Cuarto
     </div>
 
   </div>
 
 </div>
+
+<!-- Estilos específicos para impresión impecable a PDF -->
+<style>
+@media print {
+  body {
+    background: #FFFFFF !important;
+  }
+  .navbar, footer, .btn, #header {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #CBD5E1 !important;
+    padding: 1.5rem !important;
+  }
+}
+</style>
 {% endblock %}

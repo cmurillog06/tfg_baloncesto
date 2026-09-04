@@ -3,35 +3,32 @@
 {% block title %}Mesa Arbitral Digital &bull; {{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Quinto Cuarto{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto;">
+<div style="max-width: 1240px; margin: 0 auto; padding-bottom: 3rem;">
   
   <!-- Cabecera de Mesa Arbitral -->
-  <div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--gold-primary); padding: 1.25rem 2rem;">
+  <div class="card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--gold-primary); padding: 1.25rem 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
       
       <div style="display: flex; align-items: center; gap: 1rem;">
-        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--gold-border);">
-          ⏱️
+        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--obsidian-dark); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; border: 1px solid var(--gold-border);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         </div>
         <div>
           <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CONSOLA OFICIAL DE MESA</div>
-          <h1 style="font-size: 1.65rem; font-weight: 600; margin: 0;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
+          <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.15rem 0;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
           <span style="font-size: 0.82rem; color: var(--text-secondary);">Oficial responsable: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
         </div>
       </div>
 
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div id="ws-status-badge" style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-subtle); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--platinum-border);">
-          <span id="ws-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; display: inline-block;"></span>
-          <span id="ws-text">Conectando...</span>
-        </div>
-
-        <a href="{% url 'matches:match_live' match.id %}" target="_blank" class="btn btn-secondary btn-sm" title="Ver marcador público">
-          👁️ Ver Retransmisión ↗
+        <a href="{% url 'matches:match_live' match.id %}" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;" title="Ver marcador público">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+          Ver Retransmisión ↗
         </a>
 
-        <button type="button" onclick="openSignatureModal()" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25);">
-          ✍️ Firmar y Cerrar Acta
+        <button type="button" onclick="openSignatureModal()" class="btn btn-gold btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600; box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Firmar y Cerrar Acta
         </button>
       </div>
 
@@ -46,23 +43,23 @@
       <div style="display: flex; align-items: center; gap: 1.5rem;">
         <div>
           <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">RELOJ DE JUEGO</div>
-          <div id="clock-display" style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: #FFFFFF; line-height: 1;">
+          <div id="clock-display" style="font-family: var(--font-mono); font-size: 3.2rem; font-weight: 800; color: #FFFFFF; line-height: 1; letter-spacing: 0.02em;">
             {{ match.game_clock }}
           </div>
         </div>
 
         <!-- Botones de Control de Tiempo -->
         <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button type="button" id="btn-clock-toggle" onclick="toggleClock()" class="btn btn-gold" style="padding: 0.6rem 1.4rem; font-weight: 700;">
+          <button type="button" id="btn-clock-toggle" onclick="toggleClock()" class="btn btn-gold" style="padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.95rem;">
             ▶ Iniciar Reloj
           </button>
-          <button type="button" onclick="adjustClock(10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+          <button type="button" onclick="adjustClock(10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
             +10s
           </button>
-          <button type="button" onclick="adjustClock(-10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+          <button type="button" onclick="adjustClock(-10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
             -10s
           </button>
-          <button type="button" onclick="resetClock('10:00')" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.1); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+          <button type="button" onclick="resetClock('10:00')" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
             ↺ 10:00
           </button>
         </div>
@@ -84,133 +81,175 @@
     </div>
   </div>
 
-  <!-- CONSOLAS DE ANOTACIÓN BIDIRECCIONAL (LOCAL Y VISITANTE) -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+  <!-- CONSOLAS DE ANOTACIÓN Y PLANTILLAS BIDIRECCIONALES -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; margin-bottom: 2.25rem;">
     
     <!-- 1. CONSOLA EQUIPO LOCAL -->
-    <div class="card" style="border-top: 4px solid {{ match.home_team.primary_color|default:'#090D16' }}; padding: 1.75rem;">
+    <div class="card" style="border-top: 4px solid {{ match.home_team.primary_color|default:'#090D16' }}; padding: 1.5rem; display: flex; flex-direction: column;">
       
       <!-- Cabecera y Marcador Local -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             {% if match.home_team.logo %}
-              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));">
+              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));">
             {% else %}
-              <div style="width: 42px; height: 42px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
                 {{ match.home_team.acronym }}
               </div>
             {% endif %}
           </div>
           <div>
-            <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.home_team.name }}</h2>
-            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">EQUIPO LOCAL</span>
+            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-title); line-height: 1.2;">{{ match.home_team.name }}</h2>
+            <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">EQUIPO LOCAL</span>
           </div>
         </div>
 
-        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--text-title); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-home">
-          {{ match.home_score }}
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--text-title); background: var(--bg-subtle); padding: 0.15rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); min-width: 80px; text-align: center;" id="score-home">
+            {{ match.home_score }}
+          </div>
+          <button type="button" onclick="sendScoreCorrection('{{ match.home_team.id }}', -1)" class="btn btn-secondary btn-sm" title="Corregir marcador (-1)" style="padding: 0.5rem 0.65rem; color: var(--text-secondary); border-color: var(--platinum-border);">
+            -1
+          </button>
         </div>
       </div>
 
-      <!-- Selector Rápido de Jugador Anotador Local -->
-      <div style="margin-bottom: 1.25rem;">
-        <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">
-          Seleccionar Jugador Activo (Opcional):
-        </label>
-        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="roster-home-pills">
-          {% for m in home_roster %}
-            <button type="button" onclick="selectPlayer('home', '{{ m.player.id }}', '{{ m.jersey_number }}', '{{ m.player.full_name }}')" class="btn btn-secondary btn-sm pill-player" id="pill-player-{{ m.player.id }}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-family: var(--font-mono);">
-              #{{ m.jersey_number }} {{ m.player.last_name }}
-            </button>
-          {% endfor %}
+      <!-- Sección Plantilla de Jugadores Local -->
+      <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Plantilla en Acta
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Haz clic sobre un jugador para registrar puntos, faltas o estadísticas</span>
         </div>
       </div>
 
-      <!-- Botonera de Anotación Rápida -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
-        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 1, '1PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +1 Libre 🏀
-        </button>
-        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 2, '2PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +2 Canasta 🔥
-        </button>
-        <button type="button" onclick="sendScore('{{ match.home_team.id }}', 3, '3PT_MADE', 'home')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +3 Triple 🎯
-        </button>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button type="button" onclick="sendFoul('{{ match.home_team.id }}', 'PF', 'home')" class="btn btn-secondary" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); font-weight: 600;">
-          ⚠️ Falta Personal
-        </button>
-        <button type="button" onclick="sendScore('{{ match.home_team.id }}', -1, 'CORRECTION', 'home')" class="btn btn-secondary" style="font-weight: 600; color: var(--text-secondary);">
-          -1 Corregir ↺
-        </button>
+      <div class="player-roster-grid">
+        {% for m in home_roster %}
+          <button type="button" class="player-action-card"
+            data-team-id="{{ match.home_team.id }}"
+            data-team-name="{{ match.home_team.name }}"
+            data-team-acronym="{{ match.home_team.acronym }}"
+            data-team-color="{{ match.home_team.primary_color|default:'#090D16' }}"
+            data-player-id="{{ m.player.id }}"
+            data-jersey="{{ m.jersey_number }}"
+            data-player-name="{{ m.player.full_name }}"
+            data-player-pos="{{ m.player.get_position_display }}"
+            data-player-photo="{% if m.player.photo %}{{ m.player.photo.url }}{% endif %}"
+            data-side="home"
+            onclick="handlePlayerCardClick(this)">
+            {% if m.player.photo %}
+              <div style="position: relative; width: 38px; height: 38px; flex-shrink: 0;">
+                <img src="{{ m.player.photo.url }}" alt="{{ m.player.full_name }}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #FFFFFF;">
+                <span style="position: absolute; bottom: -2px; right: -3px; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.62rem; font-weight: 800; font-family: var(--font-mono); padding: 0.05rem 0.25rem; border-radius: 6px; border: 1px solid #FFFFFF; line-height: 1;">
+                  #{{ m.jersey_number }}
+                </span>
+              </div>
+            {% else %}
+              <div class="player-jersey-badge" style="background: {{ match.home_team.primary_color|default:'#090D16' }};">
+                #{{ m.jersey_number }}
+              </div>
+            {% endif %}
+            <div class="player-info-meta">
+              <div class="player-name">{{ m.player.full_name }}</div>
+              <div class="player-pos">{{ m.player.get_position_display|default:"Jugador" }}</div>
+            </div>
+            <div class="player-action-trigger" title="Abrir panel de acciones">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </button>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-md);">
+            No hay jugadores activos registrados en la plantilla local.
+          </div>
+        {% endfor %}
       </div>
 
     </div>
 
     <!-- 2. CONSOLA EQUIPO VISITANTE -->
-    <div class="card" style="border-top: 4px solid {{ match.away_team.primary_color|default:'#090D16' }}; padding: 1.75rem;">
+    <div class="card" style="border-top: 4px solid {{ match.away_team.primary_color|default:'#090D16' }}; padding: 1.5rem; display: flex; flex-direction: column;">
       
       <!-- Cabecera y Marcador Visitante -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             {% if match.away_team.logo %}
-              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));">
+              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));">
             {% else %}
-              <div style="width: 42px; height: 42px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
                 {{ match.away_team.acronym }}
               </div>
             {% endif %}
           </div>
           <div>
-            <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">{{ match.away_team.name }}</h2>
-            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">EQUIPO VISITANTE</span>
+            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-title); line-height: 1.2;">{{ match.away_team.name }}</h2>
+            <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">EQUIPO VISITANTE</span>
           </div>
         </div>
 
-        <div style="font-family: var(--font-mono); font-size: 3rem; font-weight: 700; color: var(--obsidian-dark); background: var(--bg-subtle); padding: 0.2rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);" id="score-away">
-          {{ match.away_score }}
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--text-title); background: var(--bg-subtle); padding: 0.15rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); min-width: 80px; text-align: center;" id="score-away">
+            {{ match.away_score }}
+          </div>
+          <button type="button" onclick="sendScoreCorrection('{{ match.away_team.id }}', -1)" class="btn btn-secondary btn-sm" title="Corregir marcador (-1)" style="padding: 0.5rem 0.65rem; color: var(--text-secondary); border-color: var(--platinum-border);">
+            -1
+          </button>
         </div>
       </div>
 
-      <!-- Selector Rápido de Jugador Anotador Visitante -->
-      <div style="margin-bottom: 1.25rem;">
-        <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">
-          Seleccionar Jugador Activo (Opcional):
-        </label>
-        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="roster-away-pills">
-          {% for m in away_roster %}
-            <button type="button" onclick="selectPlayer('away', '{{ m.player.id }}', '{{ m.jersey_number }}', '{{ m.player.full_name }}')" class="btn btn-secondary btn-sm pill-player" id="pill-player-{{ m.player.id }}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-family: var(--font-mono);">
-              #{{ m.jersey_number }} {{ m.player.last_name }}
-            </button>
-          {% endfor %}
+      <!-- Sección Plantilla de Jugadores Visitante -->
+      <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Plantilla en Acta
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Haz clic sobre un jugador para registrar puntos, faltas o estadísticas</span>
         </div>
       </div>
 
-      <!-- Botonera de Anotación Rápida -->
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
-        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 1, '1PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +1 Libre 🏀
-        </button>
-        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 2, '2PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +2 Canasta 🔥
-        </button>
-        <button type="button" onclick="sendScore('{{ match.away_team.id }}', 3, '3PT_MADE', 'away')" class="btn btn-primary" style="padding: 0.9rem 0.5rem; font-size: 1.05rem; font-weight: 700;">
-          +3 Triple 🎯
-        </button>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button type="button" onclick="sendFoul('{{ match.away_team.id }}', 'PF', 'away')" class="btn btn-secondary" style="color: var(--state-red); border-color: rgba(220,38,38,0.3); font-weight: 600;">
-          ⚠️ Falta Personal
-        </button>
-        <button type="button" onclick="sendScore('{{ match.away_team.id }}', -1, 'CORRECTION', 'away')" class="btn btn-secondary" style="font-weight: 600; color: var(--text-secondary);">
-          -1 Corregir ↺
-        </button>
+      <div class="player-roster-grid">
+        {% for m in away_roster %}
+          <button type="button" class="player-action-card"
+            data-team-id="{{ match.away_team.id }}"
+            data-team-name="{{ match.away_team.name }}"
+            data-team-acronym="{{ match.away_team.acronym }}"
+            data-team-color="{{ match.away_team.primary_color|default:'#090D16' }}"
+            data-player-id="{{ m.player.id }}"
+            data-jersey="{{ m.jersey_number }}"
+            data-player-name="{{ m.player.full_name }}"
+            data-player-pos="{{ m.player.get_position_display }}"
+            data-player-photo="{% if m.player.photo %}{{ m.player.photo.url }}{% endif %}"
+            data-side="away"
+            onclick="handlePlayerCardClick(this)">
+            {% if m.player.photo %}
+              <div style="position: relative; width: 38px; height: 38px; flex-shrink: 0;">
+                <img src="{{ m.player.photo.url }}" alt="{{ m.player.full_name }}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #FFFFFF;">
+                <span style="position: absolute; bottom: -2px; right: -3px; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.62rem; font-weight: 800; font-family: var(--font-mono); padding: 0.05rem 0.25rem; border-radius: 6px; border: 1px solid #FFFFFF; line-height: 1;">
+                  #{{ m.jersey_number }}
+                </span>
+              </div>
+            {% else %}
+              <div class="player-jersey-badge" style="background: {{ match.away_team.primary_color|default:'#090D16' }};">
+                #{{ m.jersey_number }}
+              </div>
+            {% endif %}
+            <div class="player-info-meta">
+              <div class="player-name">{{ m.player.full_name }}</div>
+              <div class="player-pos">{{ m.player.get_position_display|default:"Jugador" }}</div>
+            </div>
+            <div class="player-action-trigger" title="Abrir panel de acciones">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </button>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-md);">
+            No hay jugadores activos registrados en la plantilla visitante.
+          </div>
+        {% endfor %}
       </div>
 
     </div>
@@ -218,23 +257,30 @@
   </div>
 
   <!-- REGISTRO CRONOLÓGICO DE EVENTOS EN DIRECTO -->
-  <div class="card" style="padding: 1.75rem;">
+  <div class="card" style="padding: 1.5rem 2rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
-      <h3 style="font-size: 1.2rem; font-weight: 600;">Historial Reciente de la Mesa</h3>
-      <span style="font-size: 0.8rem; color: var(--text-secondary);">Registros oficiales guardados en base de datos</span>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-title);">Historial Reciente de la Mesa</h3>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-secondary);">Registros oficiales guardados en tiempo real</span>
     </div>
 
-    <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 280px; overflow-y: auto;">
+    <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 280px; overflow-y: auto;">
       {% for ev in recent_events %}
-        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border);">
           <div style="display: flex; align-items: center; gap: 0.6rem;">
             <span style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary);">{{ ev.get_period_display }} &bull; {{ ev.game_clock }}</span>
             <strong style="color: var(--text-title);">{{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}</strong>
             <span>&bull; {{ ev.get_event_type_display }}</span>
           </div>
           {% if ev.points != 0 %}
-            <strong style="color: var(--gold-primary); font-family: var(--font-mono);">{% if ev.points > 0 %}+{% endif %}{{ ev.points }}</strong>
+            <strong style="color: var(--gold-primary); font-family: var(--font-mono); font-size: 0.95rem;">{% if ev.points > 0 %}+{% endif %}{{ ev.points }}</strong>
           {% endif %}
+        </div>
+      {% empty %}
+        <div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.85rem;">
+          No hay eventos registrados todavía en el encuentro.
         </div>
       {% endfor %}
     </div>
@@ -242,15 +288,139 @@
 
 </div>
 
+<!-- MODAL DE ACCIONES POR JUGADOR (FIBA LIVESTATS STYLE - PROPUESTA 1) -->
+<div id="modal-player-action" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.75); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div class="card" style="max-width: 580px; width: 100%; padding: 1.75rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45); animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- Cabecera del Jugador Activo -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.35rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+          <img id="modal-player-photo" src="" alt="Foto Jugador" style="display: none; width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--gold-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.18); background: #FFFFFF;">
+          <div id="modal-player-jersey" style="width: 62px; height: 62px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; font-family: var(--font-mono); border: 2.5px solid var(--gold-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.18);">
+            #--
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;" id="modal-player-team">
+            EQUIPO
+          </div>
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.15rem 0;" id="modal-player-name">
+            Nombre Jugador
+          </h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);" id="modal-player-position">Posición</span>
+        </div>
+      </div>
+
+      <button type="button" onclick="closePlayerModal()" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-primary)'" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'">
+        ✕
+      </button>
+    </div>
+
+    <!-- SECCIÓN 1: PUNTOS / ANOTACIÓN -->
+    <div style="margin-bottom: 1.35rem;">
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m4.93 4.93 4.24 4.24"></path><path d="m14.83 9.17 4.24-4.24"></path><path d="m14.83 14.83 4.24 4.24"></path><path d="m9.17 14.83-4.24 4.24"></path><circle cx="12" cy="12" r="4"></circle></svg>
+        Puntos y Canastas
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+        <button type="button" onclick="executePlayerScore(1, '1PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+1</span>
+          <span class="pts-label">Tiro Libre</span>
+        </button>
+        <button type="button" onclick="executePlayerScore(2, '2PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+2</span>
+          <span class="pts-label">Canasta (2P)</span>
+        </button>
+        <button type="button" onclick="executePlayerScore(3, '3PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+3</span>
+          <span class="pts-label">Triple (3P)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: ACCIONES DE JUEGO -->
+    <div style="margin-bottom: 1.35rem;">
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+        Acciones de Juego
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; margin-bottom: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('REBOUND')" class="btn-action-stat">
+          + Rebote
+        </button>
+        <button type="button" onclick="executePlayerStat('ASSIST')" class="btn-action-stat">
+          + Asistencia
+        </button>
+        <button type="button" onclick="executePlayerStat('STEAL')" class="btn-action-stat">
+          + Robo
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('BLOCK')" class="btn-action-stat">
+          + Tapón
+        </button>
+        <button type="button" onclick="executePlayerStat('TURNOVER')" class="btn-action-stat stat-turnover">
+          + Pérdida
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: FALTAS Y TIROS FALLADOS -->
+    <div>
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-red);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+        Faltas y Tiros Fallados
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 0.55rem;">
+        <button type="button" onclick="executePlayerFoul('PF')" class="btn-action-foul">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          Falta Personal
+        </button>
+        <button type="button" onclick="executePlayerStat('MISS_FT')" class="btn-action-miss">
+          Fallo Tiro Libre
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('MISS_2PT')" class="btn-action-miss">
+          Fallo Tiro de 2
+        </button>
+        <button type="button" onclick="executePlayerStat('MISS_3PT')" class="btn-action-miss">
+          Fallo Triple
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST FLOTANTE DE CONFIRMACIÓN DE ACCIÓN (QUINTO CUARTO LUXURY DESIGN) -->
+<div id="scorekeeper-toast" style="display: none; position: fixed; bottom: 2rem; right: 2rem; background: rgba(255, 255, 255, 0.96); color: var(--text-title); border: 1px solid var(--platinum-border); border-left: 4px solid var(--gold-primary); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(197, 155, 39, 0.15); padding: 0.85rem 1.25rem; border-radius: var(--radius-lg); z-index: 1100; align-items: center; gap: 0.85rem; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-width: 440px;">
+  <div id="scorekeeper-toast-icon-box" style="width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--gold-light); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; border: 1px solid var(--gold-border);">
+    <span id="scorekeeper-toast-icon">🏀</span>
+  </div>
+  <div style="flex: 1; min-width: 0;">
+    <div style="font-size: 0.68rem; font-weight: 800; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.35rem;">
+      <span>MESA ARBITRAL</span> &bull; <span>ACTA EN DIRECTO</span>
+    </div>
+    <div id="scorekeeper-toast-text" style="font-size: 0.88rem; font-weight: 700; color: var(--text-title); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      Acción registrada correctamente
+    </div>
+  </div>
+  <button type="button" onclick="document.getElementById('scorekeeper-toast').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.2rem; margin-left: 0.25rem; font-size: 0.95rem; line-height: 1; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Cerrar aviso">&times;</button>
+</div>
+
 <!-- MODAL PARA FIRMAR Y CERRAR EL ACTA DIGITAL -->
 <div id="modal-scoresheet-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
   <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
     
     <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
-      <div style="font-size: 1.75rem;">✍️</div>
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--gold-light); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      </div>
       <div>
-        <h3 style="font-size: 1.35rem; font-weight: 600; margin: 0; color: var(--text-title);">Firma y Cierre de Acta Oficial</h3>
-        <span style="font-size: 0.82rem; color: var(--text-secondary);">Esta acción finalizará el partido y bloqueará futuras modificaciones</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-title);">Firma y Cierre de Acta Oficial</h3>
+        <span style="font-size: 0.82rem; color: var(--text-secondary);">Esta acción finalizará el partido y homologará el resultado oficial</span>
       </div>
     </div>
 
@@ -274,8 +444,9 @@
         <button type="button" onclick="closeSignatureModal()" class="btn btn-secondary" style="flex: 1;">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" style="flex: 1.2; background: var(--gold-primary); border-color: var(--gold-primary); color: #FFFFFF;">
-          Firmar y Concluir Partido ✍️
+        <button type="submit" class="btn btn-primary" style="flex: 1.3; background: var(--gold-primary); border-color: var(--gold-primary); color: #FFFFFF; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Firmar y Concluir Partido
         </button>
       </div>
     </form>
@@ -285,43 +456,232 @@
 
 <style>
 @keyframes modalPop {
-  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.pill-player.active {
-  background: var(--obsidian-dark) !important;
-  color: #FFFFFF !important;
-  border-color: var(--gold-primary) !important;
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
 .btn-period.active {
   background: var(--gold-primary) !important;
   color: #FFFFFF !important;
   border-color: var(--gold-primary) !important;
 }
+
+/* Grilla de Plantilla de Jugadores */
+.player-roster-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+@media (min-width: 900px) {
+  .player-roster-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.player-action-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  width: 100%;
+}
+.player-action-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-primary);
+  box-shadow: 0 6px 16px rgba(197, 155, 39, 0.16);
+  background: #FFFFFF;
+}
+
+.player-jersey-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.player-info-meta {
+  flex: 1;
+  min-width: 0;
+}
+.player-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.player-pos {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.player-action-trigger {
+  color: var(--gold-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.player-action-card:hover .player-action-trigger {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* Botones de Acción dentro del Modal */
+.btn-action-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0.5rem;
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 0.15rem;
+}
+.btn-action-pts:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-primary);
+  box-shadow: 0 6px 18px rgba(197, 155, 39, 0.28);
+}
+.pts-badge {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--gold-primary);
+}
+.pts-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.btn-action-stat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  color: var(--text-title);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-stat:hover {
+  background: #FFFFFF;
+  border-color: var(--gold-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+.stat-turnover {
+  color: var(--state-red);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.stat-turnover:hover {
+  border-color: var(--state-red);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.btn-action-foul {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.5rem;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--state-red);
+  font-weight: 700;
+  font-size: 0.84rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-foul:hover {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: var(--state-red);
+  transform: translateY(-1px);
+}
+
+.btn-action-miss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-miss:hover {
+  background: #FFFFFF;
+  border-color: var(--text-secondary);
+  color: var(--text-title);
+  transform: translateY(-1px);
+}
 </style>
 
-<!-- LÓGICA WEBSOCKET Y CRONÓMETRO DE MESA -->
+<!-- LÓGICA WEBSOCKET, MODALES Y CRONÓMETRO DE MESA -->
 <script>
 const matchId = "{{ match.id }}";
 const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
 
 let socket = null;
-let selectedHomePlayerId = null;
-let selectedAwayPlayerId = null;
 let clockInterval = null;
 let isClockRunning = false;
 let currentSeconds = 600; // 10:00 por defecto
 let currentPeriod = "{{ match.current_period|default:'Q1' }}";
 
+let currentModalPlayer = {
+  teamId: null,
+  teamName: '',
+  teamAcronym: '',
+  teamColor: '',
+  playerId: null,
+  jerseyNumber: '',
+  playerName: '',
+  playerPosition: '',
+  playerPhoto: '',
+  side: 'home'
+};
+
 function connectWebSocket() {
   socket = new WebSocket(wsUrl);
-
-  socket.onopen = function() {
-    document.getElementById('ws-dot').style.background = 'var(--state-green)';
-    document.getElementById('ws-text').innerText = 'Mesa Conectada (WS)';
-    document.getElementById('ws-text').style.color = 'var(--state-green)';
-  };
 
   socket.onmessage = function(e) {
     const payload = JSON.parse(e.data);
@@ -376,53 +736,193 @@ function connectWebSocket() {
   };
 
   socket.onclose = function() {
-    document.getElementById('ws-dot').style.background = 'var(--state-red)';
-    document.getElementById('ws-text').innerText = 'Reconectando...';
     setTimeout(connectWebSocket, 2500);
   };
 }
 
-function selectPlayer(side, playerId, jersey, name) {
-  if (side === 'home') {
-    selectedHomePlayerId = (selectedHomePlayerId === playerId) ? null : playerId;
-    document.querySelectorAll('#roster-home-pills .pill-player').forEach(el => el.classList.remove('active'));
-    if (selectedHomePlayerId) {
-      document.getElementById(`pill-player-${playerId}`).classList.add('active');
+/* Manejador de Clic en Tarjeta de Jugador */
+function handlePlayerCardClick(btn) {
+  const d = btn.dataset;
+  openPlayerModal(
+    d.teamId,
+    d.teamName,
+    d.teamAcronym,
+    d.teamColor,
+    d.playerId,
+    d.jersey,
+    d.playerName,
+    d.playerPos || 'Jugador',
+    d.playerPhoto || '',
+    d.side
+  );
+}
+
+/* Modal de Acciones por Jugador */
+function openPlayerModal(teamId, teamName, teamAcronym, teamColor, playerId, jersey, name, position, photoUrl, side) {
+  currentModalPlayer = {
+    teamId, teamName, teamAcronym, teamColor, playerId, jerseyNumber: jersey, playerName: name, playerPosition: position, playerPhoto: photoUrl, side
+  };
+
+  const photoEl = document.getElementById('modal-player-photo');
+  const jerseyEl = document.getElementById('modal-player-jersey');
+  const teamEl = document.getElementById('modal-player-team');
+  const nameEl = document.getElementById('modal-player-name');
+  const posEl = document.getElementById('modal-player-position');
+
+  if (photoUrl) {
+    if (photoEl) {
+      photoEl.src = photoUrl;
+      photoEl.style.display = 'block';
+    }
+    if (jerseyEl) {
+      jerseyEl.style.display = 'none';
     }
   } else {
-    selectedAwayPlayerId = (selectedAwayPlayerId === playerId) ? null : playerId;
-    document.querySelectorAll('#roster-away-pills .pill-player').forEach(el => el.classList.remove('active'));
-    if (selectedAwayPlayerId) {
-      document.getElementById(`pill-player-${playerId}`).classList.add('active');
+    if (photoEl) {
+      photoEl.style.display = 'none';
     }
+    if (jerseyEl) {
+      jerseyEl.style.display = 'flex';
+      jerseyEl.innerText = `#${jersey}`;
+      jerseyEl.style.background = teamColor || 'var(--obsidian-dark)';
+    }
+  }
+
+  if (teamEl) teamEl.innerText = `${teamName} (${teamAcronym})`;
+  if (nameEl) nameEl.innerText = name;
+  if (posEl) posEl.innerHTML = `Dorsal <strong>#${jersey}</strong> &bull; ${position}`;
+
+  const modal = document.getElementById('modal-player-action');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePlayerModal() {
+  const modal = document.getElementById('modal-player-action');
+  if (modal) modal.style.display = 'none';
+}
+
+function showScorekeeperToast(msg, icon = '🏀', iconBg = 'var(--gold-light)', iconColor = 'var(--gold-primary)', borderColor = 'var(--gold-primary)') {
+  const toast = document.getElementById('scorekeeper-toast');
+  const txt = document.getElementById('scorekeeper-toast-text');
+  const iconEl = document.getElementById('scorekeeper-toast-icon');
+  const iconBox = document.getElementById('scorekeeper-toast-icon-box');
+
+  if (toast && txt) {
+    txt.innerText = msg;
+    if (iconEl) iconEl.innerText = icon;
+    if (iconBox) {
+      iconBox.style.background = iconBg;
+      iconBox.style.color = iconColor;
+    }
+    toast.style.borderLeftColor = borderColor;
+    toast.style.display = 'flex';
+
+    clearTimeout(window._toastTimeout);
+    window._toastTimeout = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2600);
   }
 }
 
-function sendScore(teamId, points, eventType, side) {
-  const playerId = side === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
+function executePlayerScore(points, eventType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'score_point',
+      team_id: currentModalPlayer.teamId,
+      points: points,
+      player_id: currentModalPlayer.playerId,
+      event_type: eventType
+    }));
+
+    const desc = points === 1 ? '+1 Tiro Libre' : (points === 2 ? '+2 Canasta' : '+3 Triple');
+    showScorekeeperToast(
+      `${desc} anotado por #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      '🏀',
+      'var(--gold-light)',
+      'var(--gold-primary)',
+      'var(--gold-primary)'
+    );
+  }
+  closePlayerModal();
+}
+
+function executePlayerStat(statType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'record_stat',
+      team_id: currentModalPlayer.teamId,
+      player_id: currentModalPlayer.playerId,
+      stat_type: statType
+    }));
+
+    const statConfig = {
+      'REBOUND': { label: '+1 Rebote', icon: '🔄', bg: 'var(--state-blue-light)', color: 'var(--state-blue)', border: 'var(--state-blue)' },
+      'ASSIST': { label: '+1 Asistencia', icon: '🎯', bg: 'var(--gold-light)', color: 'var(--gold-primary)', border: 'var(--gold-primary)' },
+      'STEAL': { label: '+1 Robo', icon: '⚡', bg: 'var(--state-green-light)', color: 'var(--state-green)', border: 'var(--state-green)' },
+      'BLOCK': { label: '+1 Tapón', icon: '🛡️', bg: 'var(--state-green-light)', color: 'var(--state-green)', border: 'var(--state-green)' },
+      'TURNOVER': { label: '+1 Pérdida', icon: '⚠️', bg: 'var(--state-red-light)', color: 'var(--state-red)', border: 'var(--state-red)' },
+      'MISS_2PT': { label: 'Fallo Tiro de 2', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' },
+      'MISS_3PT': { label: 'Fallo Triple', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' },
+      'MISS_FT': { label: 'Fallo Tiro Libre', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' }
+    };
+    const cfg = statConfig[statType] || { label: statType, icon: '🏀', bg: 'var(--gold-light)', color: 'var(--gold-primary)', border: 'var(--gold-primary)' };
+    showScorekeeperToast(
+      `${cfg.label} registrado para #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      cfg.icon,
+      cfg.bg,
+      cfg.color,
+      cfg.border
+    );
+  }
+  closePlayerModal();
+}
+
+function executePlayerFoul(foulType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'record_foul',
+      team_id: currentModalPlayer.teamId,
+      player_id: currentModalPlayer.playerId,
+      foul_type: foulType
+    }));
+
+    showScorekeeperToast(
+      `Falta personal registrada para #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      '🚨',
+      'var(--state-red-light)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+  }
+  closePlayerModal();
+}
+
+function sendScoreCorrection(teamId, points) {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({
       action: 'score_point',
       team_id: teamId,
       points: points,
-      player_id: playerId,
-      event_type: eventType
+      player_id: null,
+      event_type: 'CORRECTION'
     }));
+    showScorekeeperToast(
+      'Corrección de marcador aplicada (-1)',
+      '✏️',
+      'var(--bg-subtle)',
+      'var(--text-title)',
+      'var(--platinum-border)'
+    );
   }
 }
 
-function sendFoul(teamId, foulType, side) {
-  const playerId = side === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      action: 'record_foul',
-      team_id: teamId,
-      player_id: playerId,
-      foul_type: foulType
-    }));
-  }
-}
-
+/* Control de Tiempo y Reloj */
 function setPeriod(periodCode, initialClock) {
   currentPeriod = periodCode;
   resetClock(initialClock);
@@ -515,10 +1015,10 @@ function syncClockToWebSocket(runningState) {
 function prependTimelineEvent(ev) {
   const timeline = document.getElementById('events-timeline');
   const div = document.createElement('div');
-  div.style = 'display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04);';
+  div.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04);';
   
   const playerText = ev.player_name ? `: ${ev.player_name}` : '';
-  const ptsHtml = ev.points !== 0 ? `<strong style="color: var(--gold-primary); font-family: var(--font-mono);">${ev.points > 0 ? '+' : ''}${ev.points}</strong>` : '';
+  const ptsHtml = ev.points !== 0 ? `<strong style="color: var(--gold-primary); font-family: var(--font-mono); font-size: 0.95rem;">${ev.points > 0 ? '+' : ''}${ev.points}</strong>` : '';
 
   div.innerHTML = `
     <div style="display: flex; align-items: center; gap: 0.6rem;">
@@ -531,6 +1031,7 @@ function prependTimelineEvent(ev) {
   timeline.insertBefore(div, timeline.firstChild);
 }
 
+/* Modales y Event Listeners */
 function openSignatureModal() {
   document.getElementById('modal-scoresheet-container').style.display = 'flex';
 }
@@ -559,6 +1060,29 @@ function submitCloseScoresheet() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', connectWebSocket);
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePlayerModal();
+    closeSignatureModal();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  connectWebSocket();
+
+  const actionModal = document.getElementById('modal-player-action');
+  if (actionModal) {
+    actionModal.addEventListener('click', function(e) {
+      if (e.target === this) closePlayerModal();
+    });
+  }
+
+  const sigModal = document.getElementById('modal-scoresheet-container');
+  if (sigModal) {
+    sigModal.addEventListener('click', function(e) {
+      if (e.target === this) closeSignatureModal();
+    });
+  }
+});
 </script>
 {% endblock %}

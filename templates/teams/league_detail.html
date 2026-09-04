@@ -180,9 +180,15 @@
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.25rem; padding-top: 0.4rem; border-top: 1px dashed var(--platinum-border);">
                 <span>📍 {{ match.location|default:"Pabellón Oficial" }}</span>
                 {% if match.status == 'FINISHED' %}
-                  <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--gold-primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">
-                    Acta Oficial ↗
-                  </a>
+                  {% if user.is_authenticated and user.role in 'TABLE_OFFICIAL,COACH' %}
+                    <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--gold-primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">
+                      Acta Oficial ↗
+                    </a>
+                  {% else %}
+                    <a href="{% url 'matches:match_live' match.id %}" style="color: var(--text-title); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">
+                      Ver Detalles &rarr;
+                    </a>
+                  {% endif %}
                 {% elif match.status == 'LIVE' %}
                   <a href="{% url 'matches:match_live' match.id %}" style="color: var(--state-red); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">
                     Ver en Directo ⚡

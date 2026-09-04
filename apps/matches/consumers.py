@@ -156,7 +156,25 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     },
                 )
 
-        # 3. Actualización de Reloj y Cronómetro de Servidor
+        # 3. Registro de Acciones Estadísticas Avanzadas (Rebotes, Asistencias, Robos, Pérdidas, Tapones, Tiros Fallados)
+        elif action == "record_stat":
+            team_id = content.get("team_id")
+            player_id = content.get("player_id")
+            stat_type = content.get("stat_type")
+
+            result = await self.record_stat_event(
+                self.match_id, team_id, player_id, stat_type
+            )
+            if result:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "event_update",
+                        "data": result,
+                    },
+                )
+
+        # 4. Actualización de Reloj y Cronómetro de Servidor
         elif action == "clock_update":
             clock_str = content.get("game_clock", "10:00")
             period = content.get("period")
@@ -363,6 +381,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             )
 
             # Actualizar hoja estadística individual del jugador en tiempo real
+            player_stat_data = None
             if player:
                 try:
                     from apps.analytics.models import PlayerMatchStat
@@ -389,6 +408,27 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                         stat.points = max(0, stat.points - 1)
                     stat.compute_pir()
                     stat.save()
+
+                    player_stat_data = {
+                        "player_id": player.id,
+                        "player_name": player.full_name,
+                        "team_id": team.id,
+                        "minutes_played": stat.minutes_played,
+                        "points": stat.points,
+                        "two_points_made": stat.two_points_made,
+                        "two_points_attempted": stat.two_points_attempted,
+                        "three_points_made": stat.three_points_made,
+                        "three_points_attempted": stat.three_points_attempted,
+                        "free_throws_made": stat.free_throws_made,
+                        "free_throws_attempted": stat.free_throws_attempted,
+                        "total_rebounds": stat.total_rebounds,
+                        "assists": stat.assists,
+                        "steals": stat.steals,
+                        "turnovers": stat.turnovers,
+                        "blocks_made": stat.blocks_made,
+                        "fouls_committed": stat.fouls_committed,
+                        "valuation_pir": stat.valuation_pir,
+                    }
                 except Exception:
                     pass
 
@@ -402,6 +442,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "clock": server_clock_str,
                 "is_running": is_running,
                 "scoring_team_id": team.id,
+                "player_stat": player_stat_data,
                 "new_event": {
                     "id": event.id,
                     "period": event.get_period_display(),
@@ -438,6 +479,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             )
 
             # Actualizar faltas en la estadística del jugador y recalcular PIR
+            player_stat_data = None
             if player:
                 try:
                     from apps.analytics.models import PlayerMatchStat
@@ -449,6 +491,27 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     stat.fouls_committed += 1
                     stat.compute_pir()
                     stat.save()
+
+                    player_stat_data = {
+                        "player_id": player.id,
+                        "player_name": player.full_name,
+                        "team_id": team.id,
+                        "minutes_played": stat.minutes_played,
+                        "points": stat.points,
+                        "two_points_made": stat.two_points_made,
+                        "two_points_attempted": stat.two_points_attempted,
+                        "three_points_made": stat.three_points_made,
+                        "three_points_attempted": stat.three_points_attempted,
+                        "free_throws_made": stat.free_throws_made,
+                        "free_throws_attempted": stat.free_throws_attempted,
+                        "total_rebounds": stat.total_rebounds,
+                        "assists": stat.assists,
+                        "steals": stat.steals,
+                        "turnovers": stat.turnovers,
+                        "blocks_made": stat.blocks_made,
+                        "fouls_committed": stat.fouls_committed,
+                        "valuation_pir": stat.valuation_pir,
+                    }
                 except Exception:
                     pass
 
@@ -464,6 +527,116 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "match_id": match.id,
                 "team_id": team.id,
                 "team_fouls": team_fouls_count,
+                "player_stat": player_stat_data,
+                "new_event": {
+                    "id": event.id,
+                    "period": event.get_period_display(),
+                    "clock": event.game_clock,
+                    "team_acronym": team.acronym,
+                    "team_id": team.id,
+                    "player_name": player.full_name if player else None,
+                    "event_type": event.get_event_type_display(),
+                    "points": 0,
+                    "time": event.created_at.strftime("%H:%M:%S"),
+                },
+            }
+        except (Match.DoesNotExist, Team.DoesNotExist):
+            return None
+
+    @database_sync_to_async
+    def record_stat_event(self, match_id, team_id, player_id, stat_type):
+        try:
+            match = Match.objects.get(id=match_id)
+            team = Team.objects.get(id=team_id)
+            player = Player.objects.filter(id=player_id).first() if player_id else None
+
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+
+            # Mapeo de tipos de estadísticas a modelos de EventType y descripciones
+            stat_meta = {
+                "REBOUND": (MatchEvent.EventType.REBOUND_DEF, "Rebote capturado"),
+                "ASSIST": (MatchEvent.EventType.ASSIST, "Asistencia repartida"),
+                "STEAL": (MatchEvent.EventType.STEAL, "Robo de balón"),
+                "TURNOVER": (MatchEvent.EventType.TURNOVER, "Pérdida de balón"),
+                "BLOCK": (MatchEvent.EventType.BLOCK, "Tapón colocado"),
+                "MISS_2PT": (MatchEvent.EventType.POINT_2_MISSED, "Tiro de 2 fallado"),
+                "MISS_3PT": (MatchEvent.EventType.POINT_3_MISSED, "Triple fallado"),
+                "MISS_FT": (MatchEvent.EventType.POINT_1_MISSED, "Tiro libre fallado"),
+            }
+
+            event_type_choice, desc = stat_meta.get(
+                stat_type, (MatchEvent.EventType.REBOUND_DEF, "Acción de juego")
+            )
+
+            event = MatchEvent.objects.create(
+                match=match,
+                period=match.current_period,
+                game_clock=server_clock_str,
+                team=team,
+                player=player,
+                event_type=event_type_choice,
+                points=0,
+                description=desc,
+            )
+
+            # Actualizar hoja estadística individual y valoración PIR en tiempo real
+            player_stat_data = None
+            if player:
+                try:
+                    from apps.analytics.models import PlayerMatchStat
+                    stat, _ = PlayerMatchStat.objects.get_or_create(
+                        match=match,
+                        player=player,
+                        defaults={"team": team}
+                    )
+                    if stat_type == "REBOUND":
+                        stat.rebounds_def += 1
+                    elif stat_type == "ASSIST":
+                        stat.assists += 1
+                    elif stat_type == "STEAL":
+                        stat.steals += 1
+                    elif stat_type == "TURNOVER":
+                        stat.turnovers += 1
+                    elif stat_type == "BLOCK":
+                        stat.blocks_made += 1
+                    elif stat_type == "MISS_2PT":
+                        stat.field_goals_attempted += 1
+                    elif stat_type == "MISS_3PT":
+                        stat.field_goals_attempted += 1
+                        stat.three_points_attempted += 1
+                    elif stat_type == "MISS_FT":
+                        stat.free_throws_attempted += 1
+
+                    stat.compute_pir()
+                    stat.save()
+
+                    player_stat_data = {
+                        "player_id": player.id,
+                        "player_name": player.full_name,
+                        "team_id": team.id,
+                        "minutes_played": stat.minutes_played,
+                        "points": stat.points,
+                        "two_points_made": stat.two_points_made,
+                        "two_points_attempted": stat.two_points_attempted,
+                        "three_points_made": stat.three_points_made,
+                        "three_points_attempted": stat.three_points_attempted,
+                        "free_throws_made": stat.free_throws_made,
+                        "free_throws_attempted": stat.free_throws_attempted,
+                        "total_rebounds": stat.total_rebounds,
+                        "assists": stat.assists,
+                        "steals": stat.steals,
+                        "turnovers": stat.turnovers,
+                        "blocks_made": stat.blocks_made,
+                        "fouls_committed": stat.fouls_committed,
+                        "valuation_pir": stat.valuation_pir,
+                    }
+                except Exception:
+                    pass
+
+            return {
+                "match_id": match.id,
+                "team_id": team.id,
+                "player_stat": player_stat_data,
                 "new_event": {
                     "id": event.id,
                     "period": event.get_period_display(),

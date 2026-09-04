@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from apps.teams.models import League, Season, Team
-from apps.matches.models import Match
+from apps.teams.models import League, Season, Team, Player
+from apps.matches.models import Match, MatchEvent
 from apps.analytics.services import recalculate_season_standings
 
 
@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
         # Jornada 2:
         # Partido 3: Real Madrid vs Unicaja (EN DIRECTO)
-        Match.objects.update_or_create(
+        m3, _ = Match.objects.update_or_create(
             season=season_acb,
             round_number=2,
             home_team=rmb,
@@ -74,6 +74,10 @@ class Command(BaseCommand):
                 "scheduled_at": now - timedelta(hours=1),
             }
         )
+
+        # Sincronizar la cronología completa de jugadas (Jugada a Jugada) con las estadísticas del partido
+        from apps.teams.management.commands.seed_full_rosters import generate_match_events_from_stats
+        generate_match_events_from_stats(m3)
 
         # Partido 4: FC Barcelona vs Valencia Basket (PROGRAMADO)
         Match.objects.update_or_create(

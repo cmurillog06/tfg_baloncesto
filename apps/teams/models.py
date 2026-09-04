@@ -87,6 +87,10 @@ class Team(models.Model):
             self.acronym = self.acronym.upper()
         super().save(*args, **kwargs)
 
+    @property
+    def arena(self):
+        return self.arena_name
+
     def __str__(self):
         return f"{self.name} ({self.acronym})"
 

@@ -169,7 +169,7 @@ class Command(BaseCommand):
             round_number=1,
             defaults={
                 "scheduled_at": now - timedelta(days=14),
-                "location": pao.arena_name,
+                "location": f"{pao.arena or 'OAKA Altion'}, {pao.city or 'Atenas'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -184,7 +184,7 @@ class Command(BaseCommand):
             round_number=1,
             defaults={
                 "scheduled_at": now - timedelta(days=13),
-                "location": fnb.arena_name,
+                "location": f"{fnb.arena or 'Ülker Sports Arena'}, {fnb.city or 'Estambul'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -201,7 +201,7 @@ class Command(BaseCommand):
             round_number=2,
             defaults={
                 "scheduled_at": now - timedelta(days=7),
-                "location": pao.arena_name,
+                "location": f"{pao.arena or 'OAKA Altion'}, {pao.city or 'Atenas'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -216,7 +216,7 @@ class Command(BaseCommand):
             round_number=2,
             defaults={
                 "scheduled_at": now - timedelta(days=6),
-                "location": oly.arena_name,
+                "location": f"{oly.arena or 'Peace and Friendship Stadium'}, {oly.city or 'El Pireo'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -233,7 +233,7 @@ class Command(BaseCommand):
             round_number=3,
             defaults={
                 "scheduled_at": now + timedelta(days=3),
-                "location": asm.arena_name,
+                "location": f"{asm.arena or 'Salle Gaston Médecin'}, {asm.city or 'Mónaco'}",
                 "status": Match.Status.SCHEDULED,
                 "current_period": Match.Period.NOT_STARTED,
                 "game_clock": "10:00",
