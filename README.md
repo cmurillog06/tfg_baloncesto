@@ -99,4 +99,3 @@ En la pantalla de inicio de sesión (`/accounts/login/`) dispones de **botones d
 ## 🔄 Reiniciar los Datos de Demostración
 Si durante las pruebas quieres volver a dejar todos los marcadores y clasificaciones en su estado inicial limpio:
 - Pulsa el botón **"Restablecer estado inicial"** en la lista de partidos (`/matches/`).
-- O ejecuta en la terminal: `python manage.py restore_canonical_data`
