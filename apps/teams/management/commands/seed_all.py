@@ -19,13 +19,13 @@ class Command(BaseCommand):
             d = os.path.join(settings.MEDIA_ROOT, sub)
             os.makedirs(d, exist_ok=True)
 
-        # 2. Crear Usuarios de Prueba para la demostración
+        # 2. Crear Usuarios de Prueba para la demostración (coincidentes con el acceso rápido de la web)
         self.stdout.write("\n👤 [1/7] Configurando usuarios y credenciales de prueba...")
         demo_users = [
-            ("admin", "admin@quintocuarto.es", "admin1234", User.Role.ADMIN, True, True),
-            ("mesa", "mesa@quintocuarto.es", "mesa1234", User.Role.TABLE_OFFICIAL, False, False),
-            ("aficionado", "fan@quintocuarto.es", "fan1234", User.Role.FAN, False, False),
-            ("entrenador", "coach@quintocuarto.es", "coach1234", User.Role.COACH, False, False),
+            ("admin", "admin@quintocuarto.es", "Basket2026!", User.Role.ADMIN, True, True),
+            ("oficial_mesa", "mesa@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False),
+            ("coach_madrid", "coach@quintocuarto.es", "Basket2026!", User.Role.COACH, False, False),
+            ("aficionado_basket", "fan@quintocuarto.es", "Basket2026!", User.Role.FAN, False, False),
         ]
 
         for username, email, password, role, is_staff, is_superuser in demo_users:
