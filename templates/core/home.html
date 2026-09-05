@@ -189,7 +189,7 @@
         style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.75rem 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
         <div style="display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-secondary);">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-          <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}</span>
+          <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if not match.location and match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
         </div>
         <a href="{% url 'matches:match_live' match.id %}"
           style="color: var(--gold-primary); font-weight: 600; display: flex; align-items: center; gap: 0.25rem; text-decoration: none;">

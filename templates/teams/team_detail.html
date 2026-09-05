@@ -38,15 +38,10 @@
             {{ team.name }}
           </h1>
           
-          <p style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0;">
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-              {{ team.city|default:"España" }}
-            </span>
-            <span style="opacity: 0.5;">&bull;</span>
-            <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"></path></svg>
-              {{ team.arena_name|default:"Pabellón Oficial" }}
+          <p style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0;">
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span>{{ team.arena_name|default:"Pabellón Oficial" }}{% if team.city %}, {{ team.city }}{% endif %}</span>
             </span>
           </p>
         </div>

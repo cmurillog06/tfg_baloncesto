@@ -45,3 +45,7 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# Scripts temporales / scratch
+scratch*.py
+scratch/

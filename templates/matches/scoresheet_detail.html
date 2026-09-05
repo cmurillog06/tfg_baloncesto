@@ -70,8 +70,10 @@
 
       <div>
         <span style="color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 0.2rem;">SEDE Y PABELLÓN</span>
-        <strong style="color: var(--text-title); font-size: 0.9rem;">{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}</strong>
-        <div style="font-size: 0.78rem; color: var(--text-secondary);">{{ match.home_team.city|default:"España" }}</div>
+        <div style="display: flex; align-items: center; gap: 0.35rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <strong style="color: var(--text-title); font-size: 0.9rem;">{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if match.home_team.city %}, {{ match.home_team.city }}{% endif %}</strong>
+        </div>
       </div>
     </div>
 

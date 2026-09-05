@@ -453,31 +453,13 @@ class Command(BaseCommand):
         if not current_season:
             current_season = Season.objects.first()
 
-        league = current_season.league if current_season else League.objects.first()
-
-        # 3. Asegurar Temporadas Históricas Pasadas
-        seasons_map = {
-            "2024-2025": Season.objects.get_or_create(
-                league=league,
-                name="Temporada 2024-2025",
-                defaults={"start_date": date(2024, 9, 15), "end_date": date(2025, 6, 20), "is_current": False}
-            )[0],
-            "2023-2024": Season.objects.get_or_create(
-                league=league,
-                name="Temporada 2023-2024",
-                defaults={"start_date": date(2023, 9, 15), "end_date": date(2024, 6, 20), "is_current": False}
-            )[0],
-            "2022-2023": Season.objects.get_or_create(
-                league=league,
-                name="Temporada 2022-2023",
-                defaults={"start_date": date(2022, 9, 15), "end_date": date(2023, 6, 20), "is_current": False}
-            )[0],
-        }
+        # Limpiar temporadas históricas ficticias sin partidos para no ensuciar los selectores
+        Season.objects.filter(name__startswith="Temporada 202").delete()
 
         total_players = 0
         total_memberships = 0
 
-        # 4. Poblar y actualizar los 80 jugadores y membresías activas actuales
+        # 3. Poblar y actualizar los 80 jugadores y membresías activas actuales
         for team_slug, players_data in ALL_TEAMS_ROSTERS.items():
             team = Team.objects.filter(slug=team_slug).first()
             if not team:

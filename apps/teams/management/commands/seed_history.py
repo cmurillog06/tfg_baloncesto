@@ -11,7 +11,7 @@ class Command(BaseCommand):
             or Season.objects.first()
         )
         rmb = Team.objects.filter(acronym="RMB").first()
-        fcb = Team.objects.filter(acronym="BAR").first()
+        fcb = Team.objects.filter(acronym__in=["BAR", "FCB"]).first()
 
         count = 0
 

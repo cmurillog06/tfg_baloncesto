@@ -178,7 +178,10 @@
 
               <!-- Pie con Ubicación y Acceso al Acta o Directo -->
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.25rem; padding-top: 0.4rem; border-top: 1px dashed var(--platinum-border);">
-                <span>📍 {{ match.location|default:"Pabellón Oficial" }}</span>
+                <span style="display: inline-flex; align-items: center; gap: 0.3rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
+                </span>
                 {% if match.status == 'FINISHED' %}
                   {% if user.is_authenticated and user.role in 'TABLE_OFFICIAL,COACH' %}
                     <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--gold-primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem;">

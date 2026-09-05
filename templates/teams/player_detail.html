@@ -110,23 +110,51 @@
       </div>
 
       <!-- Promedios Oficiales de Temporada (Estadísticas Agregadas) -->
-      {% if stats_summary %}
-        <div class="card" style="padding: 1.75rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.6rem;">
+      <div class="card" style="padding: 1.75rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
             <h2 style="font-size: 1.2rem; font-weight: 600; color: var(--text-title); margin: 0;">
               Promedios Oficiales en Competición
             </h2>
-            <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; background: var(--bg-subtle); padding: 0.25rem 0.65rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border);">
-              {{ stats_summary.games_played }} partidos disputados
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">
+              {% if selected_season %}{{ selected_season.league.name }} ({{ selected_season.name }}){% else %}Todas las competiciones oficiales (Global){% endif %}
             </span>
           </div>
 
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            {% if available_seasons|length > 1 %}
+              <form method="get" style="display: flex; align-items: center; gap: 0.35rem;">
+                <select name="season" onchange="this.form.submit()" class="form-control" style="font-size: 0.82rem; padding: 0.3rem 0.65rem; border-radius: var(--radius-md);">
+                  <option value="" {% if not selected_season %}selected{% endif %}>Todas las competiciones</option>
+                  {% for s in available_seasons %}
+                    <option value="{{ s.id }}" {% if selected_season and selected_season.id == s.id %}selected{% endif %}>
+                      {{ s.league.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
+            {% endif %}
+
+            {% if stats_summary and stats_summary.games_played > 0 %}
+              <span style="font-size: 0.82rem; color: var(--text-title); font-weight: 700; background: var(--bg-subtle); padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+                {{ stats_summary.games_played }} partido{{ stats_summary.games_played|pluralize:"s" }} ({{ stats_summary.avg_minutes }} min/p)
+              </span>
+            {% else %}
+              <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; background: var(--bg-subtle); padding: 0.35rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+                0 partidos disputados
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if stats_summary and stats_summary.games_played > 0 %}
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
             <div style="background: var(--bg-subtle); padding: 1rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
               <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">PUNTOS (PPP)</span>
               <strong style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--text-title); display: block; margin-top: 0.2rem;">
                 {{ stats_summary.avg_points }}
               </strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ stats_summary.total_points }} pts totales</span>
             </div>
 
             <div style="background: var(--bg-subtle); padding: 1rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
@@ -134,6 +162,7 @@
               <strong style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--text-title); display: block; margin-top: 0.2rem;">
                 {{ stats_summary.avg_rebounds }}
               </strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary);">media / partido</span>
             </div>
 
             <div style="background: var(--bg-subtle); padding: 1rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
@@ -141,14 +170,73 @@
               <strong style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--text-title); display: block; margin-top: 0.2rem;">
                 {{ stats_summary.avg_assists }}
               </strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary);">media / partido</span>
             </div>
 
             <div style="background: var(--gold-light); padding: 1rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--gold-border);">
-              <span style="font-size: 0.72rem; color: #926004; font-weight: 700; text-transform: uppercase;">VALORACIÓN</span>
+              <span style="font-size: 0.72rem; color: #926004; font-weight: 700; text-transform: uppercase;">VALORACIÓN (PIR)</span>
               <strong style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: #926004; display: block; margin-top: 0.2rem;">
                 {{ stats_summary.avg_pir }}
               </strong>
+              <span style="font-size: 0.72rem; color: #926004;">val / partido</span>
             </div>
+          </div>
+        {% else %}
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; padding: 0.5rem 0;">
+            Este jugador aún no ha disputado minutos en los partidos oficiales registrados de esta competición.
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Desglose por Competición (Si ha participado en más de 1 competición) -->
+      {% if competition_breakdown|length > 1 %}
+        <div class="card" style="padding: 1.75rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+          <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.6rem; color: var(--text-title);">
+            Desglose de Rendimiento por Competición
+          </h2>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+                  <th style="padding: 0.6rem 0.5rem;">Competición</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center;">PJ</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center;">Min/P</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center;">Tot PTS</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center; color: var(--gold-primary); font-weight: 700;">PPP</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center;">RPP</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center;">APP</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: center; color: var(--state-blue); font-weight: 700;">VAL (PIR)</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: right;">Filtro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cb in competition_breakdown %}
+                  <tr style="border-bottom: 1px solid var(--platinum-border); {% if selected_season and selected_season.id == cb.season.id %}background: var(--bg-subtle); font-weight: 600;{% endif %}">
+                    <td style="padding: 0.75rem 0.5rem;">
+                      <strong style="color: var(--text-title);">{{ cb.season.league.name }}</strong>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">{{ cb.season.name }}</span>
+                    </td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.games_played }}</td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.avg_minutes }}'</td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 600;">{{ cb.total_points }}</td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; color: var(--gold-primary); font-size: 1rem;">
+                      {{ cb.avg_points }}
+                    </td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.avg_rebounds }}</td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.avg_assists }}</td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; color: var(--state-blue); font-size: 1rem;">
+                      {{ cb.avg_pir }}
+                    </td>
+                    <td style="padding: 0.75rem 0.5rem; text-align: right;">
+                      <a href="?season={{ cb.season.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm);">
+                        Ver &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
       {% endif %}

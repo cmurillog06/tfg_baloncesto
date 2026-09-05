@@ -140,10 +140,27 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
         current_membership = memberships.filter(is_active=True).first()
         context["current_membership"] = current_membership
 
-        # Estadísticas agregadas del jugador en partidos oficiales
+        # Estadísticas agregadas del jugador en partidos oficiales finalizados donde disputó minutos
         from apps.analytics.models import PlayerMatchStat
-        from django.db.models import Avg, Sum
-        stats = PlayerMatchStat.objects.filter(player=player)
+        from django.db.models import Avg, Sum, F
+
+        base_stats = PlayerMatchStat.objects.filter(
+            player=player,
+            match__status="FINISHED",
+            minutes_played__gt=0
+        )
+        
+        # Obtener competiciones/temporadas donde el jugador tiene partidos disputados
+        player_season_ids = base_stats.values_list("match__season_id", flat=True).distinct()
+        available_seasons = Season.objects.filter(id__in=player_season_ids).select_related("league").order_by("league__name")
+        context["available_seasons"] = available_seasons
+
+        season_id = self.request.GET.get("season")
+        selected_season = available_seasons.filter(id=season_id).first() if season_id else None
+        context["selected_season"] = selected_season
+
+        # Filtrar estadísticas para el bloque principal
+        stats = base_stats.filter(match__season=selected_season) if selected_season else base_stats
         games_played = stats.count()
         if games_played > 0:
             agg = stats.aggregate(
@@ -167,6 +184,33 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
             }
         else:
             context["stats_summary"] = None
+
+        # Desglose estadístico individual por cada competición
+        competition_breakdown = []
+        for s in available_seasons:
+            s_stats = base_stats.filter(match__season=s)
+            s_games = s_stats.count()
+            if s_games > 0:
+                s_agg = s_stats.aggregate(
+                    avg_pts=Avg("points"),
+                    avg_reb_off=Avg("rebounds_off"),
+                    avg_reb_def=Avg("rebounds_def"),
+                    avg_ast=Avg("assists"),
+                    avg_pir=Avg("valuation_pir"),
+                    avg_min=Avg("minutes_played"),
+                    total_pts=Sum("points"),
+                )
+                competition_breakdown.append({
+                    "season": s,
+                    "games_played": s_games,
+                    "total_points": s_agg["total_pts"] or 0,
+                    "avg_points": round(s_agg["avg_pts"] or 0, 1),
+                    "avg_rebounds": round((s_agg["avg_reb_off"] or 0) + (s_agg["avg_reb_def"] or 0), 1),
+                    "avg_assists": round(s_agg["avg_ast"] or 0, 1),
+                    "avg_pir": round(s_agg["avg_pir"] or 0, 1),
+                    "avg_minutes": round(s_agg["avg_min"] or 0, 1),
+                })
+        context["competition_breakdown"] = competition_breakdown
 
         return context
 

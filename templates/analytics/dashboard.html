@@ -8,34 +8,31 @@
   <!-- Encabezado Principal de la Sección de Estadísticas -->
   <div style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem;">
     <div>
-      <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">BIG DATA & RENDIMIENTO</div>
+      <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">RENDIMIENTO</div>
       <h1 style="font-size: 2.2rem; font-weight: 600;">Estadísticas y Analítica</h1>
       <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">Métricas avanzadas oficiales, líderes de temporada y comparadores cara a cara</p>
     </div>
 
     <!-- Accesos Rápidos a Comparadores -->
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-      <a href="{% url 'analytics:leaders' %}" class="btn btn-gold btn-sm" style="box-shadow: 0 4px 12px rgba(197, 155, 39, 0.2);">
-        🏆 Ver Todos los Líderes
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+      <a href="{% url 'analytics:leaders' %}" class="btn btn-primary btn-sm" style="border-radius: var(--radius-md); font-weight: 600; padding: 0.45rem 1.1rem; box-shadow: 0 4px 12px rgba(9, 13, 22, 0.12);">
+        Ver Tablas de Líderes &rarr;
       </a>
-      <a href="{% url 'analytics:compare_teams' %}" class="btn btn-secondary btn-sm">
-        ⚔️ Comparar Equipos
+      <a href="{% url 'analytics:compare_teams' %}" class="btn btn-secondary btn-sm" style="border-radius: var(--radius-md); font-weight: 500; padding: 0.45rem 1rem;">
+        Comparar Equipos
       </a>
-      <a href="{% url 'analytics:compare_players' %}" class="btn btn-secondary btn-sm">
-        🏀 Comparar Jugadores
+      <a href="{% url 'analytics:compare_players' %}" class="btn btn-secondary btn-sm" style="border-radius: var(--radius-md); font-weight: 500; padding: 0.45rem 1rem;">
+        Comparar Jugadores
       </a>
     </div>
   </div>
 
   <!-- SECCIÓN 1: LÍDERES DE LA TEMPORADA (PODIO DE 4 PILARES) -->
   <div style="margin-bottom: 3.5rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h2 style="font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-        <span>🔥</span> Líderes Individuales de la Liga
+    <div style="margin-bottom: 1.5rem;">
+      <h2 style="font-size: 1.4rem; font-weight: 600; margin: 0;">
+        Líderes Individuales de la Liga
       </h2>
-      <a href="{% url 'analytics:leaders' %}" style="font-size: 0.88rem; font-weight: 600; color: var(--gold-primary);">
-        Ver Tablas Completas &rarr;
-      </a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
@@ -43,14 +40,23 @@
       <!-- 1. MÁXIMO ANOTADOR (PUNTOS) -->
       <div class="card card-interactive" style="border-top: 4px solid var(--gold-primary); padding: 1.5rem;">
         <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
-          🎯 MÁXIMO ANOTADOR (PTS)
+          MÁXIMO ANOTADOR (PTS)
         </div>
 
         {% if leaders.top_scorers %}
           {% with leader=leaders.top_scorers.0 %}
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                {{ leader.team__acronym }}
+              <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+                {% if leader.player__photo %}
+                  <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #FFFFFF;">
+                {% else %}
+                  <div style="width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                  </div>
+                {% endif %}
+                <span style="position: absolute; bottom: -2px; right: -4px; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                  {{ leader.team__acronym }}
+                </span>
               </div>
               <div>
                 <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 700; font-size: 1.05rem; color: var(--text-title); display: block;">
@@ -60,11 +66,16 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">PROMEDIO / TOTAL</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; background: var(--bg-subtle); padding: 0.85rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
               <div>
-                <span style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--gold-primary);">{{ leader.avg_points|floatformat:1 }}</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">pts/p ({{ leader.total_points }} tot)</span>
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">PROMEDIO</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--gold-primary); line-height: 1; display: block;">{{ leader.avg_points|floatformat:1 }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">pts / partido</span>
+              </div>
+              <div style="border-left: 1px solid var(--platinum-border); padding-left: 0.75rem;">
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">TOTAL</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--text-title); line-height: 1; display: block;">{{ leader.total_points }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">en {{ leader.games_played }} pj</span>
               </div>
             </div>
           {% endwith %}
@@ -76,14 +87,23 @@
       <!-- 2. LÍDER VALORACIÓN / MVP (PIR) -->
       <div class="card card-interactive" style="border-top: 4px solid var(--state-blue); padding: 1.5rem;">
         <div style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
-          👑 LÍDER VALORACIÓN (MVP)
+          LÍDER VALORACIÓN (MVP)
         </div>
 
         {% if leaders.top_mvp %}
           {% with leader=leaders.top_mvp.0 %}
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                {{ leader.team__acronym }}
+              <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+                {% if leader.player__photo %}
+                  <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #FFFFFF;">
+                {% else %}
+                  <div style="width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                  </div>
+                {% endif %}
+                <span style="position: absolute; bottom: -2px; right: -4px; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                  {{ leader.team__acronym }}
+                </span>
               </div>
               <div>
                 <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 700; font-size: 1.05rem; color: var(--text-title); display: block;">
@@ -93,11 +113,16 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">VALORACIÓN MEDIA</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; background: var(--bg-subtle); padding: 0.85rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
               <div>
-                <span style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--state-blue);">{{ leader.avg_pir|floatformat:1 }}</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">val/p</span>
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">PROMEDIO</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--state-blue); line-height: 1; display: block;">{{ leader.avg_pir|floatformat:1 }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">val / partido</span>
+              </div>
+              <div style="border-left: 1px solid var(--platinum-border); padding-left: 0.75rem;">
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">TOTAL</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--text-title); line-height: 1; display: block;">{{ leader.total_pir }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">en {{ leader.games_played }} pj</span>
               </div>
             </div>
           {% endwith %}
@@ -109,14 +134,23 @@
       <!-- 3. MÁXIMO ASISTENTE (AST) -->
       <div class="card card-interactive" style="border-top: 4px solid var(--state-green); padding: 1.5rem;">
         <div style="font-size: 0.75rem; font-weight: 700; color: var(--state-green); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
-          🤝 MÁXIMO ASISTENTE (AST)
+          MÁXIMO ASISTENTE (AST)
         </div>
 
         {% if leaders.top_assists %}
           {% with leader=leaders.top_assists.0 %}
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                {{ leader.team__acronym }}
+              <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+                {% if leader.player__photo %}
+                  <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #FFFFFF;">
+                {% else %}
+                  <div style="width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                  </div>
+                {% endif %}
+                <span style="position: absolute; bottom: -2px; right: -4px; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                  {{ leader.team__acronym }}
+                </span>
               </div>
               <div>
                 <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 700; font-size: 1.05rem; color: var(--text-title); display: block;">
@@ -126,11 +160,16 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">ASISTENCIAS MEDIA</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; background: var(--bg-subtle); padding: 0.85rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
               <div>
-                <span style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--state-green);">{{ leader.avg_assists|floatformat:1 }}</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">ast/p</span>
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">PROMEDIO</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--state-green); line-height: 1; display: block;">{{ leader.avg_assists|floatformat:1 }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">ast / partido</span>
+              </div>
+              <div style="border-left: 1px solid var(--platinum-border); padding-left: 0.75rem;">
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">TOTAL</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--text-title); line-height: 1; display: block;">{{ leader.total_assists }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">en {{ leader.games_played }} pj</span>
               </div>
             </div>
           {% endwith %}
@@ -142,14 +181,23 @@
       <!-- 4. MÁXIMO REBOTEADOR (REB) -->
       <div class="card card-interactive" style="border-top: 4px solid var(--obsidian-dark); padding: 1.5rem;">
         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">
-          🛡️ REBOTES TOTALES (REB)
+          REBOTES TOTALES (REB)
         </div>
 
         {% if leaders.top_rebounders %}
           {% with leader=leaders.top_rebounders.0 %}
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-              <div style="width: 52px; height: 52px; border-radius: 50%; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                {{ leader.team__acronym }}
+              <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+                {% if leader.player__photo %}
+                  <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #FFFFFF;">
+                {% else %}
+                  <div style="width: 62px; height: 62px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                  </div>
+                {% endif %}
+                <span style="position: absolute; bottom: -2px; right: -4px; background: {{ leader.team__primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                  {{ leader.team__acronym }}
+                </span>
               </div>
               <div>
                 <a href="{% url 'teams:player_detail' leader.player__id %}" style="font-weight: 700; font-size: 1.05rem; color: var(--text-title); display: block;">
@@ -159,11 +207,16 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">REBOTES MEDIA</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; background: var(--bg-subtle); padding: 0.85rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
               <div>
-                <span style="font-family: var(--font-mono); font-size: 1.6rem; font-weight: 700; color: var(--obsidian-dark);">{{ leader.avg_rebounds|floatformat:1 }}</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">reb/p</span>
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">PROMEDIO</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--obsidian-dark); line-height: 1; display: block;">{{ leader.avg_rebounds|floatformat:1 }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">reb / partido</span>
+              </div>
+              <div style="border-left: 1px solid var(--platinum-border); padding-left: 0.75rem;">
+                <span style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">TOTAL</span>
+                <span style="font-family: var(--font-mono); font-size: 1.55rem; font-weight: 700; color: var(--text-title); line-height: 1; display: block;">{{ leader.total_rebounds }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">en {{ leader.games_played }} pj</span>
               </div>
             </div>
           {% endwith %}
@@ -180,13 +233,18 @@
     
     <!-- Tarjeta Comparador de Clubes -->
     <div class="card" style="padding: 2.25rem; background: linear-gradient(135deg, #FFFFFF, var(--bg-subtle)); border: 1.5px solid var(--platinum-border); position: relative; overflow: hidden;">
-      <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">⚔️</div>
-      <h3 style="font-size: 1.45rem; font-weight: 600; margin-bottom: 0.5rem;">Comparador Cara a Cara (Equipos)</h3>
+      <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+        CARA A CARA EQUIPOS
+      </div>
+      <h3 style="font-size: 1.45rem; font-weight: 600; margin-bottom: 0.5rem;">Comparador de Equipos</h3>
       <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">
         Analiza el historial de enfrentamientos directos entre dos clubes, promedios de anotación a favor/contra y balance de victorias.
       </p>
       
       <form action="{% url 'analytics:compare_teams' %}" method="get" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+        {% if season %}
+          <input type="hidden" name="season" value="{{ season.id }}">
+        {% endif %}
         <select name="team_a" class="form-control" style="font-size: 0.88rem;">
           {% for t in all_teams %}
             <option value="{{ t.slug }}">{{ t.name }}</option>
@@ -198,17 +256,19 @@
           {% endfor %}
         </select>
         <button type="submit" class="btn btn-primary" style="grid-column: 1 / -1; font-weight: 700;">
-          Comparar Clubes ⚔️
+          Comparar Equipos &rarr;
         </button>
       </form>
     </div>
 
     <!-- Tarjeta Comparador de Jugadores -->
     <div class="card" style="padding: 2.25rem; background: linear-gradient(135deg, #FFFFFF, var(--bg-subtle)); border: 1.5px solid var(--platinum-border); position: relative; overflow: hidden;">
-      <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">🏀</div>
-      <h3 style="font-size: 1.45rem; font-weight: 600; margin-bottom: 0.5rem;">Comparador de Rendimiento (Jugadores)</h3>
+      <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">
+        CARA A CARA JUGADORES
+      </div>
+      <h3 style="font-size: 1.45rem; font-weight: 600; margin-bottom: 0.5rem;">Comparador de Jugadores</h3>
       <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem;">
-        Compara métricas antropométricas (altura, peso) y estadísticas por partido (PTS, REB, AST, VAL) entre dos atletas.
+        Compara métricas y estadísticas por partido (PTS, REB, AST, VAL) entre dos jugadores.
       </p>
 
       <form action="{% url 'analytics:compare_players' %}" method="get" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
@@ -223,7 +283,7 @@
           {% endfor %}
         </select>
         <button type="submit" class="btn btn-gold" style="grid-column: 1 / -1; font-weight: 700; color: #FFFFFF;">
-          Comparar Atletas 🏀
+          Comparar Jugadores &rarr;
         </button>
       </form>
     </div>

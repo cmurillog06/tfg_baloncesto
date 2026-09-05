@@ -127,6 +127,24 @@ class Player(models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    @property
+    def current_membership(self):
+        """
+        Retorna la ficha de plantilla activa más reciente del jugador.
+        """
+        membership = self.team_memberships.filter(is_active=True).select_related("team", "season").order_by("-season__start_date").first()
+        if not membership:
+            membership = self.team_memberships.select_related("team", "season").order_by("-season__start_date").first()
+        return membership
+
+    @property
+    def current_team(self):
+        """
+        Retorna el club actual activo del jugador.
+        """
+        membership = self.current_membership
+        return membership.team if membership else None
+
     def __str__(self):
         return f"{self.full_name} ({self.get_position_display()})"
 

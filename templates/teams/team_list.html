@@ -32,18 +32,15 @@
           {{ team.name }}
         </h2>
         
-        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.25rem;">
-          📍 {{ team.city|default:"España" }}
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>{{ team.arena_name|default:"Pabellón Oficial" }}{% if team.city %}, {{ team.city }}{% endif %}</span>
         </p>
 
-        <!-- Información Rápida (Pabellón y Entrenador) -->
+        <!-- Información Rápida (Entrenador) -->
         <div style="background: var(--bg-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); font-size: 0.82rem; color: var(--text-secondary); line-height: 1.7; text-align: left; margin-bottom: 1.5rem;">
-          <div style="display: flex; justify-content: space-between; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            <span>🏟️ Pabellón:</span>
-            <strong style="color: var(--text-title); margin-left: 0.5rem;">{{ team.arena_name|default:"Pabellón Oficial" }}</strong>
-          </div>
           <div style="display: flex; justify-content: space-between;">
-            <span>📋 Entrenador:</span>
+            <span style="font-weight: 600;">Entrenador:</span>
             <strong style="color: var(--text-title);">
               {% if team.coach %}
                 {{ team.coach.get_full_name|default:team.coach.username }}
