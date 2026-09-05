@@ -5,18 +5,16 @@
 
 ---
 
-## 💻 Requisito Único Previo
-Tener instalado **Python 3.11 o superior** en el ordenador (Descargar gratis desde [python.org](https://www.python.org/downloads/)).  
-*(En Windows, es importante marcar la casilla **"Add Python to PATH"** durante el instalador).*
-
----
-
 ## 🚀 Guía Rápida de Puesta en Marcha (Menos de 2 minutos)
 
 Abre la terminal en la carpeta principal del proyecto y ejecuta estos comandos en orden:
 
 ### Si usas Windows (PowerShell / Símbolo del Sistema):
 ```bash
+
+git clone https://github.com/cmurillog06/tfg_baloncesto.git
+cd tfg_baloncesto
+
 # 1. Crear el entorno virtual
 python -m venv venv
 
