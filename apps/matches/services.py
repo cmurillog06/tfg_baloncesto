@@ -31,6 +31,7 @@ def restore_canonical_matches():
     Restaura todos los marcadores, periodos, relojes, estadísticas individuales y jugadas
     de los partidos al estado canónico oficial.
     """
+    canonical_match_ids = []
     for home_acr, away_acr, round_num, status, period, clock, h_score, a_score in CANONICAL_MATCH_SCORES:
         matches = Match.objects.filter(
             home_team__acronym=home_acr,
@@ -46,6 +47,7 @@ def restore_canonical_matches():
             )
 
         for match in matches:
+            canonical_match_ids.append(match.id)
             needs_stat_regen = (
                 match.home_score != h_score
                 or match.away_score != a_score
@@ -153,6 +155,11 @@ def restore_canonical_matches():
                 # Generar eventos jugada a jugada acordes
                 generate_match_events_from_stats(match)
 
+    # Eliminar cualquier partido de prueba no canónico creado durante tests
+    if canonical_match_ids:
+        Match.objects.exclude(id__in=canonical_match_ids).delete()
+
     # Recalcular clasificaciones de todas las temporadas
     for season in Season.objects.all():
         recalculate_season_standings(season)
+

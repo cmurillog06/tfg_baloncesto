@@ -505,30 +505,6 @@ class Command(BaseCommand):
 
             self.stdout.write(self.style.SUCCESS(f"Plantilla de {team.name} completada con {len(players_data)} jugadores."))
 
-        # 5. Asignar historial multiclub y multitemporada
-        for hist in HISTORICAL_MEMBERSHIPS:
-            p_first, p_last = hist["player"]
-            norm_fn = normalize_str(p_first)
-            norm_ln = normalize_str(p_last)
-            p = None
-            for candidate in Player.objects.all():
-                if normalize_str(candidate.first_name) == norm_fn and normalize_str(candidate.last_name) == norm_ln:
-                    p = candidate
-                    break
-            t = Team.objects.filter(slug=hist["team"]).first()
-            s = seasons_map.get(hist["season"])
-            if p and t and s:
-                TeamMembership.objects.filter(team=t, season=s, jersey_number=hist["num"]).delete()
-                TeamMembership.objects.filter(player=p, season=s).delete()
-                TeamMembership.objects.create(
-                    team=t,
-                    player=p,
-                    season=s,
-                    jersey_number=hist["num"],
-                    is_captain=hist["captain"],
-                    is_active=False,
-                )
-
         # Asegurar que todas las membresías de temporadas pasadas queden formalmente inactivas
         TeamMembership.objects.exclude(season=current_season).update(is_active=False)
 

@@ -66,6 +66,39 @@ class Match(models.Model):
         verbose_name_plural = "Partidos"
         ordering = ["scheduled_at"]
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+
+        if self.home_team_id and self.away_team_id:
+            if self.home_team_id == self.away_team_id:
+                raise ValidationError({
+                    "away_team": "El equipo local y el equipo visitante no pueden ser el mismo."
+                })
+
+        if self.season_id:
+            from apps.teams.models import TeamMembership
+            from apps.analytics.models import Standing
+
+            # Obtener los equipos formalmente inscritos en esta temporada
+            valid_team_ids = set(
+                Standing.objects.filter(season=self.season).values_list("team_id", flat=True)
+            )
+            if not valid_team_ids:
+                valid_team_ids = set(
+                    TeamMembership.objects.filter(season=self.season).values_list("team_id", flat=True)
+                )
+
+            if valid_team_ids:
+                if self.home_team_id and self.home_team_id not in valid_team_ids:
+                    raise ValidationError({
+                        "home_team": f"El equipo '{self.home_team.name}' no está inscrito en la competición '{self.season.league.name}' ({self.season.name})."
+                    })
+                if self.away_team_id and self.away_team_id not in valid_team_ids:
+                    raise ValidationError({
+                        "away_team": f"El equipo '{self.away_team.name}' no está inscrito en la competición '{self.season.league.name}' ({self.season.name})."
+                    })
+
     def __str__(self):
         return f"{self.home_team.acronym} {self.home_score} - {self.away_score} {self.away_team.acronym} ({self.get_status_display()})"
 

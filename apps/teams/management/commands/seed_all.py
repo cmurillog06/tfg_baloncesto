@@ -28,6 +28,10 @@ class Command(BaseCommand):
             ("aficionado_basket", "fan@quintocuarto.es", "Basket2026!", User.Role.FAN, False, False),
         ]
 
+        # Limpiar usuarios temporales que no sean los 4 oficiales de demostración
+        canonical_usernames = [u[0] for u in demo_users]
+        User.objects.exclude(username__in=canonical_usernames).delete()
+
         for username, email, password, role, is_staff, is_superuser in demo_users:
             user, created = User.objects.get_or_create(
                 username=username,
@@ -70,8 +74,33 @@ class Command(BaseCommand):
         self.stdout.write("\n📜 [7/7] Registrando historial deportivo pasado de jugadores...")
         call_command("seed_history")
 
-        # 9. Restaurar y verificar estado canónico final
+        # 9. Restaurar y verificar estado canónico final de partidos y clasificaciones
         call_command("restore_canonical_data")
+
+        # 10. Restaurar mensajes oficiales del chat en vivo
+        self.stdout.write("\n💬 Restaurando mensajes canónicos del chat en vivo...")
+        from apps.chat.models import ChatMessage
+        from apps.matches.models import Match
+        
+        ChatMessage.objects.all().delete()
+        live_match = Match.objects.filter(home_team__acronym="RMB", away_team__acronym="UNI").first()
+        if live_match:
+            coach = User.objects.filter(username="coach_madrid").first()
+            admin_u = User.objects.filter(username="admin").first()
+            fan = User.objects.filter(username="aficionado_basket").first()
+            mesa = User.objects.filter(username="oficial_mesa").first()
+            
+            if coach:
+                ChatMessage.objects.create(match=live_match, user=coach, message="¡Vamos equipo!")
+            if admin_u:
+                ChatMessage.objects.create(match=live_match, user=admin_u, message="¡Gran defensa!")
+            if fan:
+                ChatMessage.objects.create(match=live_match, user=fan, message="¡Gran defensa! ¡Increíble jugada!")
+            if mesa:
+                ChatMessage.objects.create(match=live_match, user=mesa, message="¡Gran defensa!")
+            if coach:
+                ChatMessage.objects.create(match=live_match, user=coach, message="¡Vamos equipo!")
+            self.stdout.write("   ✓ Mensajes de chat canónicos restaurados con éxito.")
 
         self.stdout.write("\n" + "=" * 70)
         self.stdout.write(

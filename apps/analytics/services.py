@@ -62,8 +62,10 @@ def recalculate_season_standings(season):
             stats_by_team[away_id]["wins"] += 1
             stats_by_team[home_id]["losses"] += 1
 
-    # Guardar / Actualizar registros en Standing
+    # Guardar / Actualizar registros en Standing y purgar obsoletos
+    valid_team_ids = set()
     for team_id, data in stats_by_team.items():
+        valid_team_ids.add(team_id)
         standing, _ = Standing.objects.get_or_create(
             season=season,
             team=data["team"],
@@ -73,6 +75,9 @@ def recalculate_season_standings(season):
         standing.points_for = data["points_for"]
         standing.points_against = data["points_against"]
         standing.save()
+
+    Standing.objects.filter(season=season).exclude(team_id__in=valid_team_ids).delete()
+
 
 
 def get_league_leaders(season=None, limit=5):
