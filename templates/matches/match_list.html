@@ -33,7 +33,7 @@
         </h2>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.75rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 1.5rem;">
         {% for match in live_matches %}
           <div class="card card-interactive" style="border-top: 4px solid var(--gold-primary); position: relative; padding: 1.75rem; box-shadow: var(--shadow-card);">
             
@@ -122,7 +122,7 @@
       Próximos Encuentros Programados
     </h2>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.5rem;">
       {% for match in upcoming_matches %}
         <div class="card" style="padding: 1.5rem; position: relative; box-shadow: var(--shadow-card);">
           
@@ -200,7 +200,7 @@
       Partidos Finalizados
     </h2>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.5rem;">
       {% for match in finished_matches %}
         <div class="card" style="padding: 1.5rem; box-shadow: var(--shadow-card);">
           

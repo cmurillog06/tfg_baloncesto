@@ -42,7 +42,7 @@
   </div>
 
   <!-- Contenido en Dos Columnas: Clasificación Oficial y Calendario de Jornadas -->
-  <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: start;">
+  <div class="grid-responsive-2" style="gap: 2rem; align-items: start;">
     
     <!-- Columna Izquierda: Tabla de Clasificación Oficial -->
     <div class="card" style="padding: 1.75rem;">
@@ -55,7 +55,7 @@
       </div>
 
       {% if standings %}
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
           <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
             <thead>
               <tr style="border-bottom: 2px solid var(--platinum-border); color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -180,7 +180,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.25rem; padding-top: 0.4rem; border-top: 1px dashed var(--platinum-border);">
                 <span style="display: inline-flex; align-items: center; gap: 0.3rem;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
+                  <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if not match.location and match.home_team.city and match.home_team.city not in match.home_team.arena_name %}, {{ match.home_team.city }}{% endif %}</span>
                 </span>
                 {% if match.status == 'FINISHED' %}
                   {% if user.is_authenticated and user.role in 'TABLE_OFFICIAL,COACH' %}

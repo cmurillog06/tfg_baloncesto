@@ -13,7 +13,7 @@
   </div>
 
   <!-- Grid de Equipos -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.5rem;">
     {% for team in teams %}
       <div class="card card-interactive" style="border-top: 4px solid {{ team.primary_color|default:'#090D16' }}; padding: 2rem 1.75rem; text-align: center; position: relative;">
         

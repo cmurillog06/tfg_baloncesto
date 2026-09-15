@@ -14,7 +14,7 @@
     <p style="color: var(--text-secondary); font-size: 1rem;">Gestiona tus datos de acceso en Quinto Cuarto</p>
   </div>
 
-  <div style="display: grid; grid-template-columns: 320px 1fr; gap: 2rem; align-items: start;">
+  <div class="profile-layout-grid">
 
     <!-- Tarjeta de Identificación / Pasaporte Deportivo (Tono Champagne Suave) -->
     <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-xl); border: 1px solid rgba(212, 175, 55, 0.35); box-shadow: var(--shadow-card);">
@@ -94,7 +94,7 @@
       <form method="post" enctype="multipart/form-data" novalidate id="profile-form">
         {% csrf_token %}
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+        <div class="grid-responsive-2" style="margin-bottom: 1.25rem;">
           <div class="form-group" style="margin-bottom: 0;">
             <label for="id_username" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.35rem; display: block;">Nombre de Usuario</label>
             {{ user_form.username }}
@@ -114,7 +114,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+        <div class="grid-responsive-2" style="margin-bottom: 1.25rem;">
           <div class="form-group" style="margin-bottom: 0;">
             <label for="id_phone" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.35rem; display: block;">Teléfono de Contacto</label>
             {{ profile_form.phone }}

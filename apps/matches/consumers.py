@@ -130,13 +130,16 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 self.match_id, team_id, points, player_id, event_type
             )
             if result:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "match_update",
-                        "data": result,
-                    },
-                )
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "match_update",
+                            "data": result,
+                        },
+                    )
 
         # 2. Registro de Faltas Personales / Técnicas
         elif action == "record_foul":
@@ -148,13 +151,16 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 self.match_id, team_id, player_id, foul_type
             )
             if result:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "event_update",
-                        "data": result,
-                    },
-                )
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "event_update",
+                            "data": result,
+                        },
+                    )
 
         # 3. Registro de Acciones Estadísticas Avanzadas (Rebotes, Asistencias, Robos, Pérdidas, Tapones, Tiros Fallados)
         elif action == "record_stat":
@@ -166,15 +172,31 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 self.match_id, team_id, player_id, stat_type
             )
             if result:
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "event_update",
+                            "data": result,
+                        },
+                    )
+
+        # 4. Solicitud de Tiempo Muerto (Timeout Oficial con Pausa de Reloj)
+        elif action == "request_timeout":
+            team_id = content.get("team_id")
+            result = await self.record_timeout_event(self.match_id, team_id)
+            if result:
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        "type": "event_update",
+                        "type": "timeout_update",
                         "data": result,
                     },
                 )
 
-        # 4. Actualización de Reloj y Cronómetro de Servidor
+        # 5. Actualización de Reloj y Cronómetro de Servidor
         elif action == "clock_update":
             clock_str = content.get("game_clock", "10:00")
             period = content.get("period")
@@ -196,7 +218,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     },
                 )
 
-        # 4. Cambio de Periodo / Cuarto
+        # 6. Cambio de Periodo / Cuarto
         elif action == "period_change":
             period = content.get("period")
             clock_str = content.get("game_clock", "10:00")
@@ -214,7 +236,44 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     },
                 )
 
-        # 5. Cierre Oficial del Acta Digital
+        # 7. Selección y Registro de Quinteto Inicial (5 Jugadores en Pista)
+        elif action == "set_starting_five":
+            team_id = content.get("team_id")
+            player_ids = content.get("player_ids", [])
+            result = await self.record_starting_five(self.match_id, team_id, player_ids)
+            if result:
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "substitution_update",
+                            "data": result,
+                        },
+                    )
+
+        # 8. Sustitución de Jugadores (Banquillo <-> En Pista)
+        elif action == "substitute_player":
+            team_id = content.get("team_id")
+            player_out_id = content.get("player_out_id")
+            player_in_id = content.get("player_in_id")
+            result = await self.record_substitution(
+                self.match_id, team_id, player_out_id, player_in_id
+            )
+            if result:
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "substitution_update",
+                            "data": result,
+                        },
+                    )
+
+        # 9. Cierre Oficial del Acta Digital
         elif action == "close_scoresheet":
             referee_sig = content.get("referee_signature", "Árbitro Principal")
             table_sig = content.get("table_official_signature", user.username if user else "Mesa Arbitral")
@@ -247,10 +306,26 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
+    async def timeout_update(self, event):
+        await self.send_json(
+            {
+                "type": "timeout_update",
+                "data": event["data"],
+            }
+        )
+
     async def event_update(self, event):
         await self.send_json(
             {
                 "type": "event_update",
+                "data": event["data"],
+            }
+        )
+
+    async def substitution_update(self, event):
+        await self.send_json(
+            {
+                "type": "substitution_update",
                 "data": event["data"],
             }
         )
@@ -316,6 +391,14 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 for ev in events
             ]
 
+            from apps.analytics.models import PlayerMatchStat
+            player_stats = PlayerMatchStat.objects.filter(match=match)
+            player_points = {str(st.player_id): st.points for st in player_stats}
+            player_fouls = {str(st.player_id): st.fouls_committed for st in player_stats}
+
+            home_on_court = match.get_on_court_player_ids(match.home_team)
+            away_on_court = match.get_on_court_player_ids(match.away_team)
+
             return {
                 "id": match.id,
                 "league": match.season.league.name,
@@ -332,6 +415,10 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     "acronym": match.home_team.acronym,
                     "color": match.home_team.primary_color,
                     "score": match.home_score,
+                    "timeouts": match.get_team_timeouts_info(match.home_team),
+                    "fouls": match.get_team_fouls_info(match.home_team),
+                    "on_court": home_on_court,
+                    "has_five": match.has_valid_five_on_court(match.home_team),
                 },
                 "away_team": {
                     "id": match.away_team.id,
@@ -339,7 +426,15 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     "acronym": match.away_team.acronym,
                     "color": match.away_team.primary_color,
                     "score": match.away_score,
+                    "timeouts": match.get_team_timeouts_info(match.away_team),
+                    "fouls": match.get_team_fouls_info(match.away_team),
+                    "on_court": away_on_court,
+                    "has_five": match.has_valid_five_on_court(match.away_team),
                 },
+                "home_on_court": home_on_court,
+                "away_on_court": away_on_court,
+                "player_points": player_points,
+                "player_fouls": player_fouls,
                 "is_closed": hasattr(match, "scoresheet") and match.scoresheet.is_closed,
                 "recent_events": events_data,
             }
@@ -353,11 +448,34 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             team = Team.objects.get(id=team_id)
             player = Player.objects.filter(id=player_id).first() if player_id else None
 
-            # Actualizar marcador del partido
+            # Validar que el equipo tenga 5 jugadores marcados en pista (requisito de memoria)
+            if not match.has_valid_five_on_court(team):
+                return {
+                    "error": f"Para registrar acciones, el equipo {team.name} debe tener exactamente 5 jugadores activos en pista. Configura el quinteto inicial primero."
+                }
+
+            # Validar si el jugador está en pista y si está eliminado por 5 faltas
+            if player:
+                from apps.analytics.models import PlayerMatchStat
+                stat, _ = PlayerMatchStat.objects.get_or_create(
+                    match=match,
+                    player=player,
+                    defaults={"team": team}
+                )
+                if not stat.is_on_court:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} está en el banquillo. Solo los 5 jugadores en pista pueden registrar acciones."
+                    }
+                if stat.fouls_committed >= 5 and points > 0:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} está eliminado del partido por acumulación de 5 faltas personales."
+                    }
+
+            # Actualizar marcador del partido (evitando números negativos)
             if match.home_team_id == team.id:
-                match.home_score += points
+                match.home_score = max(0, match.home_score + points)
             elif match.away_team_id == team.id:
-                match.away_score += points
+                match.away_score = max(0, match.away_score + points)
 
             if match.status == Match.Status.SCHEDULED:
                 match.status = Match.Status.LIVE
@@ -368,6 +486,20 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             match.game_clock = server_clock_str
             match.save()
 
+            # Descripción amigable del evento
+            if event_type == "CORRECTION" or points < 0:
+                desc = f"Corrección de marcador ({points} pt{'s' if abs(points) > 1 else ''})"
+            elif points == 3 or event_type == "3PT_MADE":
+                desc = "Triple Anotado (+3 pts)"
+            elif points == 2 or event_type == "2PT_MADE":
+                desc = "Canasta de 2 Anotada (+2 pts)"
+            elif points == 1 or event_type == "1PT_MADE":
+                desc = "Tiro Libre Anotado (+1 pt)"
+            elif points > 0:
+                desc = f"+{points} pts"
+            else:
+                desc = "0 pts"
+
             # Registrar el evento en el acta
             event = MatchEvent.objects.create(
                 match=match,
@@ -377,7 +509,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 player=player,
                 event_type=event_type,
                 points=points,
-                description=f"+{points} pts" if points > 0 else f"{points} pts",
+                description=desc,
             )
 
             # Actualizar hoja estadística individual del jugador en tiempo real
@@ -405,7 +537,14 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                         stat.free_throws_made += 1
                         stat.free_throws_attempted += 1
                     elif event_type == "CORRECTION":
-                        stat.points = max(0, stat.points - 1)
+                        stat.points = max(0, stat.points + points)
+                        if points < 0:
+                            if stat.field_goals_made > 0:
+                                stat.field_goals_made = max(0, stat.field_goals_made - 1)
+                                stat.field_goals_attempted = max(0, stat.field_goals_attempted - 1)
+                            elif stat.free_throws_made > 0:
+                                stat.free_throws_made = max(0, stat.free_throws_made - 1)
+                                stat.free_throws_attempted = max(0, stat.free_throws_attempted - 1)
                     stat.compute_pir()
                     stat.save()
 
@@ -452,6 +591,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     "player_name": player.full_name if player else None,
                     "event_type": event.get_event_type_display(),
                     "points": event.points,
+                    "description": event.description,
                     "time": event.created_at.strftime("%H:%M:%S"),
                 },
             }
@@ -464,6 +604,29 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             match = Match.objects.get(id=match_id)
             team = Team.objects.get(id=team_id)
             player = Player.objects.filter(id=player_id).first() if player_id else None
+
+            # Validar que el equipo tenga 5 jugadores marcados en pista (requisito de memoria)
+            if not match.has_valid_five_on_court(team):
+                return {
+                    "error": f"Para registrar faltas, el equipo {team.name} debe tener exactamente 5 jugadores activos en pista. Configura el quinteto inicial primero."
+                }
+
+            # Validar si el jugador está en pista y si ya acumulaba 5 faltas
+            if player:
+                from apps.analytics.models import PlayerMatchStat
+                stat, _ = PlayerMatchStat.objects.get_or_create(
+                    match=match,
+                    player=player,
+                    defaults={"team": team}
+                )
+                if not stat.is_on_court:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} está en el banquillo. Solo los 5 jugadores en pista pueden cometer faltas."
+                    }
+                if stat.fouls_committed >= 5:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} ya está eliminado del partido (acumula 5 faltas)."
+                    }
 
             server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
 
@@ -480,6 +643,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
 
             # Actualizar faltas en la estadística del jugador y recalcular PIR
             player_stat_data = None
+            is_fouled_out = False
             if player:
                 try:
                     from apps.analytics.models import PlayerMatchStat
@@ -491,6 +655,9 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     stat.fouls_committed += 1
                     stat.compute_pir()
                     stat.save()
+
+                    if stat.fouls_committed >= 5:
+                        is_fouled_out = True
 
                     player_stat_data = {
                         "player_id": player.id,
@@ -515,19 +682,41 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 except Exception:
                     pass
 
-            # Contar faltas de equipo en el periodo actual
-            team_fouls_count = MatchEvent.objects.filter(
-                match=match,
-                team=team,
-                period=match.current_period,
-                event_type__in=["PF", "TF", "UF"],
-            ).count()
+            # Calcular estado de faltas de equipo en el cuarto actual (FIBA Bonus)
+            home_fouls_info = match.get_team_fouls_info(match.home_team)
+            away_fouls_info = match.get_team_fouls_info(match.away_team)
+            committing_fouls = home_fouls_info if team.id == match.home_team_id else away_fouls_info
+            is_bonus_foul = committing_fouls["count"] >= 5
+
+            if is_bonus_foul:
+                if committing_fouls["count"] == 5:
+                    bonus_text = " — ¡ENTRA EN BONUS! (2 Tiros Libres)"
+                else:
+                    bonus_text = " (En Bonus — 2 Tiros Libres)"
+            else:
+                bonus_text = ""
+
+            if is_fouled_out:
+                event.description = f"5ª Falta personal — ¡ELIMINADO DEL PARTIDO!{bonus_text}"
+            elif is_bonus_foul:
+                event.description = f"Falta señalizada{bonus_text}"
+            else:
+                event.description = "Falta señalizada"
+            event.save()
 
             return {
                 "match_id": match.id,
                 "team_id": team.id,
-                "team_fouls": team_fouls_count,
+                "team_fouls": committing_fouls["count"],
+                "home_fouls": home_fouls_info,
+                "away_fouls": away_fouls_info,
+                "is_bonus_foul": is_bonus_foul,
+                "bonus_team_id": team.id if is_bonus_foul else None,
+                "bonus_team_name": team.name if is_bonus_foul else None,
                 "player_stat": player_stat_data,
+                "is_fouled_out": is_fouled_out,
+                "fouled_out_player_id": player.id if (player and is_fouled_out) else None,
+                "fouled_out_player_name": player.full_name if (player and is_fouled_out) else None,
                 "new_event": {
                     "id": event.id,
                     "period": event.get_period_display(),
@@ -537,6 +726,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     "player_name": player.full_name if player else None,
                     "event_type": event.get_event_type_display(),
                     "points": 0,
+                    "description": event.description,
                     "time": event.created_at.strftime("%H:%M:%S"),
                 },
             }
@@ -549,6 +739,29 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             match = Match.objects.get(id=match_id)
             team = Team.objects.get(id=team_id)
             player = Player.objects.filter(id=player_id).first() if player_id else None
+
+            # Validar que el equipo tenga 5 jugadores marcados en pista (requisito de memoria)
+            if not match.has_valid_five_on_court(team):
+                return {
+                    "error": f"Para registrar acciones estadísticas, el equipo {team.name} debe tener exactamente 5 jugadores activos en pista. Configura el quinteto inicial primero."
+                }
+
+            # Validar si el jugador está en pista y si está eliminado por 5 faltas
+            if player:
+                from apps.analytics.models import PlayerMatchStat
+                stat, _ = PlayerMatchStat.objects.get_or_create(
+                    match=match,
+                    player=player,
+                    defaults={"team": team}
+                )
+                if not stat.is_on_court:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} está en el banquillo. Solo los 5 jugadores en pista pueden registrar acciones."
+                    }
+                if stat.fouls_committed >= 5:
+                    return {
+                        "error": f"El jugador #{player.jersey_number} {player.full_name} está eliminado del partido por acumulación de 5 faltas personales."
+                    }
 
             server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
 
@@ -646,6 +859,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                     "player_name": player.full_name if player else None,
                     "event_type": event.get_event_type_display(),
                     "points": 0,
+                    "description": event.description,
                     "time": event.created_at.strftime("%H:%M:%S"),
                 },
             }
@@ -687,6 +901,18 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 match.status = Match.Status.LIVE
             match.save()
 
+            period_desc = "Final del Partido" if period == Match.Period.FINISHED else f"Comienzo del {match.get_current_period_display()}"
+            event = MatchEvent.objects.create(
+                match=match,
+                period=match.current_period,
+                game_clock=clock_str,
+                team=match.home_team,
+                player=None,
+                event_type=MatchEvent.EventType.PERIOD,
+                points=0,
+                description=period_desc,
+            )
+
             return {
                 "match_id": match.id,
                 "period": match.current_period,
@@ -696,8 +922,85 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "status": match.status,
                 "home_score": match.home_score,
                 "away_score": match.away_score,
+                "home_timeouts": match.get_team_timeouts_info(match.home_team),
+                "away_timeouts": match.get_team_timeouts_info(match.away_team),
+                "home_fouls": match.get_team_fouls_info(match.home_team),
+                "away_fouls": match.get_team_fouls_info(match.away_team),
+                "new_event": {
+                    "id": event.id,
+                    "period": event.get_period_display(),
+                    "clock": event.game_clock,
+                    "team_acronym": match.home_team.acronym,
+                    "team_id": match.home_team.id,
+                    "player_name": None,
+                    "event_type": event.get_event_type_display(),
+                    "points": 0,
+                    "description": period_desc,
+                    "time": event.created_at.strftime("%H:%M:%S"),
+                },
             }
         except Match.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def record_timeout_event(self, match_id, team_id):
+        try:
+            match = Match.objects.get(id=match_id)
+            team = Team.objects.get(id=team_id)
+
+            timeout_info = match.get_team_timeouts_info(team)
+            if timeout_info["remaining"] <= 0:
+                return None
+
+            # Pausar el reloj del partido en el servidor automáticamente
+            server_clock_str, _ = get_server_clock(match_id, match.game_clock)
+            calc_clock, calc_running = set_server_clock(match_id, server_clock_str, False)
+            match.game_clock = calc_clock
+            if match.status == Match.Status.SCHEDULED:
+                match.status = Match.Status.LIVE
+                if match.current_period == Match.Period.NOT_STARTED:
+                    match.current_period = Match.Period.Q1
+            match.save()
+
+            # Registrar el evento de Tiempo Muerto en el acta oficial
+            event = MatchEvent.objects.create(
+                match=match,
+                period=match.current_period,
+                game_clock=calc_clock,
+                team=team,
+                player=None,
+                event_type=MatchEvent.EventType.TIMEOUT,
+                points=0,
+                description=f"Tiempo Muerto solicitado ({timeout_info['used'] + 1}/{timeout_info['limit']})",
+            )
+
+            # Recalcular tiempos muertos actualizados para ambos equipos
+            updated_home_timeouts = match.get_team_timeouts_info(match.home_team)
+            updated_away_timeouts = match.get_team_timeouts_info(match.away_team)
+
+            return {
+                "match_id": match.id,
+                "team_id": team.id,
+                "team_name": team.name,
+                "team_acronym": team.acronym,
+                "clock": calc_clock,
+                "is_running": False,
+                "home_timeouts": updated_home_timeouts,
+                "away_timeouts": updated_away_timeouts,
+                "new_event": {
+                    "id": event.id,
+                    "period": event.get_period_display(),
+                    "clock": event.game_clock,
+                    "team_acronym": team.acronym,
+                    "team_id": team.id,
+                    "player_name": None,
+                    "event_type": event.get_event_type_display(),
+                    "points": 0,
+                    "description": event.description,
+                    "time": event.created_at.strftime("%H:%M:%S"),
+                },
+            }
+        except (Match.DoesNotExist, Team.DoesNotExist):
             return None
 
     @database_sync_to_async
@@ -734,3 +1037,73 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             }
         except Match.DoesNotExist:
             return None
+
+    @database_sync_to_async
+    def record_starting_five(self, match_id, team_id, player_ids):
+        try:
+            match = Match.objects.get(id=match_id)
+            team = Team.objects.get(id=team_id)
+            event = match.set_starting_five(team, player_ids)
+
+            home_on_court = match.get_on_court_player_ids(match.home_team)
+            away_on_court = match.get_on_court_player_ids(match.away_team)
+
+            return {
+                "match_id": match.id,
+                "team_id": team.id,
+                "team_name": team.name,
+                "home_on_court": home_on_court,
+                "away_on_court": away_on_court,
+                "home_has_five": match.has_valid_five_on_court(match.home_team),
+                "away_has_five": match.has_valid_five_on_court(match.away_team),
+                "new_event": {
+                    "id": event.id,
+                    "period": event.get_period_display(),
+                    "clock": event.game_clock,
+                    "team_acronym": team.acronym,
+                    "team_id": team.id,
+                    "player_name": None,
+                    "event_type": event.get_event_type_display(),
+                    "points": 0,
+                    "description": event.description,
+                    "time": event.created_at.strftime("%H:%M:%S"),
+                },
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    @database_sync_to_async
+    def record_substitution(self, match_id, team_id, player_out_id, player_in_id):
+        try:
+            match = Match.objects.get(id=match_id)
+            team = Team.objects.get(id=team_id)
+            event = match.substitute_player(team, player_out_id, player_in_id)
+
+            home_on_court = match.get_on_court_player_ids(match.home_team)
+            away_on_court = match.get_on_court_player_ids(match.away_team)
+
+            return {
+                "match_id": match.id,
+                "team_id": team.id,
+                "team_name": team.name,
+                "player_out_id": player_out_id,
+                "player_in_id": player_in_id,
+                "home_on_court": home_on_court,
+                "away_on_court": away_on_court,
+                "home_has_five": match.has_valid_five_on_court(match.home_team),
+                "away_has_five": match.has_valid_five_on_court(match.away_team),
+                "new_event": {
+                    "id": event.id,
+                    "period": event.get_period_display(),
+                    "clock": event.game_clock,
+                    "team_acronym": team.acronym,
+                    "team_id": team.id,
+                    "player_name": event.player.full_name if event.player else None,
+                    "event_type": event.get_event_type_display(),
+                    "points": 0,
+                    "description": event.description,
+                    "time": event.created_at.strftime("%H:%M:%S"),
+                },
+            }
+        except Exception as e:
+            return {"error": str(e)}

@@ -10,13 +10,13 @@
   <div style="position: absolute; bottom: -50px; left: -50px; width: 340px; height: 340px; background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%); filter: blur(50px); pointer-events: none; z-index: 0;"></div>
 
   <!-- Contenedor Dividido de Registro (Split-Screen Luxury Card) -->
-  <div class="card" style="position: relative; z-index: 1; padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.22fr; border-radius: var(--radius-2xl); box-shadow: 0 25px 50px -12px rgba(9, 13, 22, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8); border: 1px solid rgba(212, 175, 55, 0.35); background: #FFFFFF;">
+  <div class="card register-split-card" style="position: relative; z-index: 1; padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.22fr; border-radius: var(--radius-2xl); box-shadow: 0 25px 50px -12px rgba(9, 13, 22, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8); border: 1px solid rgba(212, 175, 55, 0.35); background: #FFFFFF;">
     
     <!-- Línea Superior de Destello Dorado -->
     <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold-primary), transparent); z-index: 10;"></div>
 
     <!-- Columna Izquierda: Mensaje y Eslogan Alineado (Tono Oro Champagne / Arena Cálida) -->
-    <div style="background: linear-gradient(145deg, #FDF8F0 0%, #F6EBD7 45%, #EADBBD 100%); color: #4A3B2C; padding: 3rem 2.75rem; display: flex; flex-direction: column; justify-content: flex-start; position: relative; overflow: hidden; border-right: 1px solid rgba(212, 175, 55, 0.3);">
+    <div class="register-left-col" style="background: linear-gradient(145deg, #FDF8F0 0%, #F6EBD7 45%, #EADBBD 100%); color: #4A3B2C; padding: 3rem 2.75rem; display: flex; flex-direction: column; justify-content: flex-start; position: relative; overflow: hidden; border-right: 1px solid rgba(212, 175, 55, 0.3);">
       
       <!-- Resplandores Cálidos de Fondo -->
       <div style="position: absolute; top: -50px; right: -50px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
@@ -57,7 +57,7 @@
     </div>
 
     <!-- Columna Derecha: Formulario de Registro -->
-    <div style="padding: 3rem 2.75rem; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
+    <div class="register-right-col" style="padding: 3rem 2.75rem; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
       
       <div>
         <div style="margin-bottom: 2rem;">
@@ -75,7 +75,7 @@
             </div>
           {% endif %}
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
+          <div class="register-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
             <div class="form-group" style="margin-bottom: 0;">
               <label for="id_username" class="form-label" style="font-weight: 600; font-size: 0.98rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Nombre de Usuario</label>
               {{ form.username }}
@@ -95,7 +95,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
+          <div class="register-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
             <div class="form-group" style="margin-bottom: 0;">
               <label for="id_password1" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Contraseña</label>
               {{ form.password1 }}

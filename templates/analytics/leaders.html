@@ -32,7 +32,7 @@
   </div>
 
   <!-- GRID DE LAS 4 CATEGORÍAS ESTADÍSTICAS -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 2rem;">
     
     <!-- 1. MÁXIMOS ANOTADORES (PUNTOS) -->
     <div class="card" style="padding: 1.75rem; border-top: 4px solid var(--gold-primary);">
@@ -43,50 +43,52 @@
         <span class="badge badge-admin" style="font-size: 0.75rem;">PUNTOS POR PARTIDO</span>
       </div>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-            <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
-            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">Total PTS</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: right;">Pts / Partido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for leader in leaders.top_scorers %}
-            <tr style="border-bottom: 1px solid var(--platinum-border);">
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
-                #{{ forloop.counter }}
-              </td>
-              <td style="padding: 0.65rem 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  {% if leader.player__photo %}
-                    <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
-                  {% else %}
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
-                      {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
-                    </div>
-                  {% endif %}
-                  <div>
-                    <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
-                      {{ leader.player__first_name }} {{ leader.player__last_name }}
-                    </a>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
-                  </div>
-                </div>
-              </td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_points }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary);">
-                {{ leader.avg_points|floatformat:1 }}
-              </td>
+      <div class="table-responsive">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
+              <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">Total PTS</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: right;">Pts / Partido</th>
             </tr>
-          {% empty %}
-            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for leader in leaders.top_scorers %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
+                  #{{ forloop.counter }}
+                </td>
+                <td style="padding: 0.65rem 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if leader.player__photo %}
+                      <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
+                    {% else %}
+                      <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                        {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                      </div>
+                    {% endif %}
+                    <div>
+                      <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
+                        {{ leader.player__first_name }} {{ leader.player__last_name }}
+                      </a>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_points }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary);">
+                  {{ leader.avg_points|floatformat:1 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 2. LÍDERES EN VALORACIÓN / MVP (PIR) -->
@@ -98,50 +100,52 @@
         <span class="badge badge-table" style="font-size: 0.75rem;">VALORACIÓN POR PARTIDO</span>
       </div>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-            <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
-            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">Total PIR</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: right;">Val / Partido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for leader in leaders.top_mvp %}
-            <tr style="border-bottom: 1px solid var(--platinum-border);">
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
-                #{{ forloop.counter }}
-              </td>
-              <td style="padding: 0.65rem 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  {% if leader.player__photo %}
-                    <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
-                  {% else %}
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
-                      {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
-                    </div>
-                  {% endif %}
-                  <div>
-                    <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
-                      {{ leader.player__first_name }} {{ leader.player__last_name }}
-                    </a>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
-                  </div>
-                </div>
-              </td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_pir }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-blue);">
-                {{ leader.avg_pir|floatformat:1 }}
-              </td>
+      <div class="table-responsive">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
+              <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">Total PIR</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: right;">Val / Partido</th>
             </tr>
-          {% empty %}
-            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for leader in leaders.top_mvp %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
+                  #{{ forloop.counter }}
+                </td>
+                <td style="padding: 0.65rem 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if leader.player__photo %}
+                      <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
+                    {% else %}
+                      <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                        {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                      </div>
+                    {% endif %}
+                    <div>
+                      <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
+                        {{ leader.player__first_name }} {{ leader.player__last_name }}
+                      </a>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_pir }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-blue);">
+                  {{ leader.avg_pir|floatformat:1 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 3. MÁXIMOS ASISTENTES (AST) -->
@@ -153,50 +157,52 @@
         <span class="badge badge-fan" style="font-size: 0.75rem;">ASISTENCIAS POR PARTIDO</span>
       </div>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-            <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
-            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">Total AST</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: right;">Ast / Partido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for leader in leaders.top_assists %}
-            <tr style="border-bottom: 1px solid var(--platinum-border);">
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
-                #{{ forloop.counter }}
-              </td>
-              <td style="padding: 0.65rem 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  {% if leader.player__photo %}
-                    <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
-                  {% else %}
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
-                      {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
-                    </div>
-                  {% endif %}
-                  <div>
-                    <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
-                      {{ leader.player__first_name }} {{ leader.player__last_name }}
-                    </a>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
-                  </div>
-                </div>
-              </td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_assists }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-green);">
-                {{ leader.avg_assists|floatformat:1 }}
-              </td>
+      <div class="table-responsive">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
+              <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">Total AST</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: right;">Ast / Partido</th>
             </tr>
-          {% empty %}
-            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for leader in leaders.top_assists %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
+                  #{{ forloop.counter }}
+                </td>
+                <td style="padding: 0.65rem 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if leader.player__photo %}
+                      <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
+                    {% else %}
+                      <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                        {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                      </div>
+                    {% endif %}
+                    <div>
+                      <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
+                        {{ leader.player__first_name }} {{ leader.player__last_name }}
+                      </a>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_assists }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--state-green);">
+                  {{ leader.avg_assists|floatformat:1 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 4. MÁXIMOS REBOTEADORES (REB) -->
@@ -208,50 +214,52 @@
         <span class="badge badge-coach" style="font-size: 0.75rem;">REBOTES POR PARTIDO</span>
       </div>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
-            <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
-            <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: center;">Total REB</th>
-            <th style="padding: 0.5rem 0.5rem; text-align: right;">Reb / Partido</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for leader in leaders.top_rebounders %}
-            <tr style="border-bottom: 1px solid var(--platinum-border);">
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
-                #{{ forloop.counter }}
-              </td>
-              <td style="padding: 0.65rem 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  {% if leader.player__photo %}
-                    <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
-                  {% else %}
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
-                      {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
-                    </div>
-                  {% endif %}
-                  <div>
-                    <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
-                      {{ leader.player__first_name }} {{ leader.player__last_name }}
-                    </a>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
-                  </div>
-                </div>
-              </td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_rebounds }}</td>
-              <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--obsidian-dark);">
-                {{ leader.avg_rebounds|floatformat:1 }}
-              </td>
+      <div class="table-responsive">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--platinum-border); color: var(--text-secondary); text-align: left;">
+              <th style="padding: 0.5rem 0.5rem; width: 48px; text-align: center;">Pos</th>
+              <th style="padding: 0.5rem 0.5rem;">Jugador / Club</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">PJ</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: center;">Total REB</th>
+              <th style="padding: 0.5rem 0.5rem; text-align: right;">Reb / Partido</th>
             </tr>
-          {% empty %}
-            <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for leader in leaders.top_rebounders %}
+              <tr style="border-bottom: 1px solid var(--platinum-border);">
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; color: var(--gold-primary);">
+                  #{{ forloop.counter }}
+                </td>
+                <td style="padding: 0.65rem 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if leader.player__photo %}
+                      <img src="/media/{{ leader.player__photo }}" alt="{{ leader.player__first_name }} {{ leader.player__last_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); background: #FFFFFF; flex-shrink: 0;">
+                    {% else %}
+                      <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, {{ leader.team__primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                        {{ leader.player__first_name|slice:":1" }}{{ leader.player__last_name|slice:":1" }}
+                      </div>
+                    {% endif %}
+                    <div>
+                      <a href="{% url 'teams:player_detail' leader.player__id %}{% if current_season %}?season={{ current_season.id }}{% endif %}" style="font-weight: 600; color: var(--text-title); display: block; line-height: 1.25;">
+                        {{ leader.player__first_name }} {{ leader.player__last_name }}
+                      </a>
+                      <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ leader.team__acronym }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ leader.games_played }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-secondary);">{{ leader.total_rebounds }}</td>
+                <td style="padding: 0.65rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--obsidian-dark);">
+                  {{ leader.avg_rebounds|floatformat:1 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Sin datos disponibles.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>

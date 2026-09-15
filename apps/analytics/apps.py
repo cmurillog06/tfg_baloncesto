@@ -7,4 +7,8 @@ class AnalyticsConfig(AppConfig):
     verbose_name = "Estadísticas Avanzadas y Clasificaciones"
 
     def ready(self):
-        import apps.analytics.signals
+        try:
+            import apps.analytics.signals  # noqa
+        except Exception:
+            pass
+

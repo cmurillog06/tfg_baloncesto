@@ -87,7 +87,75 @@ class TeamMembershipForm(forms.ModelForm):
         return cleaned_data
 
 
-class PlayerForm(forms.ModelForm):
+import os
+import datetime
+
+
+class PlayerValidationMixin:
+    """
+    Mixin con validaciones rigurosas para todos los campos de un jugador de baloncesto:
+    - Nombre y Apellidos: no vacíos, mínimo 2 caracteres, sin números.
+    - Altura: 120 cm - 245 cm.
+    - Peso: 40.0 kg - 190.0 kg.
+    - Fecha de Nacimiento: no futura, edad entre 12 y 65 años.
+    - Fotografía: máx. 5 MB, formatos JPG, PNG, WebP.
+    """
+
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name", "").strip()
+        if not first_name or len(first_name) < 2:
+            raise forms.ValidationError("El nombre debe tener al menos 2 caracteres.")
+        if any(char.isdigit() for char in first_name):
+            raise forms.ValidationError("El nombre no puede contener números.")
+        return first_name
+
+    def clean_last_name(self):
+        last_name = self.cleaned_data.get("last_name", "").strip()
+        if not last_name or len(last_name) < 2:
+            raise forms.ValidationError("Los apellidos deben tener al menos 2 caracteres.")
+        if any(char.isdigit() for char in last_name):
+            raise forms.ValidationError("Los apellidos no pueden contener números.")
+        return last_name
+
+    def clean_height_cm(self):
+        height = self.cleaned_data.get("height_cm")
+        if height is not None:
+            if height < 120 or height > 245:
+                raise forms.ValidationError("La altura debe estar comprendida entre 120 y 245 cm.")
+        return height
+
+    def clean_weight_kg(self):
+        weight = self.cleaned_data.get("weight_kg")
+        if weight is not None:
+            if float(weight) < 40.0 or float(weight) > 190.0:
+                raise forms.ValidationError("El peso debe estar comprendido entre 40 y 190 kg.")
+        return weight
+
+    def clean_birth_date(self):
+        birth_date = self.cleaned_data.get("birth_date")
+        if birth_date:
+            today = datetime.date.today()
+            if birth_date > today:
+                raise forms.ValidationError("La fecha de nacimiento no puede ser posterior al día de hoy.")
+            age = (today - birth_date).days / 365.25
+            if age < 12:
+                raise forms.ValidationError("El jugador debe tener al menos 12 años para tener ficha federada.")
+            if age > 65:
+                raise forms.ValidationError("La edad del jugador no puede superar los 65 años.")
+        return birth_date
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        if photo and hasattr(photo, "size"):
+            if photo.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("La fotografía no puede superar los 5 MB de tamaño.")
+            ext = os.path.splitext(photo.name)[1].lower()
+            if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+                raise forms.ValidationError("Formato no válido. Se admiten archivos JPG, PNG y WebP.")
+        return photo
+
+
+class PlayerForm(PlayerValidationMixin, forms.ModelForm):
     """
     Formulario para crear o editar la ficha técnica de un jugador.
     """
@@ -106,10 +174,10 @@ class PlayerForm(forms.ModelForm):
         ]
         widgets = {
             "first_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Nombre"}
+                attrs={"class": "form-control", "placeholder": "Nombre", "minlength": "2"}
             ),
             "last_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Apellidos"}
+                attrs={"class": "form-control", "placeholder": "Apellidos", "minlength": "2"}
             ),
             "birth_date": forms.DateInput(
                 attrs={"class": "form-control", "type": "date"}
@@ -118,16 +186,21 @@ class PlayerForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "Altura en cm (ej. 198)",
+                    "min": 120,
+                    "max": 245,
                 }
             ),
             "weight_kg": forms.NumberInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Peso en kg (ej. 92.5)",
+                    "step": "0.1",
+                    "min": 40,
+                    "max": 190,
                 }
             ),
             "position": forms.Select(attrs={"class": "form-control"}),
-            "photo": forms.FileInput(attrs={"class": "form-control-file"}),
+            "photo": forms.FileInput(attrs={"class": "form-control-file", "accept": "image/jpeg,image/png,image/webp,image/*"}),
             "is_active": forms.CheckboxInput(
                 attrs={"class": "form-check-input"}
             ),
@@ -142,6 +215,154 @@ class PlayerForm(forms.ModelForm):
             "photo": "Fotografía Oficial",
             "is_active": "Ficha Activa",
         }
+
+
+class CoachPlayerCreateForm(PlayerValidationMixin, forms.ModelForm):
+    """
+    Formulario para que el entrenador dé de alta a un jugador nuevo con sus datos biométricos,
+    posición, fotografía y le asigne un dorsal y capitanía directamente en su plantilla.
+    """
+    jersey_number = forms.IntegerField(
+        min_value=0,
+        max_value=99,
+        label="Dorsal (0-99)",
+        widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "ej. 23", "min": 0, "max": 99})
+    )
+    is_captain = forms.BooleanField(
+        required=False,
+        label="Designar como Capitán",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
+    class Meta:
+        model = Player
+        fields = [
+            "first_name",
+            "last_name",
+            "birth_date",
+            "height_cm",
+            "weight_kg",
+            "position",
+            "photo",
+        ]
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre", "minlength": "2"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Apellidos", "minlength": "2"}),
+            "birth_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "height_cm": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Altura en cm (ej. 198)", "min": 120, "max": 245}),
+            "weight_kg": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Peso en kg (ej. 92.5)", "step": "0.1", "min": 40, "max": 190}),
+            "position": forms.Select(attrs={"class": "form-control"}),
+            "photo": forms.FileInput(attrs={"class": "form-control-file", "accept": "image/jpeg,image/png,image/webp,image/*"}),
+        }
+        labels = {
+            "first_name": "Nombre",
+            "last_name": "Apellidos",
+            "birth_date": "Fecha de Nacimiento",
+            "height_cm": "Altura (cm)",
+            "weight_kg": "Peso (kg)",
+            "position": "Posición en Cancha",
+            "photo": "Fotografía Oficial",
+        }
+
+    def __init__(self, *args, team=None, season=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.team = team
+        self.season = season
+
+    def clean_jersey_number(self):
+        jersey = self.cleaned_data.get("jersey_number")
+        if jersey is not None:
+            if jersey < 0 or jersey > 99:
+                raise forms.ValidationError("El dorsal debe ser un número entero entre 0 y 99.")
+            if self.team and self.season:
+                dorsal_taken = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    jersey_number=jersey,
+                    is_active=True
+                ).exists()
+                if dorsal_taken:
+                    raise forms.ValidationError(
+                        f"El dorsal #{jersey} ya está ocupado por otro jugador en la plantilla."
+                    )
+        return jersey
+
+
+class CoachPlayerEditForm(PlayerValidationMixin, forms.ModelForm):
+    """
+    Formulario para que el entrenador modifique los datos biométricos, dorsal,
+    posición o fotografía de un jugador de su plantilla.
+    """
+    jersey_number = forms.IntegerField(
+        min_value=0,
+        max_value=99,
+        label="Dorsal (0-99)",
+        widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "ej. 23", "min": 0, "max": 99})
+    )
+    is_captain = forms.BooleanField(
+        required=False,
+        label="Designar como Capitán",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
+    class Meta:
+        model = Player
+        fields = [
+            "first_name",
+            "last_name",
+            "birth_date",
+            "height_cm",
+            "weight_kg",
+            "position",
+            "photo",
+        ]
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre", "minlength": "2"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Apellidos", "minlength": "2"}),
+            "birth_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "height_cm": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Altura en cm (ej. 198)", "min": 120, "max": 245}),
+            "weight_kg": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Peso en kg (ej. 92.5)", "step": "0.1", "min": 40, "max": 190}),
+            "position": forms.Select(attrs={"class": "form-control"}),
+            "photo": forms.FileInput(attrs={"class": "form-control-file", "accept": "image/jpeg,image/png,image/webp"}),
+        }
+        labels = {
+            "first_name": "Nombre",
+            "last_name": "Apellidos",
+            "birth_date": "Fecha de Nacimiento",
+            "height_cm": "Altura (cm)",
+            "weight_kg": "Peso (kg)",
+            "position": "Posición en Cancha",
+            "photo": "Fotografía Oficial",
+        }
+
+    def __init__(self, *args, team=None, season=None, membership=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.team = team
+        self.season = season
+        self.membership = membership
+        if membership:
+            self.fields["jersey_number"].initial = membership.jersey_number
+            self.fields["is_captain"].initial = membership.is_captain
+
+    def clean_jersey_number(self):
+        jersey = self.cleaned_data.get("jersey_number")
+        if jersey is not None:
+            if jersey < 0 or jersey > 99:
+                raise forms.ValidationError("El dorsal debe ser un número entero entre 0 y 99.")
+            if self.team and self.season:
+                query = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    jersey_number=jersey,
+                    is_active=True
+                )
+                if self.membership:
+                    query = query.exclude(pk=self.membership.pk)
+                if query.exists():
+                    raise forms.ValidationError(
+                        f"El dorsal #{jersey} ya está ocupado por otro jugador activo en este equipo."
+                    )
+        return jersey
 
 
 class TeamForm(forms.ModelForm):

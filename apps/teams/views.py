@@ -8,7 +8,7 @@ from django.views.generic import ListView, DetailView, View
 
 from .models import League, Season, Team, Player, TeamMembership
 from apps.analytics.models import Standing
-from .forms import TeamMembershipForm
+from .forms import TeamMembershipForm, CoachPlayerCreateForm, CoachPlayerEditForm
 from apps.matches.models import Match
 from apps.accounts.permissions import RoleRequiredMixin
 
@@ -241,7 +241,8 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        form = TeamMembershipForm(team=self.team, season=self.season)
+        membership_form = TeamMembershipForm(team=self.team, season=self.season)
+        player_create_form = CoachPlayerCreateForm(team=self.team, season=self.season)
         memberships = TeamMembership.objects.filter(
             team=self.team,
             season=self.season,
@@ -255,7 +256,9 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                 "team": self.team,
                 "season": self.season,
                 "current_season": self.season,
-                "form": form,
+                "form": membership_form,
+                "membership_form": membership_form,
+                "player_create_form": player_create_form,
                 "memberships": memberships,
                 "active_memberships": memberships,
             },
@@ -278,73 +281,160 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.success(request, f"{player_name} ha sido dado de baja de la plantilla activa.")
             return redirect("teams:roster_manage", slug=self.team.slug)
 
-        # 2. Inscribir / Dar de alta a un jugador
-        form = TeamMembershipForm(request.POST, team=self.team, season=self.season)
-        if form.is_valid():
-            player = form.cleaned_data["player"]
-            jersey_number = form.cleaned_data["jersey_number"]
-            is_captain = form.cleaned_data.get("is_captain", False)
+        # 2. Crear un jugador nuevo directamente desde el panel del entrenador
+        elif action == "create_player":
+            create_form = CoachPlayerCreateForm(
+                request.POST, request.FILES, team=self.team, season=self.season
+            )
+            if create_form.is_valid():
+                player = create_form.save()
+                jersey_number = create_form.cleaned_data["jersey_number"]
+                is_captain = create_form.cleaned_data.get("is_captain", False)
 
-            # Comprobar si ya existe un registro para este jugador en este equipo y temporada
-            existing_membership = TeamMembership.objects.filter(
-                team=self.team,
-                season=self.season,
-                player=player
-            ).first()
-
-            # Comprobar si el jugador ya está activo en otro equipo para esta temporada
-            active_in_other = TeamMembership.objects.filter(
-                season=self.season,
-                player=player,
-                is_active=True
-            ).exclude(team=self.team).select_related("team").first()
-
-            if active_in_other:
-                messages.error(request, f"{player.full_name} no puede ser inscrito porque ya tiene ficha activa en {active_in_other.team.name} para esta temporada.")
+                TeamMembership.objects.create(
+                    team=self.team,
+                    player=player,
+                    season=self.season,
+                    jersey_number=jersey_number,
+                    is_captain=is_captain,
+                    is_active=True,
+                )
+                messages.success(
+                    request,
+                    f"¡Jugador {player.full_name} añadido con éxito con el dorsal #{jersey_number}!"
+                )
                 return redirect("teams:roster_manage", slug=self.team.slug)
-
-            # Comprobar si el dorsal ya está ocupado por otro jugador ACTIVO
-            dorsal_busy = TeamMembership.objects.filter(
-                team=self.team,
-                season=self.season,
-                jersey_number=jersey_number,
-                is_active=True
-            ).exclude(player=player).exists()
-
-            if dorsal_busy:
-                messages.error(request, f"El dorsal #{jersey_number} ya está en uso por otro jugador activo en la plantilla.")
-                return redirect("teams:roster_manage", slug=self.team.slug)
-
-            if existing_membership:
-                existing_membership.jersey_number = jersey_number
-                existing_membership.is_captain = is_captain
-                existing_membership.is_active = True
-                existing_membership.save()
             else:
-                membership = form.save(commit=False)
-                membership.team = self.team
-                membership.season = self.season
-                membership.is_active = True
-                membership.save()
+                membership_form = TeamMembershipForm(team=self.team, season=self.season)
+                memberships = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    is_active=True
+                ).select_related("player").order_by("jersey_number")
+                messages.error(request, "Por favor, corrige los errores en los datos del jugador.")
+                return render(
+                    request,
+                    self.template_name,
+                    {
+                        "team": self.team,
+                        "season": self.season,
+                        "current_season": self.season,
+                        "form": membership_form,
+                        "membership_form": membership_form,
+                        "player_create_form": create_form,
+                        "memberships": memberships,
+                        "active_memberships": memberships,
+                        "active_tab": "new",
+                    },
+                )
 
-            messages.success(request, f"{player.full_name} ha sido inscrito en la plantilla con el dorsal #{jersey_number}.")
+        # 3. Modificar datos biométricos, dorsal, posición o fotografía de un jugador existente
+        elif action == "edit_player":
+            membership_id = request.POST.get("membership_id")
+            membership = get_object_or_404(
+                TeamMembership,
+                id=membership_id,
+                team=self.team,
+                season=self.season
+            )
+            player = membership.player
+            edit_form = CoachPlayerEditForm(
+                request.POST, request.FILES, instance=player, team=self.team, season=self.season, membership=membership
+            )
+            if edit_form.is_valid():
+                edit_form.save()
+                membership.jersey_number = edit_form.cleaned_data["jersey_number"]
+                membership.is_captain = edit_form.cleaned_data.get("is_captain", False)
+                membership.save()
+                messages.success(
+                    request,
+                    f"Datos biométricos y ficha de {player.full_name} actualizados correctamente."
+                )
+            else:
+                err_list = []
+                for field, errs in edit_form.errors.items():
+                    err_list.extend(errs)
+                messages.error(request, "Error al actualizar: " + " ".join(err_list))
             return redirect("teams:roster_manage", slug=self.team.slug)
 
-        memberships = TeamMembership.objects.filter(
-            team=self.team,
-            season=self.season,
-            is_active=True
-        ).select_related("player").order_by("jersey_number")
+        # 4. Inscribir un jugador existente de la base de datos federada
+        else:
+            form = TeamMembershipForm(request.POST, team=self.team, season=self.season)
+            if form.is_valid():
+                player = form.cleaned_data["player"]
+                jersey_number = form.cleaned_data["jersey_number"]
+                is_captain = form.cleaned_data.get("is_captain", False)
 
-        return render(
-            request,
-            self.template_name,
-            {
-                "team": self.team,
-                "season": self.season,
-                "current_season": self.season,
-                "form": form,
-                "memberships": memberships,
-                "active_memberships": memberships,
-            },
-        )
+                existing_membership = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    player=player
+                ).first()
+
+                active_in_other = TeamMembership.objects.filter(
+                    season=self.season,
+                    player=player,
+                    is_active=True
+                ).exclude(team=self.team).select_related("team").first()
+
+                if active_in_other:
+                    messages.error(
+                        request,
+                        f"{player.full_name} no puede ser inscrito porque ya tiene ficha activa en {active_in_other.team.name} para esta temporada."
+                    )
+                    return redirect("teams:roster_manage", slug=self.team.slug)
+
+                dorsal_busy = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    jersey_number=jersey_number,
+                    is_active=True
+                ).exclude(player=player).exists()
+
+                if dorsal_busy:
+                    messages.error(
+                        request,
+                        f"El dorsal #{jersey_number} ya está en uso por otro jugador activo en la plantilla."
+                    )
+                    return redirect("teams:roster_manage", slug=self.team.slug)
+
+                if existing_membership:
+                    existing_membership.jersey_number = jersey_number
+                    existing_membership.is_captain = is_captain
+                    existing_membership.is_active = True
+                    existing_membership.save()
+                else:
+                    membership = form.save(commit=False)
+                    membership.team = self.team
+                    membership.season = self.season
+                    membership.is_active = True
+                    membership.save()
+
+                messages.success(
+                    request,
+                    f"{player.full_name} ha sido inscrito en la plantilla con el dorsal #{jersey_number}."
+                )
+                return redirect("teams:roster_manage", slug=self.team.slug)
+
+            memberships = TeamMembership.objects.filter(
+                team=self.team,
+                season=self.season,
+                is_active=True
+            ).select_related("player").order_by("jersey_number")
+            player_create_form = CoachPlayerCreateForm(team=self.team, season=self.season)
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    "team": self.team,
+                    "season": self.season,
+                    "current_season": self.season,
+                    "form": form,
+                    "membership_form": form,
+                    "player_create_form": player_create_form,
+                    "memberships": memberships,
+                    "active_memberships": memberships,
+                    "active_tab": "existing",
+                },
+            )

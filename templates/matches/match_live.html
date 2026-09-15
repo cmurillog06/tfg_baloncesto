@@ -27,7 +27,7 @@
   <!-- GRAN MARCADOR EN TIEMPO REAL (BROADCAST LUXURY SCOREBOARD) -->
   <div class="card" style="margin-bottom: 2rem; padding: 2.25rem 2rem; background: #FFFFFF; border-top: 4px solid var(--gold-primary); box-shadow: 0 12px 35px rgba(9, 13, 22, 0.08); position: relative; overflow: hidden;">
     
-    <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 2rem; text-align: center;">
+    <div class="scoreboard-grid">
       
       <!-- EQUIPO LOCAL -->
       <div style="display: flex; flex-direction: column; align-items: center;">
@@ -44,6 +44,25 @@
           <a href="{% url 'teams:team_detail' match.home_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.home_team.name }}</a>
         </h2>
         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">LOCAL</span>
+
+        <!-- Tiempos Muertos FIBA (Local) -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 0.35rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Tiempos Muertos disponibles en esta mitad/periodo">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Tiempos Muertos</span>
+            <div id="live-home-timeouts" style="display: flex; gap: 0.3rem; align-items: center;">
+              <!-- Indicadores de tiempos muertos -->
+            </div>
+          </div>
+
+          <!-- Faltas de Equipo y Bonus (Local) -->
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Faltas de equipo en el cuarto actual (Límite 5)">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Faltas:</span>
+            <strong id="live-home-fouls-count" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-title);">{{ home_fouls_info.count|default:0 }}/5</strong>
+            <span id="live-home-bonus-badge" class="badge-bonus-live {% if home_fouls_info.in_bonus %}active{% endif %}" title="Equipo en Bonus: 2 tiros libres por cada falta personal posterior">
+              {% if home_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- MARCADOR Y RELOJ CENTRAL -->
@@ -99,6 +118,25 @@
           <a href="{% url 'teams:team_detail' match.away_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.away_team.name }}</a>
         </h2>
         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">VISITANTE</span>
+
+        <!-- Tiempos Muertos FIBA (Visitante) -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 0.35rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Tiempos Muertos disponibles en esta mitad/periodo">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Tiempos Muertos</span>
+            <div id="live-away-timeouts" style="display: flex; gap: 0.3rem; align-items: center;">
+              <!-- Indicadores de tiempos muertos -->
+            </div>
+          </div>
+
+          <!-- Faltas de Equipo y Bonus (Visitante) -->
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Faltas de equipo en el cuarto actual (Límite 5)">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Faltas:</span>
+            <strong id="live-away-fouls-count" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-title);">{{ away_fouls_info.count|default:0 }}/5</strong>
+            <span id="live-away-bonus-badge" class="badge-bonus-live {% if away_fouls_info.in_bonus %}active{% endif %}" title="Equipo en Bonus: 2 tiros libres por cada falta personal posterior">
+              {% if away_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+            </span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -145,10 +183,10 @@
   </div>
 
   <!-- SECCIÓN INTERACTIVA: PESTAÑAS (JUGADA A JUGADA vs CHAT EN VIVO) + PLANTILLAS -->
-  <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 1.75rem; align-items: stretch; margin-bottom: 2rem;">
+  <div class="grid-responsive-2" style="gap: 1.75rem; align-items: start; margin-bottom: 2rem;">
     
     <!-- COLUMNA IZQUIERDA: PANEL DINÁMICO CON PESTAÑAS (ALTURA FIJA UNIFORME) -->
-    <div class="card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
+    <div class="card live-card-height" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
       
       <!-- Barra de Pestañas Superiores -->
       <div style="display: flex; height: 57px; flex-shrink: 0; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
@@ -170,133 +208,133 @@
       <!-- CONTENIDO PESTAÑA 0: ESTADÍSTICAS -->
       <div id="tab-content-boxscore" style="display: none; height: calc(610px - 57px); max-height: calc(610px - 57px); overflow-y: auto; padding: 1.25rem; box-sizing: border-box;">
         
-        {% if match.status == 'SCHEDULED' or not home_player_stats and not away_player_stats %}
-          <div style="text-align: center; padding: 4.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; box-sizing: border-box;">
-            <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
-              📊
+        <!-- Box Score Equipo Local -->
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
             </div>
-            <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Estadísticas en Espera</h4>
-            <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
-              Las estadísticas individuales, puntos, rebotes y valoraciones de cada jugador se registrarán en tiempo real una vez comience el encuentro.
-            </p>
+            <strong id="boxscore-home-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
           </div>
-        {% else %}
-          <!-- Box Score Equipo Local -->
-          <div style="margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
-                <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
-              </div>
-              <strong id="boxscore-home-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
-            </div>
 
-            <div style="overflow-x: auto;">
-              <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
-                    <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
-                    <th>MIN</th>
-                    <th>PTS</th>
-                    <th>T2</th>
-                    <th>T3</th>
-                    <th>TL</th>
-                    <th>REB</th>
-                    <th>AST</th>
-                    <th>ROB</th>
-                    <th>PER</th>
-                    <th>TAP</th>
-                    <th>FAL</th>
-                    <th style="color: #926004; font-weight: 700;">PIR</th>
+          <div class="table-responsive">
+            <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody id="boxscore-home-tbody">
+                {% for stat in home_player_stats %}
+                  <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                    <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td class="stat-min">{{ stat.minutes_played }}'</td>
+                    <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                    <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                    <td class="stat-ast">{{ stat.assists }}</td>
+                    <td class="stat-rob">{{ stat.steals }}</td>
+                    <td class="stat-per">{{ stat.turnovers }}</td>
+                    <td class="stat-tap">{{ stat.blocks_made }}</td>
+                    <td class="stat-fal">
+                      {% if stat.fouls_committed >= 5 %}
+                        <strong style="color: var(--state-red);">{{ stat.fouls_committed }}</strong>
+                      {% else %}
+                        {{ stat.fouls_committed }}
+                      {% endif %}
+                    </td>
+                    <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
                   </tr>
-                </thead>
-                <tbody id="boxscore-home-tbody">
-                  {% for stat in home_player_stats %}
-                    <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
-                      <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
-                        <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
-                          {{ stat.player.full_name }}
-                        </a>
-                      </td>
-                      <td class="stat-min">{{ stat.minutes_played }}'</td>
-                      <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
-                      <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
-                      <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
-                      <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
-                      <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
-                      <td class="stat-ast">{{ stat.assists }}</td>
-                      <td class="stat-rob">{{ stat.steals }}</td>
-                      <td class="stat-per">{{ stat.turnovers }}</td>
-                      <td class="stat-tap">{{ stat.blocks_made }}</td>
-                      <td class="stat-fal">{{ stat.fouls_committed }}</td>
-                      <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Box Score Equipo Visitante -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
             </div>
+            <strong id="boxscore-away-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
           </div>
 
-          <!-- Box Score Equipo Visitante -->
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
-                <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
-              </div>
-              <strong id="boxscore-away-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
-            </div>
-
-            <div style="overflow-x: auto;">
-              <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
-                    <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
-                    <th>MIN</th>
-                    <th>PTS</th>
-                    <th>T2</th>
-                    <th>T3</th>
-                    <th>TL</th>
-                    <th>REB</th>
-                    <th>AST</th>
-                    <th>ROB</th>
-                    <th>PER</th>
-                    <th>TAP</th>
-                    <th>FAL</th>
-                    <th style="color: #926004; font-weight: 700;">PIR</th>
+          <div class="table-responsive">
+            <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody id="boxscore-away-tbody">
+                {% for stat in away_player_stats %}
+                  <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                    <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td class="stat-min">{{ stat.minutes_played }}'</td>
+                    <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                    <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                    <td class="stat-ast">{{ stat.assists }}</td>
+                    <td class="stat-rob">{{ stat.steals }}</td>
+                    <td class="stat-per">{{ stat.turnovers }}</td>
+                    <td class="stat-tap">{{ stat.blocks_made }}</td>
+                    <td class="stat-fal">
+                      {% if stat.fouls_committed >= 5 %}
+                        <strong style="color: var(--state-red);">{{ stat.fouls_committed }}</strong>
+                      {% else %}
+                        {{ stat.fouls_committed }}
+                      {% endif %}
+                    </td>
+                    <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
                   </tr>
-                </thead>
-                <tbody id="boxscore-away-tbody">
-                  {% for stat in away_player_stats %}
-                    <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
-                      <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
-                        <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
-                          {{ stat.player.full_name }}
-                        </a>
-                      </td>
-                      <td class="stat-min">{{ stat.minutes_played }}'</td>
-                      <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
-                      <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
-                      <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
-                      <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
-                      <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
-                      <td class="stat-ast">{{ stat.assists }}</td>
-                      <td class="stat-rob">{{ stat.steals }}</td>
-                      <td class="stat-per">{{ stat.turnovers }}</td>
-                      <td class="stat-tap">{{ stat.blocks_made }}</td>
-                      <td class="stat-fal">{{ stat.fouls_committed }}</td>
-                      <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-        {% endif %}
+        </div>
 
       </div>
 
@@ -307,46 +345,44 @@
           <span style="font-size: 0.78rem; color: var(--text-muted);">Sincronización en tiempo real</span>
         </div>
 
-        {% if match.status == 'SCHEDULED' or not recent_events %}
-          <div style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-            <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
-              ⏱️
-            </div>
-            <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Partido Aún No Comenzado</h4>
-            <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
-              La cronología de jugadas y canastas se retransmitirá aquí en directo en cuanto la mesa arbitral inicie el encuentro.
-            </p>
-          </div>
-        {% else %}
-          <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; min-height: 0;">
-            {% for ev in recent_events %}
-              <div class="event-item" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.7rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.3s ease;">
+        <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; min-height: 0;">
+          {% for ev in recent_events %}
+            <div class="event-item" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.7rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.3s ease;">
+              
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  {{ ev.get_period_display }} &bull; {{ ev.game_clock }}
+                </span>
                 
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
-                    {{ ev.get_period_display }} &bull; {{ ev.game_clock }}
-                  </span>
-                  
-                  <div>
-                    <strong style="color: var(--text-title); font-size: 0.9rem;">
-                      {{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}
-                    </strong>
-                    <div style="font-size: 0.78rem; color: var(--text-secondary);">
-                      {{ ev.get_event_type_display }}
-                    </div>
+                <div>
+                  <strong style="color: var(--text-title); font-size: 0.9rem;">
+                    {{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}
+                  </strong>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">
+                    {% if ev.description %}{{ ev.description }}{% else %}{{ ev.get_event_type_display }}{% endif %}
                   </div>
                 </div>
-
-                {% if ev.points > 0 %}
-                  <div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary); background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">
-                    +{{ ev.points }}
-                  </div>
-                {% endif %}
-
               </div>
-            {% endfor %}
-          </div>
-        {% endif %}
+
+              {% if ev.points != 0 %}
+                <div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: {% if ev.points > 0 %}var(--gold-primary){% else %}var(--state-red){% endif %}; background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid {% if ev.points > 0 %}var(--gold-border){% else %}rgba(220,38,38,0.3){% endif %};">
+                  {% if ev.points > 0 %}+{% endif %}{{ ev.points }}
+                </div>
+              {% endif %}
+
+            </div>
+          {% empty %}
+            <div id="no-events-text" style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+              <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
+                ⏱️
+              </div>
+              <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Sin Jugadas Registradas</h4>
+              <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
+                La cronología de jugadas y canastas se retransmitirá aquí en directo en cuanto la mesa arbitral registre acciones.
+              </p>
+            </div>
+          {% endfor %}
+        </div>
       </div>
 
       <!-- CONTENIDO PESTAÑA 2: SALA DE CHAT EN VIVO -->
@@ -389,7 +425,7 @@
     </div>
 
     <!-- COLUMNA DERECHA: PLANTILLAS OFICIALES (ALTURA FIJA UNIFORME DE 610px) -->
-    <div class="card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
+    <div class="card live-card-height" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
       
       <!-- Cabecera de Plantillas -->
       <div style="display: flex; align-items: center; justify-content: space-between; height: 57px; flex-shrink: 0; padding: 0 1.25rem; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
@@ -422,7 +458,12 @@
                   <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
                   <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
                 </div>
-                <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                  <span id="roster-court-badge-{{ m.player.id }}" class="roster-court-badge on-court" style="{% if m.player.id in home_on_court_ids %}display: inline-flex;{% else %}display: none;{% endif %}">
+                    🏀 En Pista
+                  </span>
+                </div>
               </div>
             {% endfor %}
           </div>
@@ -445,7 +486,12 @@
                   <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
                   <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
                 </div>
-                <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                  <span id="roster-court-badge-{{ m.player.id }}" class="roster-court-badge on-court" style="{% if m.player.id in away_on_court_ids %}display: inline-flex;{% else %}display: none;{% endif %}">
+                    🏀 En Pista
+                  </span>
+                </div>
               </div>
             {% endfor %}
           </div>
@@ -498,6 +544,71 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.badge-bonus-live {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--platinum-border);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.badge-bonus-live.active {
+  background: var(--state-red);
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+  animation: pulseBonus 2s infinite ease-in-out;
+}
+@keyframes pulseBonus {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.92; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5); }
+}
+
+.roster-court-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+.roster-court-badge.on-court {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--state-green);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.scoreboard-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .scoreboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .live-card-height {
+    height: auto !important;
+    min-height: 520px !important;
+    max-height: none !important;
+  }
+}
 </style>
 
 <!-- CLIENTES WEBSOCKET JS: MARCADOR + SALA DE CHAT EN VIVO -->
@@ -516,6 +627,9 @@ let clientClockInterval = null;
 let clientSeconds = 600;
 let totalChatMessages = 0;
 let pendingDeleteMessageId = null;
+
+let liveHomeOnCourt = new Set(JSON.parse('{{ home_on_court_json|default:"[]"|escapejs }}').map(id => parseInt(id, 10)));
+let liveAwayOnCourt = new Set(JSON.parse('{{ away_on_court_json|default:"[]"|escapejs }}').map(id => parseInt(id, 10)));
 
 // -----------------------------------------------------------------------------
 // CONTROL DE PESTAÑAS (Box Score vs Jugada a Jugada vs Chat)
@@ -573,6 +687,34 @@ function switchLiveTab(tab) {
   });
 {% endif %}
 
+function updateLiveOnCourt(side, onCourtIds) {
+  const onCourtIdSet = new Set((onCourtIds || []).map(id => parseInt(id, 10)));
+  if (side === 'home') {
+    liveHomeOnCourt = onCourtIdSet;
+  } else if (side === 'away') {
+    liveAwayOnCourt = onCourtIdSet;
+  }
+
+  const combinedOnCourt = new Set([...liveHomeOnCourt, ...liveAwayOnCourt]);
+
+  // Actualizar badges en la plantilla lateral (solo mostrar 'En Pista', ocultar para banquillo)
+  document.querySelectorAll(`.roster-court-badge`).forEach(badge => {
+    const idParts = badge.id.split('-');
+    if (idParts.length === 4) {
+      const pId = parseInt(idParts[3], 10);
+      if (combinedOnCourt.has(pId)) {
+        badge.style.display = 'inline-flex';
+        badge.className = 'roster-court-badge on-court';
+        badge.innerHTML = '🏀 En Pista';
+      } else {
+        badge.style.display = 'none';
+        badge.className = 'roster-court-badge';
+        badge.innerHTML = '';
+      }
+    }
+  });
+}
+
 // -----------------------------------------------------------------------------
 // 1. WEBSOCKET DE MARCADOR Y RELOJ EN VIVO
 // -----------------------------------------------------------------------------
@@ -596,11 +738,35 @@ function connectMatchWebSocket() {
     if (payload.type === 'initial_state' && data) {
       updateScoreboard(data.home_team.score, data.away_team.score, data.period_display, data.clock);
       handleRunningClock(data.is_running, data.clock);
+      if (data.home_team && data.home_team.timeouts) renderLiveTimeouts('home', data.home_team.timeouts);
+      if (data.away_team && data.away_team.timeouts) renderLiveTimeouts('away', data.away_team.timeouts);
+      if (data.home_team && data.home_team.fouls) renderLiveTeamFouls('home', data.home_team.fouls);
+      if (data.away_team && data.away_team.fouls) renderLiveTeamFouls('away', data.away_team.fouls);
+      if (data.home_on_court) updateLiveOnCourt('home', data.home_on_court);
+      if (data.away_on_court) updateLiveOnCourt('away', data.away_on_court);
     } else if (payload.type === 'match_update' && data) {
       updateScoreboard(data.home_score, data.away_score, data.period_display, data.clock);
+      if (data.is_running !== undefined) handleRunningClock(data.is_running, data.clock);
+      if (data.home_timeouts) renderLiveTimeouts('home', data.home_timeouts);
+      if (data.away_timeouts) renderLiveTimeouts('away', data.away_timeouts);
+      if (data.home_fouls) renderLiveTeamFouls('home', data.home_fouls);
+      if (data.away_fouls) renderLiveTeamFouls('away', data.away_fouls);
       if (data.new_event) addEventToTimeline(data.new_event);
       if (data.player_stat) updatePlayerBoxScore(data.player_stat);
+    } else if (payload.type === 'substitution_update' && data) {
+      if (data.home_on_court) updateLiveOnCourt('home', data.home_on_court);
+      if (data.away_on_court) updateLiveOnCourt('away', data.away_on_court);
+      if (data.new_event) addEventToTimeline(data.new_event);
+    } else if (payload.type === 'timeout_update' && data) {
+      if (data.home_timeouts) renderLiveTimeouts('home', data.home_timeouts);
+      if (data.away_timeouts) renderLiveTimeouts('away', data.away_timeouts);
+      if (data.clock) {
+        handleRunningClock(false, data.clock);
+      }
+      if (data.new_event) addEventToTimeline(data.new_event);
     } else if (payload.type === 'event_update' && data) {
+      if (data.home_fouls) renderLiveTeamFouls('home', data.home_fouls);
+      if (data.away_fouls) renderLiveTeamFouls('away', data.away_fouls);
       if (data.new_event) addEventToTimeline(data.new_event);
       if (data.player_stat) updatePlayerBoxScore(data.player_stat);
     } else if (payload.type === 'clock_update' && data) {
@@ -620,6 +786,52 @@ function connectMatchWebSocket() {
     if (clientClockInterval) clearInterval(clientClockInterval);
     setTimeout(connectMatchWebSocket, 3000);
   };
+}
+
+function renderLiveTimeouts(side, info) {
+  const container = document.getElementById(`live-${side}-timeouts`);
+  if (!container || !info) return;
+
+  const limit = info.limit || 0;
+  const used = info.used || 0;
+  let html = '';
+
+  for (let i = 0; i < limit; i++) {
+    const isUsed = i < used;
+    html += `<span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: ${isUsed ? 'var(--gold-primary)' : 'var(--platinum-border)'}; border: 1px solid ${isUsed ? 'var(--gold-primary)' : 'rgba(0,0,0,0.12)'}; transition: all 0.25s ease;" title="${isUsed ? 'Tiempo muerto consumido' : 'Tiempo muerto disponible'}"></span>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderLiveTeamFouls(side, foulsInfo) {
+  if (!foulsInfo) return;
+  const countEl = document.getElementById(`live-${side}-fouls-count`);
+  const badgeEl = document.getElementById(`live-${side}-bonus-badge`);
+
+  const count = foulsInfo.count !== undefined ? foulsInfo.count : 0;
+  const inBonus = foulsInfo.in_bonus !== undefined ? foulsInfo.in_bonus : (count >= 5);
+
+  if (countEl) {
+    countEl.innerText = `${count}/5`;
+    if (inBonus) {
+      countEl.style.color = 'var(--state-red)';
+    } else {
+      countEl.style.color = 'var(--text-title)';
+    }
+  }
+
+  if (badgeEl) {
+    if (inBonus) {
+      badgeEl.className = 'badge-bonus-live active';
+      badgeEl.innerHTML = 'Bonus';
+      badgeEl.setAttribute('title', 'Equipo en Bonus: todas las faltas defensivas otorgan 2 tiros libres al rival');
+    } else {
+      badgeEl.className = 'badge-bonus-live';
+      badgeEl.innerHTML = 'Sin Bonus';
+      badgeEl.setAttribute('title', `Faltan ${Math.max(0, 5 - count)} faltas para entrar en bonus`);
+    }
+  }
 }
 
 function parseClock(str) {
@@ -730,7 +942,13 @@ function updatePlayerBoxScore(st) {
   if (robEl && st.steals !== undefined) robEl.innerText = st.steals;
   if (perEl && st.turnovers !== undefined) perEl.innerText = st.turnovers;
   if (tapEl && st.blocks_made !== undefined) tapEl.innerText = st.blocks_made;
-  if (falEl && st.fouls_committed !== undefined) falEl.innerText = st.fouls_committed;
+  if (falEl && st.fouls_committed !== undefined) {
+    if (st.fouls_committed >= 5) {
+      falEl.innerHTML = `<strong style="color: var(--state-red);">${st.fouls_committed}</strong>`;
+    } else {
+      falEl.innerText = st.fouls_committed;
+    }
+  }
   if (pirEl && st.valuation_pir !== undefined) {
     pirEl.innerText = st.valuation_pir;
   }
@@ -757,12 +975,15 @@ function addEventToTimeline(ev) {
   if (noEventsText) noEventsText.style.display = 'none';
 
   const timelineEl = document.getElementById('events-timeline');
+  if (!timelineEl) return;
+
   const div = document.createElement('div');
   div.className = 'event-item';
   div.style = 'display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1.5px solid var(--gold-border); box-shadow: 0 4px 12px rgba(0,0,0,0.06); animation: slideDown 0.35s ease; margin-bottom: 0.5rem;';
 
-  const ptsHtml = ev.points > 0 ? `<div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: var(--gold-primary); background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--gold-border);">+${ev.points}</div>` : '';
+  const ptsHtml = ev.points !== 0 ? `<div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: ${ev.points > 0 ? 'var(--gold-primary)' : 'var(--state-red)'}; background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid ${ev.points > 0 ? 'var(--gold-border)' : 'rgba(220,38,38,0.3)'};">${ev.points > 0 ? '+' : ''}${ev.points}</div>` : '';
   const playerText = ev.player_name ? `: ${ev.player_name}` : '';
+  const detailText = ev.description || ev.event_type || '';
 
   div.innerHTML = `
     <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -774,7 +995,7 @@ function addEventToTimeline(ev) {
           ${ev.team_acronym || ''}${playerText}
         </strong>
         <div style="font-size: 0.78rem; color: var(--text-secondary);">
-          ${ev.event_type || ''}
+          ${detailText}
         </div>
       </div>
     </div>
@@ -946,6 +1167,17 @@ document.addEventListener('DOMContentLoaded', function() {
       counter.innerText = `${input.value.length} / 500`;
     });
   }
+
+  // Renderizar estado inicial de tiempos muertos y faltas de equipo de forma segura
+  const initialHomeTimeouts = { limit: {{ home_timeouts.limit|default:2 }}, used: {{ home_timeouts.used|default:0 }}, remaining: {{ home_timeouts.remaining|default:2 }} };
+  const initialAwayTimeouts = { limit: {{ away_timeouts.limit|default:2 }}, used: {{ away_timeouts.used|default:0 }}, remaining: {{ away_timeouts.remaining|default:2 }} };
+  renderLiveTimeouts('home', initialHomeTimeouts);
+  renderLiveTimeouts('away', initialAwayTimeouts);
+
+  const initialHomeFouls = { count: {{ home_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ home_fouls_info.in_bonus|yesno:"true,false" }} };
+  const initialAwayFouls = { count: {{ away_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ away_fouls_info.in_bonus|yesno:"true,false" }} };
+  renderLiveTeamFouls('home', initialHomeFouls);
+  renderLiveTeamFouls('away', initialAwayFouls);
 
   const matchStatus = "{{ match.status }}";
   if (matchStatus !== 'FINISHED') {

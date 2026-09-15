@@ -123,6 +123,39 @@ class Player(models.Model):
         verbose_name_plural = "Jugadores"
         ordering = ["last_name", "first_name"]
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        import datetime
+        super().clean()
+
+        if self.first_name:
+            self.first_name = self.first_name.strip()
+            if len(self.first_name) < 2:
+                raise ValidationError({"first_name": "El nombre debe tener al menos 2 caracteres."})
+
+        if self.last_name:
+            self.last_name = self.last_name.strip()
+            if len(self.last_name) < 2:
+                raise ValidationError({"last_name": "Los apellidos deben tener al menos 2 caracteres."})
+
+        if self.height_cm is not None:
+            if self.height_cm < 120 or self.height_cm > 245:
+                raise ValidationError({"height_cm": "La altura debe estar comprendida entre 120 y 245 cm."})
+
+        if self.weight_kg is not None:
+            if float(self.weight_kg) < 40.0 or float(self.weight_kg) > 190.0:
+                raise ValidationError({"weight_kg": "El peso debe estar comprendido entre 40 y 190 kg."})
+
+        if self.birth_date:
+            today = datetime.date.today()
+            if self.birth_date > today:
+                raise ValidationError({"birth_date": "La fecha de nacimiento no puede ser posterior al día de hoy."})
+            age = (today - self.birth_date).days / 365.25
+            if age < 12:
+                raise ValidationError({"birth_date": "El jugador debe tener al menos 12 años para poseer ficha federada."})
+            if age > 65:
+                raise ValidationError({"birth_date": "La edad del jugador no puede superar los 65 años."})
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -179,6 +212,27 @@ class TeamMembership(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         super().clean()
+
+        # Validación de rango de dorsal (0 a 99)
+        if self.jersey_number is not None:
+            if self.jersey_number < 0 or self.jersey_number > 99:
+                raise ValidationError({"jersey_number": "El dorsal debe ser un número entero comprendido entre 0 y 99."})
+
+        # 1. En un mismo equipo no pueden existir dos jugadores con el mismo número de dorsal activo durante la misma temporada
+        if self.is_active and self.team_id and self.season_id and self.jersey_number is not None:
+            existing_dorsal = TeamMembership.objects.filter(
+                team_id=self.team_id,
+                season_id=self.season_id,
+                jersey_number=self.jersey_number,
+                is_active=True
+            ).exclude(pk=self.pk).select_related("player", "season").first()
+
+            if existing_dorsal:
+                player_name = existing_dorsal.player.full_name if existing_dorsal.player else "otro jugador"
+                season_name = self.season.name if self.season_id else "la temporada seleccionada"
+                raise ValidationError({
+                    "jersey_number": f"El dorsal #{self.jersey_number} ya está asignado al jugador {player_name} con ficha activa en este equipo durante la temporada {season_name}."
+                })
 
         if self.is_active and self.player_id and self.season_id:
             # Un jugador no puede tener más de una ficha activa en la misma temporada (en ningún equipo)

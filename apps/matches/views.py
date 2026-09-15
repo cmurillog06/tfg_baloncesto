@@ -1,3 +1,4 @@
+import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -76,6 +77,18 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
             match=match, team=match.away_team
         ).select_related("player").order_by("-points", "-valuation_pir")
 
+        # Tiempos muertos y faltas de equipo según normativa FIBA
+        context["home_timeouts"] = match.get_team_timeouts_info(match.home_team)
+        context["away_timeouts"] = match.get_team_timeouts_info(match.away_team)
+        context["home_fouls_info"] = match.get_team_fouls_info(match.home_team)
+        context["away_fouls_info"] = match.get_team_fouls_info(match.away_team)
+        home_on_court = match.get_on_court_player_ids(match.home_team)
+        away_on_court = match.get_on_court_player_ids(match.away_team)
+        context["home_on_court_ids"] = home_on_court
+        context["away_on_court_ids"] = away_on_court
+        context["home_on_court_json"] = json.dumps(home_on_court)
+        context["away_on_court_json"] = json.dumps(away_on_court)
+
         # Cronología completa de eventos del partido (Jugada a Jugada)
         context["recent_events"] = match.events.select_related(
             "player", "team"
@@ -151,6 +164,43 @@ class OfficialTableScorekeeperView(LoginRequiredMixin, RoleRequiredMixin, Detail
             team=match.away_team, is_active=True
         ).select_related("player").order_by("jersey_number")
 
+        # Asegurar estadísticas individuales para los jugadores de las plantillas
+        from apps.analytics.models import PlayerMatchStat
+        import json
+
+        for member in context["home_roster"]:
+            PlayerMatchStat.objects.get_or_create(
+                match=match,
+                player=member.player,
+                defaults={"team": match.home_team}
+            )
+        for member in context["away_roster"]:
+            PlayerMatchStat.objects.get_or_create(
+                match=match,
+                player=member.player,
+                defaults={"team": match.away_team}
+            )
+
+        player_stats = PlayerMatchStat.objects.filter(match=match)
+        player_points_map = {str(stat.player_id): stat.points for stat in player_stats}
+        player_fouls_map = {str(stat.player_id): stat.fouls_committed for stat in player_stats}
+        context["player_points_json"] = json.dumps(player_points_map)
+        context["player_fouls_json"] = json.dumps(player_fouls_map)
+
+        home_on_court_ids = match.get_on_court_player_ids(match.home_team)
+        away_on_court_ids = match.get_on_court_player_ids(match.away_team)
+        context["home_on_court_ids"] = home_on_court_ids
+        context["away_on_court_ids"] = away_on_court_ids
+        context["home_on_court_json"] = json.dumps(home_on_court_ids)
+        context["away_on_court_json"] = json.dumps(away_on_court_ids)
+        context["home_has_five"] = match.has_valid_five_on_court(match.home_team)
+        context["away_has_five"] = match.has_valid_five_on_court(match.away_team)
+
+        context["home_timeouts"] = match.get_team_timeouts_info(match.home_team)
+        context["away_timeouts"] = match.get_team_timeouts_info(match.away_team)
+        context["home_fouls_info"] = match.get_team_fouls_info(match.home_team)
+        context["away_fouls_info"] = match.get_team_fouls_info(match.away_team)
+
         context["recent_events"] = match.events.select_related(
             "player", "team"
         ).order_by("-created_at")[:30]
@@ -165,13 +215,13 @@ class OfficialTableScorekeeperView(LoginRequiredMixin, RoleRequiredMixin, Detail
 class ScoreSheetDetailView(LoginRequiredMixin, RoleRequiredMixin, DetailView):
     """
     Vista del acta digital oficial del partido cerrada y firmada.
-    Acceso estrictamente restringido a Mesa Arbitral y Entrenadores.
+    Acceso estrictamente restringido a Administradores, Mesa Arbitral y Entrenadores.
     """
 
     model = Match
     template_name = "matches/scoresheet_detail.html"
     context_object_name = "match"
-    allowed_roles = ["TABLE_OFFICIAL", "COACH"]
+    allowed_roles = ["ADMIN", "TABLE_OFFICIAL", "COACH"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -180,14 +230,58 @@ class ScoreSheetDetailView(LoginRequiredMixin, RoleRequiredMixin, DetailView):
         scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)
         context["scoresheet"] = scoresheet
 
-        # Plantillas con estadísticas del partido
-        context["home_roster"] = TeamMembership.objects.filter(
-            team=match.home_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
+        # 1. Desglose oficial de puntos por cuartos
+        context["quarters_breakdown"] = match.get_quarters_breakdown()
 
-        context["away_roster"] = TeamMembership.objects.filter(
-            team=match.away_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
+        # 2. Listado completo de jugadores participantes con puntos y faltas personales
+        from apps.analytics.models import PlayerMatchStat
+
+        def build_roster_stats(team):
+            memberships = TeamMembership.objects.filter(
+                team=team, is_active=True
+            ).select_related("player").order_by("jersey_number")
+
+            stats_map = {
+                stat.player_id: stat
+                for stat in PlayerMatchStat.objects.filter(match=match, team=team)
+            }
+
+            roster_list = []
+            total_points = 0
+            total_fouls = 0
+
+            for m in memberships:
+                stat = stats_map.get(m.player_id)
+                points = stat.points if stat else 0
+                fouls = stat.fouls_committed if stat else 0
+                is_starter = stat.is_starter if stat else False
+                is_on_court = stat.is_on_court if stat else False
+
+                total_points += points
+                total_fouls += fouls
+
+                roster_list.append({
+                    "membership": m,
+                    "player": m.player,
+                    "jersey_number": m.jersey_number,
+                    "is_captain": m.is_captain,
+                    "is_starter": is_starter,
+                    "is_on_court": is_on_court,
+                    "points": points,
+                    "fouls": fouls,
+                    "is_fouled_out": fouls >= 5,
+                    "stat": stat,
+                })
+
+            return roster_list, total_points, total_fouls
+
+        home_roster, home_total_pts, home_total_fouls = build_roster_stats(match.home_team)
+        away_roster, away_total_pts, away_total_fouls = build_roster_stats(match.away_team)
+
+        context["home_roster_stats"] = home_roster
+        context["away_roster_stats"] = away_roster
+        context["home_total_fouls"] = home_total_fouls
+        context["away_total_fouls"] = away_total_fouls
 
         context["all_events"] = match.events.select_related(
             "player", "team"

@@ -57,6 +57,8 @@ class PlayerMatchStat(models.Model):
     )
     minutes_played = models.PositiveIntegerField(default=0, verbose_name="Minutos Jugados")
     points = models.PositiveIntegerField(default=0, verbose_name="Puntos Totales")
+    is_starter = models.BooleanField(default=False, verbose_name="Titular / Quinteto Inicial")
+    is_on_court = models.BooleanField(default=False, verbose_name="En Pista")
 
     # Tiros
     field_goals_made = models.PositiveIntegerField(default=0, verbose_name="Tiros de Campo Anotados (T2/T3)")

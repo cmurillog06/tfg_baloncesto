@@ -13,7 +13,7 @@
   </div>
 
   <!-- Grid de Ligas -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.75rem;">
     {% for league in leagues %}
       <div class="card card-interactive" style="border-top: 3px solid var(--obsidian-dark); position: relative; overflow: hidden;">
         
