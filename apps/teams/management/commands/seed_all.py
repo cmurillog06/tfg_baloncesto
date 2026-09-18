@@ -24,6 +24,11 @@ class Command(BaseCommand):
         demo_users = [
             ("admin", "admin@quintocuarto.es", "Basket2026!", User.Role.ADMIN, True, True, "Carlos", "Administrador"),
             ("oficial_mesa", "mesa@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False, "Carlos", "Murillo"),
+            ("cronometrador", "crono@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False, "Laura", "Sánchez Gómez"),
+            ("anotador_auxiliar", "anotador@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False, "David", "Fernández Ruiz"),
+            ("arbitro_principal", "arbitro1@quintocuarto.es", "Basket2026!", User.Role.REFEREE, False, False, "Juan Carlos", "García González"),
+            ("arbitro_fiba", "arbitro2@quintocuarto.es", "Basket2026!", User.Role.REFEREE, False, False, "Antonio", "Conde Ruiz"),
+            ("arbitro_auxiliar", "arbitro3@quintocuarto.es", "Basket2026!", User.Role.REFEREE, False, False, "Emilio", "Pérez Pizarro"),
             ("coach_madrid", "coach@quintocuarto.es", "Basket2026!", User.Role.COACH, False, False, "Chus", "Mateo"),
             ("aficionado_basket", "fan@quintocuarto.es", "Basket2026!", User.Role.FAN, False, False, "Aficionado", "Basket"),
         ]

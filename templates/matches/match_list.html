@@ -12,16 +12,28 @@
       <h1 style="font-size: 2.2rem; font-weight: 700; font-family: var(--font-display); color: var(--text-title); margin-bottom: 0.35rem;">Centro de Partidos</h1>
       <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">Consulta los resultados oficiales, el calendario de juego y sigue los encuentros en directo</p>
     </div>
-    {% if user.is_authenticated and user.role in 'ADMIN,TABLE_OFFICIAL' or user.is_superuser %}
-      <a href="{% url 'matches:restore_demo_data' %}" 
-        style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.38rem 0.85rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border); text-decoration: none; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02);"
-        onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-border)'; this.style.background='#FFFFFF';"
-        onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'; this.style.background='var(--bg-subtle)';"
-        title="Restaura los partidos en juego, marcadores y actas oficiales a su estado inicial de demostración">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-        <span>Restablecer estado inicial de los partidos</span>
-      </a>
-    {% endif %}
+    <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+      {% if user.is_authenticated and user.role == 'ADMIN' or user.is_superuser or user.is_staff %}
+        <a href="{% url 'admin:matches_match_generate_schedule' %}" 
+          style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; font-weight: 600; color: var(--text-title); background: #FFFFFF; padding: 0.38rem 0.85rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border); text-decoration: none; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);"
+          onmouseover="this.style.borderColor='var(--gold-border)'; this.style.color='var(--gold-primary)';"
+          onmouseout="this.style.borderColor='var(--platinum-border)'; this.style.color='var(--text-title)';"
+          title="Genera de forma automática y aleatoria el calendario oficial, sedes y designaciones de árbitros y mesas">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Generar Calendario</span>
+        </a>
+      {% endif %}
+      {% if user.is_authenticated and user.role in 'ADMIN,TABLE_OFFICIAL' or user.is_superuser %}
+        <a href="{% url 'matches:restore_demo_data' %}" 
+          style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.38rem 0.85rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border); text-decoration: none; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02);"
+          onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-border)'; this.style.background='#FFFFFF';"
+          onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'; this.style.background='var(--bg-subtle)';"
+          title="Restaura los partidos en juego, marcadores y actas oficiales a su estado inicial de demostración">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          <span>Restablecer estado inicial</span>
+        </a>
+      {% endif %}
+    </div>
   </div>
 
   <!-- SECCIÓN 1: PARTIDOS EN DIRECTO -->

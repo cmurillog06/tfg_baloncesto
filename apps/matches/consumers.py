@@ -276,12 +276,13 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
         # 9. Cierre Oficial del Acta Digital
         elif action == "close_scoresheet":
             referee_sig = content.get("referee_signature", "Árbitro Principal")
+            second_referee_sig = content.get("second_referee_signature", "")
             table_sig = content.get("table_official_signature", user.username if user else "Anotador")
             timekeeper_sig = content.get("timekeeper_signature", "Cronometrador")
             report = content.get("incidents_report", "")
 
             result = await self.close_digital_scoresheet(
-                self.match_id, referee_sig, table_sig, timekeeper_sig, report
+                self.match_id, referee_sig, second_referee_sig, table_sig, timekeeper_sig, report
             )
             if result:
                 if "error" in result:
@@ -1010,7 +1011,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             return None
 
     @database_sync_to_async
-    def close_digital_scoresheet(self, match_id, referee_sig, table_sig, timekeeper_sig, report):
+    def close_digital_scoresheet(self, match_id, referee_sig, second_referee_sig, table_sig, timekeeper_sig, report):
         try:
             match = Match.objects.get(id=match_id)
             server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
@@ -1047,6 +1048,10 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)
             scoresheet.is_closed = True
             scoresheet.referee_signature = referee_sig
+            scoresheet.second_referee_signature = second_referee_sig or (
+                f"{match.second_referee.get_full_name() or match.second_referee.username} (Lic. FEB-31084)"
+                if match.second_referee else "Antonio Conde Ruiz (Lic. FEB-31084)"
+            )
             scoresheet.table_official_signature = table_sig
             scoresheet.timekeeper_signature = timekeeper_sig
             scoresheet.incidents_report = report

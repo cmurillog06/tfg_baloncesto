@@ -399,6 +399,33 @@
           </div>
         </div>
 
+        <!-- Tarjeta de Firma Árbitro Auxiliar -->
+        <div style="background: #FFFFFF; padding: 1.25rem 1.4rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gold-primary);"></div>
+          
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;">
+                ÁRBITRO AUXILIAR
+              </span>
+              <span style="font-size: 0.68rem; background: var(--state-green-light); color: var(--state-green); font-weight: 700; padding: 0.15rem 0.45rem; border-radius: var(--radius-full); border: 1px solid rgba(5, 150, 105, 0.2);">
+                AUTENTICADA
+              </span>
+            </div>
+
+            <div style="font-family: 'Space Grotesk', serif; font-size: 1.15rem; font-weight: 700; color: var(--text-title); margin-bottom: 0.4rem; letter-spacing: -0.01em;">
+              {{ scoresheet.second_referee_name }}
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.73rem; color: var(--text-secondary); border-top: 1px dashed var(--platinum-border); padding-top: 0.45rem;">
+            {% if scoresheet.second_referee_license %}
+              <div><span>Licencia:</span> <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ scoresheet.second_referee_license }}</strong></div>
+            {% endif %}
+            <div><span>Certificación:</span> <strong style="color: var(--text-title);">Comité Técnico de Árbitros (FEB / FIBA)</strong></div>
+          </div>
+        </div>
+
         <!-- Tarjeta de Firma Anotador (Mesa Arbitral) -->
         <div style="background: #FFFFFF; padding: 1.25rem 1.4rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
           <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--state-blue);"></div>

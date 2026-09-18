@@ -100,7 +100,15 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
             if not scoresheet.is_closed:
                 scoresheet.is_closed = True
                 if not scoresheet.referee_signature:
-                    scoresheet.referee_signature = "Juan Carlos García González (Lic. FEB-48192)"
+                    scoresheet.referee_signature = (
+                        f"{match.referee.get_full_name() or match.referee.username} (Lic. FEB-48192)"
+                        if match.referee else "Juan Carlos García González (Lic. FEB-48192)"
+                    )
+                if not scoresheet.second_referee_signature:
+                    scoresheet.second_referee_signature = (
+                        f"{match.second_referee.get_full_name() or match.second_referee.username} (Lic. FEB-31084)"
+                        if match.second_referee else "Antonio Conde Ruiz (Lic. FEB-31084)"
+                    )
                 if not scoresheet.table_official_signature:
                     scoresheet.table_official_signature = (
                         match.table_official.get_full_name() or match.table_official.username

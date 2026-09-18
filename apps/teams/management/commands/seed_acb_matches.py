@@ -24,6 +24,8 @@ class Command(BaseCommand):
         User = get_user_model()
         mesa = User.objects.filter(username="oficial_mesa").first()
         crono = User.objects.filter(username="cronometrador").first()
+        ref1 = User.objects.filter(username="arbitro_principal").first()
+        ref2 = User.objects.filter(username="arbitro_fiba").first()
 
         now = timezone.now()
 
@@ -42,6 +44,8 @@ class Command(BaseCommand):
                 "away_score": 81,
                 "location": "WiZink Center, Madrid",
                 "scheduled_at": now - timedelta(days=7),
+                "referee": ref1,
+                "second_referee": ref2,
                 "table_official": mesa,
                 "timekeeper": crono,
             }
@@ -61,6 +65,8 @@ class Command(BaseCommand):
                 "away_score": 74,
                 "location": "Martín Carpena, Málaga",
                 "scheduled_at": now - timedelta(days=7),
+                "referee": ref1,
+                "second_referee": ref2,
                 "table_official": mesa,
                 "timekeeper": crono,
             }
@@ -81,6 +87,8 @@ class Command(BaseCommand):
                 "away_score": 59,
                 "location": "WiZink Center, Madrid",
                 "scheduled_at": now - timedelta(hours=1),
+                "referee": ref1,
+                "second_referee": ref2,
                 "table_official": mesa,
                 "timekeeper": crono,
             }
@@ -104,6 +112,8 @@ class Command(BaseCommand):
                 "away_score": 0,
                 "scheduled_at": now.replace(hour=21, minute=0, second=0, microsecond=0),
                 "location": "Palau Blaugrana, Barcelona",
+                "referee": ref1,
+                "second_referee": ref2,
                 "table_official": mesa,
                 "timekeeper": crono,
             }

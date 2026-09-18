@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = "ADMIN", "Administrador"
         TABLE_OFFICIAL = "TABLE_OFFICIAL", "Mesa Arbitral"
+        REFEREE = "REFEREE", "Árbitro"
         COACH = "COACH", "Entrenador"
         FAN = "FAN", "Aficionado / Espectador"
 
@@ -36,6 +37,10 @@ class CustomUser(AbstractUser):
     @property
     def is_table_official(self):
         return self.role in [self.Role.ADMIN, self.Role.TABLE_OFFICIAL]
+
+    @property
+    def is_referee(self):
+        return self.role in [self.Role.ADMIN, self.Role.REFEREE]
 
     @property
     def is_coach(self):

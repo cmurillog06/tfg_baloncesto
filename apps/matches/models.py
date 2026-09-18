@@ -49,6 +49,24 @@ class Match(models.Model):
     home_score = models.PositiveIntegerField(default=0, verbose_name="Puntos Local")
     away_score = models.PositiveIntegerField(default=0, verbose_name="Puntos Visitante")
 
+    referee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="refereed_matches",
+        verbose_name="Árbitro Principal",
+        limit_choices_to={"role": "REFEREE"},
+    )
+    second_referee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assistant_refereed_matches",
+        verbose_name="Árbitro Auxiliar",
+        limit_choices_to={"role": "REFEREE"},
+    )
     table_official = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -434,6 +452,7 @@ class DigitalScoreSheet(models.Model):
     )
     is_closed = models.BooleanField(default=False, verbose_name="Acta Oficial Cerrada")
     referee_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma / Nombre Árbitro Principal")
+    second_referee_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma / Nombre Árbitro Auxiliar")
     table_official_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma Anotador (Mesa Arbitral)")
     timekeeper_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma Cronometrador (Mesa Arbitral)")
     incidents_report = models.TextField(blank=True, verbose_name="Informe de Incidencias")
@@ -463,6 +482,30 @@ class DigitalScoreSheet(models.Model):
         if "(Lic." in self.referee_signature:
             import re
             m = re.search(r'\(Lic\.\s*([^)]+)\)', self.referee_signature)
+            if m:
+                return m.group(1).strip()
+        return ""
+
+    @property
+    def second_referee_name(self):
+        if not self.second_referee_signature:
+            return "Antonio Conde Ruiz"
+        if "|" in self.second_referee_signature:
+            return self.second_referee_signature.split("|")[0].strip()
+        if "(Lic." in self.second_referee_signature:
+            return self.second_referee_signature.split("(Lic.")[0].strip()
+        return self.second_referee_signature
+
+    @property
+    def second_referee_license(self):
+        if not self.second_referee_signature:
+            return "FEB-31084"
+        if "|" in self.second_referee_signature:
+            parts = self.second_referee_signature.split("|")
+            return parts[1].strip() if len(parts) > 1 else ""
+        if "(Lic." in self.second_referee_signature:
+            import re
+            m = re.search(r'\(Lic\.\s*([^)]+)\)', self.second_referee_signature)
             if m:
                 return m.group(1).strip()
         return ""

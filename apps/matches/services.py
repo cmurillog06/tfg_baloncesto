@@ -50,6 +50,8 @@ def restore_canonical_matches():
         User = get_user_model()
         mesa = User.objects.filter(username="oficial_mesa").first()
         crono = User.objects.filter(username="cronometrador").first()
+        ref1 = User.objects.filter(username="arbitro_principal").first()
+        ref2 = User.objects.filter(username="arbitro_fiba").first()
 
         for match in matches:
             canonical_match_ids.append(match.id)
@@ -64,6 +66,10 @@ def restore_canonical_matches():
             match.status = status
             match.current_period = period
             match.game_clock = clock
+            if not match.referee and ref1:
+                match.referee = ref1
+            if not match.second_referee and ref2:
+                match.second_referee = ref2
             if not match.table_official and mesa:
                 match.table_official = mesa
             if not match.timekeeper and crono:
@@ -74,7 +80,15 @@ def restore_canonical_matches():
                 scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)
                 scoresheet.is_closed = True
                 if not scoresheet.referee_signature:
-                    scoresheet.referee_signature = "Juan Carlos García González (Lic. FEB-48192)"
+                    scoresheet.referee_signature = (
+                        f"{match.referee.get_full_name() or match.referee.username} (Lic. FEB-48192)"
+                        if match.referee else "Juan Carlos García González (Lic. FEB-48192)"
+                    )
+                if not scoresheet.second_referee_signature:
+                    scoresheet.second_referee_signature = (
+                        f"{match.second_referee.get_full_name() or match.second_referee.username} (Lic. FEB-31084)"
+                        if match.second_referee else "Antonio Conde Ruiz (Lic. FEB-31084)"
+                    )
                 if not scoresheet.table_official_signature:
                     scoresheet.table_official_signature = (
                         match.table_official.get_full_name() or match.table_official.username

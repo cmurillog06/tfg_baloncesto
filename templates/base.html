@@ -52,7 +52,8 @@
             </li>
             <li><a href="{% url 'analytics:dashboard' %}" class="nav-link">Estadísticas</a></li>
             {% if user.is_staff or user.role == 'ADMIN' %}
-            <li><a href="/admin/" class="nav-link" target="_blank" style="color: var(--text-secondary);">Panel de Administración</a></li>
+            <li><a href="{% url 'admin:matches_match_generate_schedule' %}" class="nav-link">Generar Calendario</a></li>
+            <li><a href="/admin/" class="nav-link" target="_blank">Panel de Administración</a></li>
             {% endif %}
             {% endif %}
           </ul>
@@ -88,6 +89,8 @@
                   👑 Administrador
                 {% elif user.role == 'TABLE_OFFICIAL' %}
                   ⏱️ Mesa Arbitral
+                {% elif user.role == 'REFEREE' %}
+                  Árbitro
                 {% elif user.role == 'COACH' %}
                   📋 Entrenador
                 {% else %}
@@ -144,9 +147,10 @@
           <span class="badge badge-live" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;"><span class="live-dot"></span> EN DIRECTO</span>
         </a>
       </li>
-      <li><a href="{% url 'analytics:dashboard' %}" class="mobile-nav-link" onclick="toggleMobileMenu()"><span>📊 Estadísticas</span> <span>&rsaquo;</span></a></li>
+      <li><a href="{% url 'analytics:dashboard' %}" class="mobile-nav-link" onclick="toggleMobileMenu()"><span>Estadísticas</span> <span>&rsaquo;</span></a></li>
       {% if user.is_staff or user.role == 'ADMIN' %}
-      <li><a href="/admin/" class="mobile-nav-link" target="_blank"><span>👑 Panel de Administración</span> <span>&rsaquo;</span></a></li>
+      <li><a href="{% url 'admin:matches_match_generate_schedule' %}" class="mobile-nav-link" onclick="toggleMobileMenu()"><span>Generar Calendario</span> <span>&rsaquo;</span></a></li>
+      <li><a href="/admin/" class="mobile-nav-link" target="_blank"><span>Panel de Administración</span> <span>&rsaquo;</span></a></li>
       {% endif %}
       {% endif %}
     </ul>
