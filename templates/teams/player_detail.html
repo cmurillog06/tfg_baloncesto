@@ -216,15 +216,16 @@
                   <th style="padding: 0.6rem 0.5rem; text-align: center;">RPP</th>
                   <th style="padding: 0.6rem 0.5rem; text-align: center;">APP</th>
                   <th style="padding: 0.6rem 0.5rem; text-align: center; color: var(--state-blue); font-weight: 700;">VAL (PIR)</th>
-                  <th style="padding: 0.6rem 0.5rem; text-align: right;">Filtro</th>
                 </tr>
               </thead>
               <tbody>
                 {% for cb in competition_breakdown %}
                   <tr style="border-bottom: 1px solid var(--platinum-border); {% if selected_season and selected_season.id == cb.season.id %}background: var(--bg-subtle); font-weight: 600;{% endif %}">
                     <td style="padding: 0.75rem 0.5rem;">
-                      <strong style="color: var(--text-title);">{{ cb.season.league.name }}</strong>
-                      <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">{{ cb.season.name }}</span>
+                      <a href="?season={{ cb.season.id }}" style="color: inherit; text-decoration: none;" title="Filtrar por esta competición">
+                        <strong style="color: var(--text-title);">{{ cb.season.league.name }}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">{{ cb.season.name }}</span>
+                      </a>
                     </td>
                     <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.games_played }}</td>
                     <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.avg_minutes }}'</td>
@@ -236,11 +237,6 @@
                     <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono);">{{ cb.avg_assists }}</td>
                     <td style="padding: 0.75rem 0.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; color: var(--state-blue); font-size: 1rem;">
                       {{ cb.avg_pir }}
-                    </td>
-                    <td style="padding: 0.75rem 0.5rem; text-align: right;">
-                      <a href="?season={{ cb.season.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm);">
-                        Ver &rarr;
-                      </a>
                     </td>
                   </tr>
                 {% endfor %}
