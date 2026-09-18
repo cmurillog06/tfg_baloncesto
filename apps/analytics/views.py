@@ -7,6 +7,7 @@ from .services import (
     get_league_leaders,
     compare_teams_head_to_head,
     compare_players_head_to_head,
+    predictive_matchup_model,
 )
 from apps.teams.models import Team, Player, Season, League
 
@@ -82,25 +83,19 @@ class TeamComparatorView(LoginRequiredMixin, View):
             teams = Team.objects.filter(
                 Q(standings__season=current_season) |
                 Q(home_matches__season=current_season) |
-                Q(away_matches__season=current_season) |
-                Q(roster_memberships__season=current_season)
+                Q(away_matches__season=current_season)
             ).distinct().order_by("name")
         else:
-            teams = Team.objects.all().order_by("name")
-
-        # Si una competición específica no tiene al menos 2 equipos registrados, mostrar todos los clubes para poder comparar
-        if not teams.exists() or teams.count() < 2:
-            teams = Team.objects.all().order_by("name")
+            teams = Team.objects.none()
 
         team_a_slug = request.GET.get("team_a")
         team_b_slug = request.GET.get("team_b")
 
         team_a = teams.filter(slug=team_a_slug).first() if team_a_slug else teams.first()
 
-        # Seleccionar segundo equipo estrictamente distinto a team_a
         other_teams = teams.exclude(id=team_a.id) if team_a else teams
         if team_b_slug and team_b_slug != (team_a.slug if team_a else None):
-            team_b = teams.filter(slug=team_b_slug).first() or other_teams.first()
+            team_b = other_teams.filter(slug=team_b_slug).first() or other_teams.first()
         else:
             team_b = other_teams.first()
 
@@ -141,7 +136,6 @@ class PlayerComparatorView(LoginRequiredMixin, View):
 
         player_a = all_players.filter(id=player_a_id).first() if player_a_id else all_players.first()
 
-        # Seleccionar segundo jugador estrictamente distinto a player_a
         other_players = all_players.exclude(id=player_a.id) if player_a else all_players
         if player_b_id and str(player_b_id) != str(player_a.id if player_a else ""):
             player_b = all_players.filter(id=player_b_id).first() or other_players.first()
@@ -160,5 +154,74 @@ class PlayerComparatorView(LoginRequiredMixin, View):
                 "player_a": player_a,
                 "player_b": player_b,
                 "comparison": comparison_data,
+            },
+        )
+
+
+class PredictiveModelView(LoginRequiredMixin, View):
+    """
+    Modelo Matemático Predictivo de Partidos y Demarcaciones Posicionales.
+    Permite proyectar probabilidades de victoria y marcador final (Expectativa Pitagórica, Índices Posicionales, Diferencial Neto).
+    """
+
+    template_name = "analytics/predictive_model.html"
+
+    def get(self, request, *args, **kwargs):
+        from django.db.models import Q
+
+        all_seasons = Season.objects.filter(is_current=True).select_related("league").order_by("league__name")
+        season_id = request.GET.get("season")
+
+        if season_id:
+            current_season = all_seasons.filter(id=season_id).first() or Season.objects.filter(id=season_id).first()
+        else:
+            current_season = all_seasons.first() or Season.objects.first()
+
+        if current_season:
+            teams = Team.objects.filter(
+                Q(standings__season=current_season) |
+                Q(home_matches__season=current_season) |
+                Q(away_matches__season=current_season)
+            ).distinct().order_by("name")
+        else:
+            teams = Team.objects.none()
+
+        team_a_slug = request.GET.get("team_a")
+        team_b_slug = request.GET.get("team_b")
+
+        team_a = teams.filter(slug=team_a_slug).first() if team_a_slug else teams.first()
+
+        other_teams = teams.exclude(id=team_a.id) if team_a else teams
+        if team_b_slug and team_b_slug != (team_a.slug if team_a else None):
+            team_b = other_teams.filter(slug=team_b_slug).first() or other_teams.first()
+        else:
+            team_b = other_teams.first()
+
+        # Parámetro matemático de ventaja de campo (Dean Oliver, 2004)
+        try:
+            hca = float(request.GET.get("hca", "3.5"))
+        except (ValueError, TypeError):
+            hca = 3.5
+
+        prediction_data = None
+        if team_a and team_b:
+            prediction_data = predictive_matchup_model(
+                team_a=team_a,
+                team_b=team_b,
+                season=current_season,
+                home_court_advantage=hca,
+            )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "all_seasons": all_seasons,
+                "current_season": current_season,
+                "teams": teams,
+                "team_a": team_a,
+                "team_b": team_b,
+                "hca": hca,
+                "prediction": prediction_data,
             },
         )

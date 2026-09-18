@@ -276,23 +276,26 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
         # 9. Cierre Oficial del Acta Digital
         elif action == "close_scoresheet":
             referee_sig = content.get("referee_signature", "Árbitro Principal")
-            table_sig = content.get("table_official_signature", user.username if user else "Mesa Arbitral")
+            table_sig = content.get("table_official_signature", user.username if user else "Anotador")
+            timekeeper_sig = content.get("timekeeper_signature", "Cronometrador")
             report = content.get("incidents_report", "")
 
-            # Detener reloj en servidor
-            set_server_clock(self.match_id, "00:00", False)
-
             result = await self.close_digital_scoresheet(
-                self.match_id, referee_sig, table_sig, report
+                self.match_id, referee_sig, table_sig, timekeeper_sig, report
             )
             if result:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "scoresheet_closed",
-                        "data": result,
-                    },
-                )
+                if "error" in result:
+                    await self.send_json({"type": "error", "message": result["error"]})
+                else:
+                    # Detener reloj en servidor
+                    set_server_clock(self.match_id, "00:00", False)
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            "type": "scoresheet_closed",
+                            "data": result,
+                        },
+                    )
 
     # --------------------------------------------------------------------------
     # Handlers para enviar mensajes a los clientes del grupo WebSocket
@@ -354,11 +357,14 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
     def check_official_permission(self, user, match_id):
         if not user or not user.is_authenticated:
             return False
-        if user.is_superuser or user.role in ["ADMIN", "TABLE_OFFICIAL"]:
+        if user.is_superuser or user.role == "ADMIN":
             return True
         try:
             match = Match.objects.get(id=match_id)
-            return match.table_official == user
+            return (
+                user.role == "TABLE_OFFICIAL"
+                and (match.table_official_id == user.id or match.timekeeper_id == user.id)
+            )
         except Match.DoesNotExist:
             return False
 
@@ -1004,9 +1010,35 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             return None
 
     @database_sync_to_async
-    def close_digital_scoresheet(self, match_id, referee_sig, table_sig, report):
+    def close_digital_scoresheet(self, match_id, referee_sig, table_sig, timekeeper_sig, report):
         try:
             match = Match.objects.get(id=match_id)
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+
+            # 1. Validar que el partido se encuentre en el último cuarto (4Q) o prórroga
+            valid_closing_periods = [
+                Match.Period.Q4,
+                Match.Period.OT1,
+                Match.Period.OT2,
+                Match.Period.FINISHED,
+            ]
+            if match.current_period not in valid_closing_periods:
+                return {
+                    "error": f"No se puede firmar ni cerrar el acta: el encuentro se encuentra en el {match.get_current_period_display()}. El acta solo puede firmarse al concluir el último periodo (4Q o Prórroga)."
+                }
+
+            # 2. Validar que el tiempo de juego haya expirado por completo (00:00) y no esté corriendo
+            if server_clock_str != "00:00" or is_running:
+                return {
+                    "error": f"No se puede firmar ni cerrar el acta: el partido aún está en juego con {server_clock_str} restantes. El reloj debe llegar a 00:00 para concluir el partido."
+                }
+
+            # 3. Validar que no haya empate al finalizar el tiempo reglamentario (Reglamento FIBA/ACB)
+            if match.home_score == match.away_score:
+                return {
+                    "error": f"No se puede cerrar el acta con empate ({match.home_score} - {match.away_score}). En baloncesto oficial debe disputarse una prórroga antes del cierre del acta."
+                }
+
             match.status = Match.Status.FINISHED
             match.current_period = Match.Period.FINISHED
             match.game_clock = "00:00"
@@ -1016,6 +1048,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             scoresheet.is_closed = True
             scoresheet.referee_signature = referee_sig
             scoresheet.table_official_signature = table_sig
+            scoresheet.timekeeper_signature = timekeeper_sig
             scoresheet.incidents_report = report
             scoresheet.closed_at = timezone.now()
             scoresheet.save()
@@ -1032,6 +1065,7 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "is_closed": True,
                 "referee_signature": referee_sig,
                 "table_signature": table_sig,
+                "timekeeper_signature": timekeeper_sig,
                 "closed_at": scoresheet.closed_at.strftime("%d/%m/%Y %H:%M"),
                 "status": match.status,
             }

@@ -46,6 +46,11 @@ def restore_canonical_matches():
                 round_number=round_num,
             )
 
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        mesa = User.objects.filter(username="oficial_mesa").first()
+        crono = User.objects.filter(username="cronometrador").first()
+
         for match in matches:
             canonical_match_ids.append(match.id)
             needs_stat_regen = (
@@ -59,15 +64,27 @@ def restore_canonical_matches():
             match.status = status
             match.current_period = period
             match.game_clock = clock
+            if not match.table_official and mesa:
+                match.table_official = mesa
+            if not match.timekeeper and crono:
+                match.timekeeper = crono
             match.save()
 
             if status == Match.Status.FINISHED:
                 scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)
                 scoresheet.is_closed = True
-                scoresheet.table_official_signed = True
-                scoresheet.referee_signed = True
-                scoresheet.home_coach_signed = True
-                scoresheet.away_coach_signed = True
+                if not scoresheet.referee_signature:
+                    scoresheet.referee_signature = "Juan Carlos García González (Lic. FEB-48192)"
+                if not scoresheet.table_official_signature:
+                    scoresheet.table_official_signature = (
+                        match.table_official.get_full_name() or match.table_official.username
+                        if match.table_official else "Carlos Murillo (Anotador)"
+                    )
+                if not scoresheet.timekeeper_signature:
+                    scoresheet.timekeeper_signature = (
+                        match.timekeeper.get_full_name() or match.timekeeper.username
+                        if match.timekeeper else "Laura Gómez (Cronometradora)"
+                    )
                 scoresheet.save()
 
             if status == Match.Status.SCHEDULED:

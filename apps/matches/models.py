@@ -55,7 +55,17 @@ class Match(models.Model):
         null=True,
         blank=True,
         related_name="officiated_matches",
-        verbose_name="Mesa Arbitral Asignada",
+        verbose_name="Mesa Arbitral - Anotador",
+        limit_choices_to={"role": "TABLE_OFFICIAL"},
+    )
+    timekeeper = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="timekeeper_matches",
+        verbose_name="Mesa Arbitral - Cronometrador",
+        limit_choices_to={"role": "TABLE_OFFICIAL"},
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -424,7 +434,8 @@ class DigitalScoreSheet(models.Model):
     )
     is_closed = models.BooleanField(default=False, verbose_name="Acta Oficial Cerrada")
     referee_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma / Nombre Árbitro Principal")
-    table_official_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma Mesa Arbitral")
+    table_official_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma Anotador (Mesa Arbitral)")
+    timekeeper_signature = models.CharField(max_length=150, blank=True, verbose_name="Firma Cronometrador (Mesa Arbitral)")
     incidents_report = models.TextField(blank=True, verbose_name="Informe de Incidencias")
     closed_at = models.DateTimeField(null=True, blank=True, verbose_name="Fecha y Hora de Cierre")
 
@@ -463,7 +474,7 @@ class DigitalScoreSheet(models.Model):
         """
         import hashlib
         date_str = self.closed_at.isoformat() if self.closed_at else (self.match.created_at.isoformat() if self.match else "2026")
-        raw = f"ACTA-{self.match_id}-{self.referee_signature}-{self.table_official_signature}-{date_str}"
+        raw = f"ACTA-{self.match_id}-{self.referee_signature}-{self.table_official_signature}-{self.timekeeper_signature}-{date_str}"
         digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12].upper()
         return f"QQ-SEC-{self.match_id:04d}-{digest}"
 

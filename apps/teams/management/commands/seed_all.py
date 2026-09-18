@@ -22,17 +22,17 @@ class Command(BaseCommand):
         # 2. Crear Usuarios de Prueba para la demostración (coincidentes con el acceso rápido de la web)
         self.stdout.write("\n👤 [1/7] Configurando usuarios y credenciales de prueba...")
         demo_users = [
-            ("admin", "admin@quintocuarto.es", "Basket2026!", User.Role.ADMIN, True, True),
-            ("oficial_mesa", "mesa@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False),
-            ("coach_madrid", "coach@quintocuarto.es", "Basket2026!", User.Role.COACH, False, False),
-            ("aficionado_basket", "fan@quintocuarto.es", "Basket2026!", User.Role.FAN, False, False),
+            ("admin", "admin@quintocuarto.es", "Basket2026!", User.Role.ADMIN, True, True, "Carlos", "Administrador"),
+            ("oficial_mesa", "mesa@quintocuarto.es", "Basket2026!", User.Role.TABLE_OFFICIAL, False, False, "Carlos", "Murillo"),
+            ("coach_madrid", "coach@quintocuarto.es", "Basket2026!", User.Role.COACH, False, False, "Chus", "Mateo"),
+            ("aficionado_basket", "fan@quintocuarto.es", "Basket2026!", User.Role.FAN, False, False, "Aficionado", "Basket"),
         ]
 
-        # Limpiar usuarios temporales que no sean los 4 oficiales de demostración
+        # Limpiar usuarios temporales que no sean los oficiales de demostración
         canonical_usernames = [u[0] for u in demo_users]
         User.objects.exclude(username__in=canonical_usernames).delete()
 
-        for username, email, password, role, is_staff, is_superuser in demo_users:
+        for username, email, password, role, is_staff, is_superuser, first_name, last_name in demo_users:
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -40,15 +40,19 @@ class Command(BaseCommand):
                     "role": role,
                     "is_staff": is_staff,
                     "is_superuser": is_superuser,
+                    "first_name": first_name,
+                    "last_name": last_name,
                 }
             )
             user.role = role
             user.is_staff = is_staff
             user.is_superuser = is_superuser
+            user.first_name = first_name
+            user.last_name = last_name
             user.set_password(password)
             user.save()
             action = "creado" if created else "actualizado"
-            self.stdout.write(f"   ✓ Usuario '{username}' ({user.get_role_display()}) {action} - Contraseña: {password}")
+            self.stdout.write(f"   ✓ Usuario '{username}' ({user.get_role_display()} - {user.get_full_name()}) {action} - Contraseña: {password}")
 
         # 3. Poblar EuroLeague
         self.stdout.write("\n🌍 [2/7] Poblando Liga EuroLeague y clubes europeos...")

@@ -99,25 +99,39 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
             scoresheet, _ = DigitalScoreSheet.objects.get_or_create(match=match)
             if not scoresheet.is_closed:
                 scoresheet.is_closed = True
-                scoresheet.table_official_signed = True
-                scoresheet.referee_signed = True
-                scoresheet.home_coach_signed = True
-                scoresheet.away_coach_signed = True
+                if not scoresheet.referee_signature:
+                    scoresheet.referee_signature = "Juan Carlos García González (Lic. FEB-48192)"
+                if not scoresheet.table_official_signature:
+                    scoresheet.table_official_signature = (
+                        match.table_official.get_full_name() or match.table_official.username
+                        if match.table_official else "Carlos Murillo (Anotador)"
+                    )
+                if not scoresheet.timekeeper_signature:
+                    scoresheet.timekeeper_signature = (
+                        match.timekeeper.get_full_name() or match.timekeeper.username
+                        if match.timekeeper else "Laura Gómez (Cronometradora)"
+                    )
                 scoresheet.save()
             match.scoresheet = scoresheet
 
-        # Comprobar si el usuario es oficial de mesa para mostrar botón de consola arbitral (solo si el partido NO está finalizado)
+        # Comprobar si el usuario es oficial de mesa asignado a este partido o administrador
         user = self.request.user
+        is_assigned_official = (
+            user.is_authenticated
+            and user.role == "TABLE_OFFICIAL"
+            and (match.table_official_id == user.id or match.timekeeper_id == user.id)
+        )
+        is_admin = user.is_authenticated and (user.is_superuser or user.role == "ADMIN")
         context["can_manage_table"] = (
             user.is_authenticated
             and match.status != Match.Status.FINISHED
-            and (user.role == "TABLE_OFFICIAL" or match.table_official == user)
+            and (is_admin or is_assigned_official)
         )
 
         # Comprobar si el usuario tiene permiso para acceder al acta oficial (solo Mesa Arbitral y Entrenadores)
         context["can_view_scoresheet"] = (
             user.is_authenticated
-            and user.role in ["TABLE_OFFICIAL", "COACH"]
+            and user.role in ["ADMIN", "TABLE_OFFICIAL", "COACH"]
         )
 
         return context
@@ -126,19 +140,28 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
 class OfficialTableScorekeeperView(LoginRequiredMixin, RoleRequiredMixin, DetailView):
     """
     Consola interactiva de Mesa Arbitral: control de marcador, reloj, faltas y acta oficial.
-    Solo accesible por Oficiales de Mesa Arbitral colegiados para partidos activos o programados.
+    Solo accesible por los Oficiales de Mesa Arbitral específicamente asignados a este partido (Anotador y Cronometrador) o Administradores.
     """
 
     model = Match
     template_name = "matches/scorekeeper.html"
     context_object_name = "match"
-    allowed_roles = ["TABLE_OFFICIAL"]
+    allowed_roles = ["ADMIN", "TABLE_OFFICIAL"]
 
     def get_object(self, queryset=None):
         match = super().get_object(queryset)
         user = self.request.user
-        if not (user.role == "TABLE_OFFICIAL" or match.table_official == user):
-            messages.error(self.request, "Solo los oficiales de mesa arbitral autorizados pueden acceder a la consola.")
+        is_assigned_official = (
+            user.is_authenticated
+            and user.role == "TABLE_OFFICIAL"
+            and (match.table_official_id == user.id or match.timekeeper_id == user.id)
+        )
+        is_admin = user.is_authenticated and (user.is_superuser or user.role == "ADMIN")
+        if not (is_admin or is_assigned_official):
+            messages.error(
+                self.request,
+                "Acceso denegado: No estás asignado como oficial de mesa (Anotador o Cronometrador) para este partido.",
+            )
             raise PermissionDenied
         return match
 

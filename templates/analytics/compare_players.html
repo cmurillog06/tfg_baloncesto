@@ -2,6 +2,13 @@
 
 {% block title %}Comparador de Jugadores | {{ player_a.full_name }} vs {{ player_b.full_name }} | Quinto Cuarto{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 1140px; margin: 0 auto;">
   
@@ -24,17 +31,17 @@
         <label style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
           Jugador 1
         </label>
-        <select name="player_a" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; height: 42px; padding: 0.45rem 0.75rem; border-radius: var(--radius-md); border: 1.5px solid var(--platinum-border); width: 100%;">
+        <select name="player_a" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; width: 100%; border-left: 3px solid var(--gold-primary);">
           {% for p in all_players %}
             <option value="{{ p.id }}" {% if player_a and player_a.id == p.id %}selected{% endif %} {% if player_b and player_b.id == p.id %}disabled style="color: #94A3B8;"{% endif %}>
-              {{ p.full_name }}{% if p.current_team %} ({{ p.current_team.acronym }}){% endif %}{% if player_b and player_b.id == p.id %} [Jugador 2]{% endif %}
+              {{ p.full_name }} ({{ p.get_position_display }}){% if player_b and player_b.id == p.id %} [Jugador 2]{% endif %}
             </option>
           {% endfor %}
         </select>
       </div>
 
       <!-- Separador VS -->
-      <div style="height: 42px; display: flex; align-items: center; justify-content: center;">
+      <div style="height: 44px; display: flex; align-items: center; justify-content: center;">
         <div style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; font-size: 0.75rem; font-weight: 800; box-shadow: 0 2px 6px rgba(9, 13, 22, 0.2);">
           VS
         </div>
@@ -45,10 +52,10 @@
         <label style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
           Jugador 2
         </label>
-        <select name="player_b" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; height: 42px; padding: 0.45rem 0.75rem; border-radius: var(--radius-md); border: 1.5px solid var(--platinum-border); width: 100%;">
+        <select name="player_b" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; width: 100%; border-left: 3px solid var(--state-blue);">
           {% for p in all_players %}
             <option value="{{ p.id }}" {% if player_b and player_b.id == p.id %}selected{% endif %} {% if player_a and player_a.id == p.id %}disabled style="color: #94A3B8;"{% endif %}>
-              {{ p.full_name }}{% if p.current_team %} ({{ p.current_team.acronym }}){% endif %}{% if player_a and player_a.id == p.id %} [Jugador 1]{% endif %}
+              {{ p.full_name }} ({{ p.get_position_display }}){% if player_a and player_a.id == p.id %} [Jugador 1]{% endif %}
             </option>
           {% endfor %}
         </select>
@@ -56,7 +63,7 @@
 
       <!-- Botón Comparar -->
       <div>
-        <button type="submit" class="btn btn-primary" style="height: 42px; padding: 0 1.25rem; font-weight: 700; border-radius: var(--radius-md); font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(9, 13, 22, 0.12); width: 100%;">
+        <button type="submit" class="btn btn-primary" style="height: 44px; padding: 0 1.25rem; font-weight: 700; border-radius: var(--radius-md); font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(9, 13, 22, 0.12); width: 100%;">
           <span>Comparar</span>
           <span>&rarr;</span>
         </button>
@@ -66,94 +73,208 @@
   </div>
 
   {% if comparison %}
-    <!-- 3. Gran Banner Cara a Cara de Jugadores -->
-    <div class="card" style="margin-bottom: 2.5rem; padding: 2.5rem 2rem; background: #FFFFFF; border-top: 4px solid var(--gold-primary); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
-      <div class="scoreboard-grid" style="align-items: center; gap: 2rem; text-align: center;">
+    <!-- 3. Banner Cara a Cara Horizontal Compacto -->
+    <div class="card" style="margin-bottom: 2rem; padding: 1.25rem 1.75rem; background: #FFFFFF; border-top: 4px solid var(--gold-primary); border-radius: var(--radius-xl); border: 1.5px solid var(--platinum-border); box-shadow: var(--shadow-card);">
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.25rem;">
         
         <!-- JUGADOR A -->
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="position: relative; width: 84px; height: 84px; margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 1.15rem; min-width: 0;">
+          <div style="position: relative; width: 68px; height: 68px; flex-shrink: 0;">
             {% if player_a.photo %}
-              <img src="{{ player_a.photo.url }}" alt="{{ player_a.full_name }}" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--platinum-border); background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+              <img src="{{ player_a.photo.url }}" alt="{{ player_a.full_name }}" style="width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); background: #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
             {% else %}
-              <div style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, {{ comparison.color_a }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+              <div style="width: 68px; height: 68px; border-radius: 50%; background: linear-gradient(135deg, {{ comparison.color_a }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; border: 2.5px solid #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
                 {{ player_a.first_name|slice:":1" }}{{ player_a.last_name|slice:":1" }}
               </div>
             {% endif %}
             {% if player_a.current_team %}
-              <span style="position: absolute; bottom: -2px; right: -4px; background: {{ comparison.color_a }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+              <span style="position: absolute; bottom: -2px; right: -3px; background: {{ comparison.color_a }}; color: #FFFFFF; font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
                 {{ player_a.current_team.acronym }}
               </span>
             {% endif %}
           </div>
-          <h2 style="font-size: 1.4rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.35rem;">
-            <a href="{% url 'teams:player_detail' player_a.id %}" style="color: inherit; text-decoration: none;">{{ player_a.full_name }}</a>
-          </h2>
-          {% if player_a.current_team %}
-            <div style="margin-bottom: 0.6rem;">
-              <a href="{% url 'teams:team_detail' player_a.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.82rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ comparison.color_a }};"></span>
-                {{ player_a.current_team.name }}
-              </a>
+          <div style="min-width: 0; display: flex; flex-direction: column; gap: 0.2rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-title); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <a href="{% url 'teams:player_detail' player_a.id %}" style="color: inherit; text-decoration: none;">{{ player_a.full_name }}</a>
+            </h2>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;">
+              {% if player_a.current_team %}
+                <a href="{% url 'teams:team_detail' player_a.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ comparison.color_a }};"></span>
+                  {{ player_a.current_team.name }}
+                </a>
+              {% endif %}
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); background: rgba(197, 155, 39, 0.08); border: 1px solid var(--gold-border); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">
+                {{ player_a.get_position_display }}
+              </span>
             </div>
-          {% endif %}
-
-          <div style="display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.1rem;">
-            <span>Altura: <strong style="color: var(--text-title);">{{ player_a.height_cm|default:"-" }} cm</strong></span>
-            <span>Peso: <strong style="color: var(--text-title);">{{ player_a.weight_kg|default:"-" }} kg</strong></span>
+            <div style="display: flex; gap: 0.75rem; font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.05rem;">
+              <span>Altura: <strong style="color: var(--text-title);">{{ player_a.height_cm|default:"-" }} cm</strong></span>
+              <span>Peso: <strong style="color: var(--text-title);">{{ player_a.weight_kg|default:"-" }} kg</strong></span>
+            </div>
           </div>
         </div>
 
         <!-- INSIGNIA CENTRAL -->
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem;">
-          <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--obsidian-dark); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold-border); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <line x1="12" y1="2" x2="12" y2="22"></line>
-              <path d="M4.93 4.93C7.5 7.5 8.7 9.7 8.7 12s-1.2 4.5-3.77 7.07"></path>
-              <path d="M19.07 4.93C16.5 7.5 15.3 9.7 15.3 12s1.2 4.5 3.77 7.07"></path>
-            </svg>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; padding: 0 0.5rem;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--obsidian-dark); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold-border); box-shadow: 0 3px 8px rgba(0,0,0,0.15); font-weight: 800; font-size: 0.85rem; font-family: var(--font-display);">
+            VS
           </div>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">CARA A CARA</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;">CARA A CARA</span>
         </div>
 
         <!-- JUGADOR B -->
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <div style="position: relative; width: 84px; height: 84px; margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 1.15rem; text-align: right; min-width: 0;">
+          <div style="min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-title); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <a href="{% url 'teams:player_detail' player_b.id %}" style="color: inherit; text-decoration: none;">{{ player_b.full_name }}</a>
+            </h2>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.4rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); background: rgba(30, 58, 138, 0.08); border: 1px solid rgba(30, 58, 138, 0.25); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">
+                {{ player_b.get_position_display }}
+              </span>
+              {% if player_b.current_team %}
+                <a href="{% url 'teams:team_detail' player_b.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ comparison.color_b }};"></span>
+                  {{ player_b.current_team.name }}
+                </a>
+              {% endif %}
+            </div>
+            <div style="display: flex; gap: 0.75rem; font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.05rem;">
+              <span>Altura: <strong style="color: var(--text-title);">{{ player_b.height_cm|default:"-" }} cm</strong></span>
+              <span>Peso: <strong style="color: var(--text-title);">{{ player_b.weight_kg|default:"-" }} kg</strong></span>
+            </div>
+          </div>
+          <div style="position: relative; width: 68px; height: 68px; flex-shrink: 0;">
             {% if player_b.photo %}
-              <img src="{{ player_b.photo.url }}" alt="{{ player_b.full_name }}" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--platinum-border); background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+              <img src="{{ player_b.photo.url }}" alt="{{ player_b.full_name }}" style="width: 68px; height: 68px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--platinum-border); background: #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
             {% else %}
-              <div style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, {{ comparison.color_b }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+              <div style="width: 68px; height: 68px; border-radius: 50%; background: linear-gradient(135deg, {{ comparison.color_b }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; border: 2.5px solid #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
                 {{ player_b.first_name|slice:":1" }}{{ player_b.last_name|slice:":1" }}
               </div>
             {% endif %}
             {% if player_b.current_team %}
-              <span style="position: absolute; bottom: -2px; right: -4px; background: {{ comparison.color_b }}; color: #FFFFFF; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+              <span style="position: absolute; bottom: -2px; right: -3px; background: {{ comparison.color_b }}; color: #FFFFFF; font-size: 0.6rem; font-weight: 700; padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); border: 1.5px solid #FFFFFF; font-family: var(--font-mono); box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
                 {{ player_b.current_team.acronym }}
               </span>
             {% endif %}
-          </div>
-          <h2 style="font-size: 1.4rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.35rem;">
-            <a href="{% url 'teams:player_detail' player_b.id %}" style="color: inherit; text-decoration: none;">{{ player_b.full_name }}</a>
-          </h2>
-          {% if player_b.current_team %}
-            <div style="margin-bottom: 0.6rem;">
-              <a href="{% url 'teams:team_detail' player_b.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.82rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ comparison.color_b }};"></span>
-                {{ player_b.current_team.name }}
-              </a>
-            </div>
-          {% endif %}
-
-          <div style="display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.1rem;">
-            <span>Altura: <strong style="color: var(--text-title);">{{ player_b.height_cm|default:"-" }} cm</strong></span>
-            <span>Peso: <strong style="color: var(--text-title);">{{ player_b.weight_kg|default:"-" }} kg</strong></span>
           </div>
         </div>
 
       </div>
     </div>
+
+    <!-- 3.5. Modelado Matemático: Probabilidad de Rendimiento Superior -->
+    {% if comparison.superiority_prob %}
+      <div class="card" style="margin-bottom: 2.5rem; padding: 2.25rem 2rem; background: #FFFFFF; border-radius: var(--radius-xl); border: 1.5px solid var(--platinum-border); border-top: 4px solid var(--gold-primary); box-shadow: var(--shadow-card);">
+        
+        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">
+            PRONÓSTICO INDIVIDUAL
+          </div>
+          <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-title); margin: 0;">
+            ¿Quién tiene más opciones de rendir mejor hoy?
+          </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; text-align: center;">
+          
+          <!-- Jugador A -->
+          <div>
+            <strong style="font-size: 1.15rem; color: var(--text-title); display: block;">{{ player_a.full_name }}</strong>
+            <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--gold-primary); line-height: 1; margin: 0.35rem 0 0.25rem 0;">
+              {{ comparison.superiority_prob.prob_a_pct }}%
+            </div>
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+              {% if comparison.superiority_prob.games_a == 0 %}
+                <span style="color: var(--text-muted);">(Sin partidos disputados)</span>
+              {% else %}
+                Valoración media: <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.superiority_prob.mu_a }}</strong>
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Separador VS -->
+          <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; font-size: 0.75rem; font-weight: 800;">
+            VS
+          </div>
+
+          <!-- Jugador B -->
+          <div>
+            <strong style="font-size: 1.15rem; color: var(--text-title); display: block;">{{ player_b.full_name }}</strong>
+            <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--state-blue); line-height: 1; margin: 0.35rem 0 0.25rem 0;">
+              {{ comparison.superiority_prob.prob_b_pct }}%
+            </div>
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+              {% if comparison.superiority_prob.games_b == 0 %}
+                <span style="color: var(--text-muted);">(Sin partidos disputados)</span>
+              {% else %}
+                Valoración media: <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.superiority_prob.mu_b }}</strong>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Barra Proporcional de Probabilidad (Visible y Coloreada) -->
+        <div style="height: 14px; background: #E2E8F0; border-radius: 9999px; overflow: hidden; display: flex; margin-bottom: 1.35rem; border: 1.5px solid var(--platinum-border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="width: {{ comparison.superiority_prob.prob_a_css }}%; background: linear-gradient(90deg, #996515, var(--gold-primary)); transition: width 0.6s ease;" title="{{ player_a.full_name }}: {{ comparison.superiority_prob.prob_a_pct }}%"></div>
+          <div style="width: {{ comparison.superiority_prob.prob_b_css }}%; background: linear-gradient(90deg, var(--state-blue), #1E3A8A); transition: width 0.6s ease;" title="{{ player_b.full_name }}: {{ comparison.superiority_prob.prob_b_pct }}%"></div>
+        </div>
+
+        <!-- Caja de Resumen Explicativo -->
+        <div style="background: var(--bg-subtle); padding: 1rem 1.25rem; border-radius: var(--radius-md); font-size: 0.92rem; color: var(--text-title); border: 1px solid var(--platinum-border); border-left: 4px solid var(--gold-primary); margin-bottom: 1rem; line-height: 1.55;">
+          <strong>Resumen del análisis:</strong> {{ comparison.superiority_prob.simple_explanation }}
+        </div>
+
+        <!-- Desplegable explicativo del método y origen de los datos -->
+        <details style="margin-top: 0.75rem; padding-top: 0.5rem;">
+          <summary style="font-size: 0.82rem; font-weight: 700; color: var(--text-title); cursor: pointer; user-select: none;">
+            Ver cómo se calculan las opciones y la valoración oficial (Detalles y fórmulas)
+          </summary>
+          <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.55; padding: 1.1rem 1.35rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border);">
+            
+            <p style="font-size: 0.88rem; color: var(--text-title); margin: 0 0 0.75rem 0;">
+              Compara el promedio de <strong>Valoración Oficial</strong> acumulado por ambos jugadores en la temporada:
+            </p>
+
+            <!-- Fórmulas KaTeX -->
+            <div style="margin: 0.75rem 0; text-align: center; color: var(--text-title); font-size: 0.88rem; background: #FFFFFF; padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); line-height: 1.6;">
+              $$\text{Valoración} = (\text{Puntos} + \text{Rebotes} + \text{Asistencias} + \text{Recuperaciones} + \text{Tapones a favor} + \text{Faltas recibidas}) - (\text{Tiros fallados} + \text{Tiros libres fallados} + \text{Pérdidas} + \text{Tapones recibidos} + \text{Faltas cometidas})$$
+              <div style="margin-top: 0.5rem;">
+                $$\text{Opciones de Victoria Jugador 1} = \frac{\text{Valoración}_1}{\text{Valoración}_1 + \text{Valoración}_2} \times 100$$
+              </div>
+            </div>
+
+            <!-- Glosario de Variables de la Fórmula -->
+            <div style="margin-top: 1rem; border-top: 1px solid var(--platinum-border); padding-top: 0.85rem;">
+              <strong style="font-size: 0.8rem; color: var(--text-title); display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                Significado de cada dato en la fórmula:
+              </strong>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.4rem 1rem; font-size: 0.78rem; color: var(--text-secondary);">
+                <div><strong>Puntos:</strong> Puntos anotados en juego y tiros libres</div>
+                <div><strong>Rebotes:</strong> Balones atrapados tras tiro fallado</div>
+                <div><strong>Asistencias:</strong> Pases que terminan en canasta</div>
+                <div><strong>Recuperaciones:</strong> Balones robados al rival</div>
+                <div><strong>Tapones a favor:</strong> Tiros del rival bloqueados</div>
+                <div><strong>Faltas recibidas:</strong> Infracciones recibidas del rival</div>
+                <div><strong>Tiros fallados:</strong> Tiros de 2 y triples que no entraron</div>
+                <div><strong>Tiros libres fallados:</strong> Tiros libres no convertidos</div>
+                <div><strong>Pérdidas:</strong> Balones perdidos o entregados al rival</div>
+                <div><strong>Tapones recibidos:</strong> Tiros propios bloqueados</div>
+                <div><strong>Faltas cometidas:</strong> Infracciones cometidas sobre el rival</div>
+                <div><strong>Valoración:</strong> Media de valoración por partido</div>
+              </div>
+            </div>
+
+            <!-- Origen oficial sin emoticono -->
+            <div style="margin-top: 1rem; border-top: 1px solid var(--platinum-border); padding-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary);">
+              <strong style="color: var(--text-title);">Normativa oficial:</strong> Reglamento Estadístico Oficial de la Liga Endesa (ACB) y Federación Internacional de Baloncesto (FIBA).
+            </div>
+
+          </div>
+        </details>
+      </div>
+    {% endif %}
 
     <!-- 4. Panel de Estadísticas Cara a Cara (Promedios por Partido) -->
     <div class="card" style="padding: 2.25rem 2rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-card); background: #FFFFFF; margin-bottom: 3rem;">

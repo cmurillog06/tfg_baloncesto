@@ -20,6 +20,11 @@ class Command(BaseCommand):
         uni = Team.objects.filter(acronym="UNI").first()
         val = Team.objects.filter(acronym__in=["VAL", "VBC"]).first()
 
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        mesa = User.objects.filter(username="oficial_mesa").first()
+        crono = User.objects.filter(username="cronometrador").first()
+
         now = timezone.now()
 
         # Jornada 1: Ambos finalizados
@@ -37,6 +42,8 @@ class Command(BaseCommand):
                 "away_score": 81,
                 "location": "WiZink Center, Madrid",
                 "scheduled_at": now - timedelta(days=7),
+                "table_official": mesa,
+                "timekeeper": crono,
             }
         )
 
@@ -54,6 +61,8 @@ class Command(BaseCommand):
                 "away_score": 74,
                 "location": "Martín Carpena, Málaga",
                 "scheduled_at": now - timedelta(days=7),
+                "table_official": mesa,
+                "timekeeper": crono,
             }
         )
 
@@ -72,6 +81,8 @@ class Command(BaseCommand):
                 "away_score": 59,
                 "location": "WiZink Center, Madrid",
                 "scheduled_at": now - timedelta(hours=1),
+                "table_official": mesa,
+                "timekeeper": crono,
             }
         )
 
@@ -93,6 +104,8 @@ class Command(BaseCommand):
                 "away_score": 0,
                 "scheduled_at": now.replace(hour=21, minute=0, second=0, microsecond=0),
                 "location": "Palau Blaugrana, Barcelona",
+                "table_official": mesa,
+                "timekeeper": crono,
             }
         )
 

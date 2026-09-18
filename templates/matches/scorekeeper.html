@@ -14,9 +14,13 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         </div>
         <div>
-          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CONSOLA OFICIAL DE MESA</div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CONSOLA OFICIAL DE MESA ARBITRAL</div>
           <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.15rem 0;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
-          <span style="font-size: 0.82rem; color: var(--text-secondary);">Oficial responsable: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+          <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <span>Anotador: <strong>{% if match.table_official %}{{ match.table_official.get_full_name|default:match.table_official.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}</strong></span>
+            <span style="color: var(--platinum-border);">&bull;</span>
+            <span>Cronometrador: <strong>{% if match.timekeeper %}{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}{% else %}Laura Gómez (Cronometradora){% endif %}</strong></span>
+          </div>
         </div>
       </div>
 
@@ -26,9 +30,9 @@
           Ver Retransmisión ↗
         </a>
 
-        <button type="button" onclick="openSignatureModal()" class="btn btn-gold btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600; box-shadow: 0 4px 12px rgba(197, 155, 39, 0.25);">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-          Firmar y Cerrar Acta
+        <button type="button" id="btn-close-scoresheet-top" onclick="openSignatureModal()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600; transition: all 0.2s ease;" title="Disponible únicamente al concluir el 4º cuarto (00:00)">
+          <svg id="icon-close-scoresheet" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span id="text-close-scoresheet">Firmar y Cerrar Acta</span>
         </button>
       </div>
 
@@ -683,9 +687,15 @@
         </small>
       </div>
 
-      <div class="form-group" style="margin-bottom: 1rem;">
-        <label class="form-label" style="font-weight: 600;">Oficial de Mesa Responsable (Sesión Activa)</label>
-        <input type="text" id="input-table-sig" class="form-control" value="{{ request.user.get_full_name|default:request.user.username }}" readonly style="background: var(--bg-subtle); cursor: not-allowed; font-weight: 600;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">Oficial 1: Anotador</label>
+          <input type="text" id="input-table-sig" class="form-control" value="{% if match.table_official %}{{ match.table_official.get_full_name|default:match.table_official.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}" style="font-weight: 600;">
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">Oficial 2: Cronometrador</label>
+          <input type="text" id="input-timekeeper-sig" class="form-control" value="{% if match.timekeeper %}{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}{% else %}Laura Gómez (Cronometradora){% endif %}" style="font-weight: 600;">
+        </div>
       </div>
 
       <div class="form-group" style="margin-bottom: 1.25rem;">
@@ -1046,7 +1056,15 @@ const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`
 let socket = null;
 let clockInterval = null;
 let isClockRunning = false;
-let currentSeconds = 600; // 10:00 por defecto
+function getInitialClockSeconds(clockStr) {
+  if (!clockStr) return 600;
+  const parts = String(clockStr).trim().split(':');
+  if (parts.length === 2) {
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+  return 600;
+}
+let currentSeconds = getInitialClockSeconds("{{ match.game_clock|default:'10:00' }}");
 let currentPeriod = "{{ match.current_period|default:'Q1' }}";
 
 let currentModalPlayer = {
@@ -1247,6 +1265,7 @@ function connectWebSocket() {
             if (currentSeconds > 0) {
               currentSeconds--;
               updateClockDisplay();
+              updateSignatureButtonState();
             } else {
               clearInterval(clockInterval);
               isClockRunning = false;
@@ -1254,10 +1273,12 @@ function connectWebSocket() {
                 btn.innerText = '▶ Iniciar Reloj';
                 btn.classList.replace('btn-secondary', 'btn-gold');
               }
+              updateSignatureButtonState();
             }
           }, 1000);
         }
       }
+      updateSignatureButtonState();
     } else if (payload.type === 'match_update' && data) {
       document.getElementById('score-home').innerText = data.home_score;
       document.getElementById('score-away').innerText = data.away_score;
@@ -1288,6 +1309,7 @@ function connectWebSocket() {
         awayFoulsState = data.away_fouls;
         renderTeamFouls('away', awayFoulsState);
       }
+      updateSignatureButtonState();
     } else if (payload.type === 'substitution_update' && data) {
       if (data.home_on_court) {
         homeOnCourtState = data.home_on_court;
@@ -1335,12 +1357,14 @@ function connectWebSocket() {
         }
       }
       if (data.new_event) prependTimelineEvent(data.new_event);
+      updateSignatureButtonState();
     } else if (payload.type === 'clock_update' && data) {
       if (data.clock) {
         document.getElementById('clock-display').innerText = data.clock;
         parseClockStringToSeconds(data.clock);
       }
       if (data.period) highlightActivePeriod(data.period);
+      updateSignatureButtonState();
     } else if (payload.type === 'event_update' && data) {
       if (data.player_stat) {
         playerPointsState[String(data.player_stat.player_id)] = data.player_stat.points;
@@ -1374,6 +1398,7 @@ function connectWebSocket() {
         );
       }
       if (data.new_event) prependTimelineEvent(data.new_event);
+      updateSignatureButtonState();
     } else if (payload.type === 'error') {
       showScorekeeperToast(
         payload.message || 'Error en la acción arbitral',
@@ -2121,6 +2146,7 @@ function setPeriod(periodCode, initialClock) {
     }));
   }
   highlightActivePeriod(periodCode);
+  updateSignatureButtonState();
 }
 
 function highlightActivePeriod(periodCode) {
@@ -2137,22 +2163,47 @@ function toggleClock() {
     btn.innerText = '▶ Iniciar Reloj';
     btn.classList.replace('btn-secondary', 'btn-gold');
     syncClockToWebSocket(false);
+    updateSignatureButtonState();
   } else {
     isClockRunning = true;
     btn.innerText = '⏸ Pausar Reloj';
     btn.classList.replace('btn-gold', 'btn-secondary');
     syncClockToWebSocket(true);
+    updateSignatureButtonState();
     clockInterval = setInterval(() => {
       if (currentSeconds > 0) {
         currentSeconds--;
         updateClockDisplay();
         syncClockToWebSocket(true);
+        updateSignatureButtonState();
       } else {
         clearInterval(clockInterval);
         isClockRunning = false;
         btn.innerText = '▶ Iniciar Reloj';
         btn.classList.replace('btn-secondary', 'btn-gold');
         syncClockToWebSocket(false);
+        updateSignatureButtonState();
+
+        if (currentPeriod === 'Q4' || currentPeriod === 'OT1' || currentPeriod === 'OT2') {
+          const eligibility = checkScoresheetClosingEligibility();
+          if (eligibility.canClose) {
+            showScorekeeperToast(
+              '🏆 ¡Final del partido! El tiempo ha concluido (00:00). Ya puedes firmar y cerrar el acta oficial.',
+              '✍️',
+              'var(--gold-light)',
+              'var(--gold-primary)',
+              'var(--gold-primary)'
+            );
+          } else {
+            showScorekeeperToast(
+              eligibility.reason,
+              '⚖️',
+              'rgba(220, 38, 38, 0.12)',
+              'var(--state-red)',
+              'var(--state-red)'
+            );
+          }
+        }
       }
     }, 1000);
   }
@@ -2162,6 +2213,7 @@ function adjustClock(deltaSec) {
   currentSeconds = Math.max(0, currentSeconds + deltaSec);
   updateClockDisplay();
   syncClockToWebSocket(isClockRunning);
+  updateSignatureButtonState();
 }
 
 function resetClock(clockStr) {
@@ -2169,6 +2221,7 @@ function resetClock(clockStr) {
   parseClockStringToSeconds(clockStr);
   updateClockDisplay();
   syncClockToWebSocket(false);
+  updateSignatureButtonState();
 }
 
 function parseClockStringToSeconds(str) {
@@ -2307,8 +2360,88 @@ function requestTeamTimeout(teamId, teamName, side) {
   }
 }
 
+/* Verificación de Elegibilidad para Firma y Cierre de Acta Oficial */
+function checkScoresheetClosingEligibility() {
+  const validClosingPeriods = ['Q4', 'OT1', 'OT2', 'FINISHED'];
+
+  // 1. Validar Periodo (Solo 4Q o Prórroga)
+  if (!validClosingPeriods.includes(currentPeriod)) {
+    const periodLabels = { 'NS': 'Por comenzar', 'Q1': '1º Cuarto (1Q)', 'Q2': '2º Cuarto (2Q)', 'HT': 'Descanso', 'Q3': '3º Cuarto (3Q)' };
+    const pName = periodLabels[currentPeriod] || currentPeriod;
+    return {
+      canClose: false,
+      reason: `El acta solo puede firmarse al concluir el último cuarto (4Q) o prórroga. El partido se encuentra actualmente en el ${pName}.`
+    };
+  }
+
+  // 2. Validar Reloj de Juego (debe ser 00:00 y estar detenido)
+  if (currentSeconds > 0 || isClockRunning) {
+    const m = Math.floor(currentSeconds / 60);
+    const s = currentSeconds % 60;
+    const timeFormatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return {
+      canClose: false,
+      reason: `El partido sigue en juego (${timeFormatted} restantes). El reloj debe llegar a 00:00 en el 4º cuarto para poder firmar y cerrar el acta oficial.`
+    };
+  }
+
+  // 3. Validar Desempate (Reglamento FIBA/ACB)
+  const homeScoreEl = document.getElementById('score-home');
+  const awayScoreEl = document.getElementById('score-away');
+  const homeScore = homeScoreEl ? parseInt(homeScoreEl.innerText.trim() || '0', 10) : 0;
+  const awayScore = awayScoreEl ? parseInt(awayScoreEl.innerText.trim() || '0', 10) : 0;
+
+  if (homeScore === awayScore) {
+    return {
+      canClose: false,
+      reason: `El marcador está empatado (${homeScore} - ${awayScore}). En baloncesto oficial no puede haber empate al concluir el 4º cuarto; debe disputarse una Prórroga (OT).`
+    };
+  }
+
+  return { canClose: true };
+}
+
+function updateSignatureButtonState() {
+  const btn = document.getElementById('btn-close-scoresheet-top');
+  const icon = document.getElementById('icon-close-scoresheet');
+  if (!btn) return;
+
+  const eligibility = checkScoresheetClosingEligibility();
+
+  if (eligibility.canClose) {
+    btn.className = 'btn btn-gold btn-sm';
+    btn.style.opacity = '1';
+    btn.style.boxShadow = '0 4px 14px rgba(197, 155, 39, 0.35)';
+    btn.style.cursor = 'pointer';
+    btn.setAttribute('title', 'El tiempo ha concluido (00:00). Haz clic para firmar y homologar el acta oficial.');
+    if (icon) {
+      icon.innerHTML = '<path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>';
+    }
+  } else {
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.style.opacity = '0.7';
+    btn.style.boxShadow = 'none';
+    btn.style.cursor = 'pointer';
+    btn.setAttribute('title', eligibility.reason);
+    if (icon) {
+      icon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
+    }
+  }
+}
+
 /* Modales y Event Listeners */
 function openSignatureModal() {
+  const eligibility = checkScoresheetClosingEligibility();
+  if (!eligibility.canClose) {
+    showScorekeeperToast(
+      eligibility.reason,
+      '⏳',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    return;
+  }
   document.getElementById('modal-scoresheet-container').style.display = 'flex';
 }
 
@@ -2317,14 +2450,29 @@ function closeSignatureModal() {
 }
 
 function submitCloseScoresheet() {
+  const eligibility = checkScoresheetClosingEligibility();
+  if (!eligibility.canClose) {
+    showScorekeeperToast(
+      eligibility.reason,
+      '⏳',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    closeSignatureModal();
+    return;
+  }
+
   const refereeNameInput = document.getElementById('input-referee-name');
   const refereeLicenseInput = document.getElementById('input-referee-license');
   const tableSigInput = document.getElementById('input-table-sig');
+  const timekeeperSigInput = document.getElementById('input-timekeeper-sig');
   const reportInput = document.getElementById('input-report');
 
   const refereeName = refereeNameInput ? refereeNameInput.value.trim() : '';
   const refereeLicense = refereeLicenseInput ? refereeLicenseInput.value.trim() : '';
-  const tableSig = tableSigInput ? tableSigInput.value.trim() : 'Oficial de Mesa';
+  const tableSig = tableSigInput ? tableSigInput.value.trim() : 'Carlos Murillo (Anotador)';
+  const timekeeperSig = timekeeperSigInput ? timekeeperSigInput.value.trim() : 'Laura Gómez (Cronometradora)';
   const report = reportInput ? reportInput.value.trim() : '';
 
   if (!refereeName || !refereeLicense) {
@@ -2339,6 +2487,7 @@ function submitCloseScoresheet() {
       action: 'close_scoresheet',
       referee_signature: fullRefereeSig,
       table_official_signature: tableSig,
+      timekeeper_signature: timekeeperSig,
       incidents_report: report
     }));
   }
@@ -2372,6 +2521,8 @@ document.addEventListener('DOMContentLoaded', function() {
       updatePlayerCardFouls(pId, playerFoulsState[pId]);
     });
   }
+
+  updateSignatureButtonState();
 
   const actionModal = document.getElementById('modal-player-action');
   if (actionModal) {

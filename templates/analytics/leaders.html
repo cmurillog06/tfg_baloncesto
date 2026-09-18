@@ -20,7 +20,7 @@
     {% if all_seasons %}
       <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
         <label for="season-select" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Temporada:</label>
-        <select name="season" id="season-select" onchange="this.form.submit()" class="form-control" style="font-size: 0.88rem; padding: 0.4rem 0.85rem;">
+        <select name="season" id="season-select" onchange="this.form.submit()" class="form-control" style="font-size: 0.88rem; width: auto;">
           {% for s in all_seasons %}
             <option value="{{ s.id }}" {% if current_season and current_season.id == s.id %}selected{% endif %}>
               {{ s.league.name }} ({{ s.name }})
