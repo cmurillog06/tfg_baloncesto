@@ -1,4 +1,5 @@
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
+from django.urls import reverse_lazy
 from apps.matches.models import Match
 from apps.teams.models import League
 from apps.analytics.models import Standing
@@ -29,5 +30,8 @@ class HomeView(TemplateView):
         return context
 
 
-class DashboardView(TemplateView):
-    template_name = "core/dashboard.html"
+class DashboardView(HomeView):
+    """
+    Panel de inicio / dashboard principal de Quinto Cuarto.
+    """
+    pass

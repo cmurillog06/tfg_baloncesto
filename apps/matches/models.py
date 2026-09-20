@@ -267,7 +267,7 @@ class Match(models.Model):
         )
 
         starter_players = Player.objects.filter(id__in=player_ids)
-        names = ", ".join([f"#{p.jersey_number} {p.last_name or p.first_name}" for p in starter_players])
+        names = ", ".join([f"#{getattr(p, 'jersey_number', '')} {p.last_name or p.first_name}" for p in starter_players])
 
         event = MatchEvent.objects.create(
             match=self,
@@ -311,8 +311,8 @@ class Match(models.Model):
         p_out = Player.objects.filter(id=player_out_id).first()
         p_in = Player.objects.filter(id=player_in_id).first()
 
-        out_name = f"#{p_out.jersey_number} {p_out.full_name}" if p_out else "Jugador"
-        in_name = f"#{p_in.jersey_number} {p_in.full_name}" if p_in else "Jugador"
+        out_name = f"#{getattr(p_out, 'jersey_number', '')} {p_out.full_name}" if p_out else "Jugador"
+        in_name = f"#{getattr(p_in, 'jersey_number', '')} {p_in.full_name}" if p_in else "Jugador"
 
         event = MatchEvent.objects.create(
             match=self,

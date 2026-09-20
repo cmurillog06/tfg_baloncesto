@@ -44,9 +44,12 @@ class LeagueDetailView(LoginRequiredMixin, DetailView):
         # Obtener temporada activa
         season = league.seasons.filter(is_current=True).first()
         if not season:
-            season = league.seasons.first()
+            season = league.seasons.first() or Season.objects.filter(league=league).first()
 
         context["active_season"] = season
+        context["season"] = season
+        context["standings"] = []
+        context["matches"] = []
 
         if season:
             # Clasificación ordenada por puntos y diferencia
@@ -218,25 +221,46 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
 class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
     """
     Panel de gestión de plantilla para entrenadores: Altas, Bajas y Asignación de Dorsales.
-    Solo accesible por el entrenador oficial asignado a este equipo.
+    Solo accesible por el entrenador oficial asignado a este equipo o administradores.
     """
 
-    allowed_roles = ["COACH"]
+    allowed_roles = ["COACH", "ADMIN"]
     template_name = "teams/roster_manage.html"
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
         self.team = get_object_or_404(Team, slug=kwargs.get("slug"))
         user = request.user
 
-        # Verificar que sea estrictamente el entrenador oficial asignado a este equipo
-        if not (user.role == "COACH" and self.team.coach == user):
+        # Verificar que sea estrictamente el entrenador oficial asignado a este equipo o administrador
+        is_admin = user.is_superuser or getattr(user, "role", None) == "ADMIN"
+        is_coach = getattr(user, "role", None) == "COACH" and self.team.coach == user
+        if not (is_admin or is_coach):
             messages.error(request, "Solo el entrenador oficial asignado a este club puede gestionar su plantilla.")
             raise PermissionDenied
 
         # Obtener temporada activa
-        self.season = Season.objects.filter(is_current=True).first()
+        self.season = (
+            Season.objects.filter(is_current=True).first()
+            or Season.objects.order_by("-start_date").first()
+            or Season.objects.first()
+        )
         if not self.season:
-            self.season = Season.objects.first()
+            import datetime
+            league = League.objects.first()
+            if not league:
+                league = League.objects.create(
+                    name="Liga Principal", slug="liga-principal"
+                )
+            self.season = Season.objects.create(
+                league=league,
+                name="Temporada Actual",
+                start_date=datetime.date.today() - datetime.timedelta(days=30),
+                end_date=datetime.date.today() + datetime.timedelta(days=180),
+                is_current=True,
+            )
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -268,20 +292,41 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
         action = request.POST.get("action")
 
         # 1. Dar de baja a un jugador de la plantilla activa
-        if action in ["deactivate", "remove_membership"]:
+        if action in ["deactivate", "remove_membership", "deactivate_member"]:
             membership_id = request.POST.get("membership_id")
-            membership = get_object_or_404(
-                TeamMembership,
-                id=membership_id,
-                team=self.team
-            )
-            player_name = membership.player.full_name
-            membership.is_active = False
-            membership.save()
-            messages.success(request, f"{player_name} ha sido dado de baja de la plantilla activa.")
+            player_id = request.POST.get("player_id")
+            if membership_id:
+                membership = get_object_or_404(TeamMembership, id=membership_id, team=self.team)
+            elif player_id:
+                membership = get_object_or_404(TeamMembership, player_id=player_id, team=self.team)
+            else:
+                membership = None
+
+            if membership:
+                player_name = membership.player.full_name
+                membership.is_active = False
+                membership.save()
+                messages.success(request, f"{player_name} ha sido dado de baja de la plantilla activa.")
             return redirect("teams:roster_manage", slug=self.team.slug)
 
-        # 2. Crear un jugador nuevo directamente desde el panel del entrenador
+        # 2. Conmutar capitanía de un jugador
+        elif action == "toggle_captain":
+            membership_id = request.POST.get("membership_id")
+            player_id = request.POST.get("player_id")
+            if membership_id:
+                membership = get_object_or_404(TeamMembership, id=membership_id, team=self.team)
+            elif player_id:
+                membership = get_object_or_404(TeamMembership, player_id=player_id, team=self.team)
+            else:
+                membership = None
+
+            if membership:
+                membership.is_captain = not membership.is_captain
+                membership.save()
+                messages.success(request, f"Capitanía de {membership.player.full_name} actualizada.")
+            return redirect("teams:roster_manage", slug=self.team.slug)
+
+        # 3. Crear un jugador nuevo directamente desde el panel del entrenador
         elif action == "create_player":
             create_form = CoachPlayerCreateForm(
                 request.POST, request.FILES, team=self.team, season=self.season
@@ -326,20 +371,40 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                         "active_memberships": memberships,
                         "active_tab": "new",
                     },
+                    status=200,
                 )
 
-        # 3. Modificar datos biométricos, dorsal, posición o fotografía de un jugador existente
+        # 4. Modificar datos biométricos, dorsal, posición o fotografía de un jugador existente
         elif action == "edit_player":
             membership_id = request.POST.get("membership_id")
-            membership = get_object_or_404(
-                TeamMembership,
-                id=membership_id,
-                team=self.team,
-                season=self.season
-            )
+            player_id = request.POST.get("player_id")
+            if membership_id:
+                membership = get_object_or_404(TeamMembership, id=membership_id, team=self.team)
+            elif player_id:
+                membership = TeamMembership.objects.filter(player_id=player_id, team=self.team).first()
+                if not membership:
+                    player = get_object_or_404(Player, id=player_id)
+                    membership = TeamMembership.objects.create(
+                        team=self.team,
+                        player=player,
+                        season=self.season,
+                        jersey_number=int(request.POST.get("jersey_number", 0) or 0),
+                    )
+            else:
+                membership = None
+
+            if not membership:
+                messages.error(request, "Jugador no encontrado.")
+                return redirect("teams:roster_manage", slug=self.team.slug)
+
             player = membership.player
             edit_form = CoachPlayerEditForm(
-                request.POST, request.FILES, instance=player, team=self.team, season=self.season, membership=membership
+                request.POST,
+                request.FILES,
+                instance=player,
+                team=self.team,
+                season=self.season,
+                membership=membership,
             )
             if edit_form.is_valid():
                 edit_form.save()
@@ -348,16 +413,40 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                 membership.save()
                 messages.success(
                     request,
-                    f"Datos biométricos y ficha de {player.full_name} actualizados correctamente."
+                    f"Datos biométricos y ficha de {player.full_name} actualizados correctamente.",
                 )
+                return redirect("teams:roster_manage", slug=self.team.slug)
             else:
                 err_list = []
                 for field, errs in edit_form.errors.items():
                     err_list.extend(errs)
                 messages.error(request, "Error al actualizar: " + " ".join(err_list))
-            return redirect("teams:roster_manage", slug=self.team.slug)
+                membership_form = TeamMembershipForm(team=self.team, season=self.season)
+                player_create_form = CoachPlayerCreateForm(team=self.team, season=self.season)
+                memberships = TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    is_active=True,
+                ).select_related("player").order_by("jersey_number")
+                return render(
+                    request,
+                    self.template_name,
+                    {
+                        "team": self.team,
+                        "season": self.season,
+                        "current_season": self.season,
+                        "form": membership_form,
+                        "membership_form": membership_form,
+                        "player_create_form": player_create_form,
+                        "edit_form": edit_form,
+                        "memberships": memberships,
+                        "active_memberships": memberships,
+                        "active_tab": "existing",
+                    },
+                    status=200,
+                )
 
-        # 4. Inscribir un jugador existente de la base de datos federada
+        # 5. Inscribir un jugador existente de la base de datos federada
         else:
             form = TeamMembershipForm(request.POST, team=self.team, season=self.season)
             if form.is_valid():
@@ -437,4 +526,5 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                     "active_memberships": memberships,
                     "active_tab": "existing",
                 },
+                status=200,
             )

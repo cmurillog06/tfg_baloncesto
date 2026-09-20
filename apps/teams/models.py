@@ -178,6 +178,14 @@ class Player(models.Model):
         membership = self.current_membership
         return membership.team if membership else None
 
+    @property
+    def jersey_number(self):
+        """
+        Retorna el número de dorsal del jugador en su plantilla activa.
+        """
+        membership = self.current_membership
+        return membership.jersey_number if membership else ""
+
     def __str__(self):
         return f"{self.full_name} ({self.get_position_display()})"
 
