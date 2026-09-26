@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Competiciones y Ligas | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div>
+  
+  <!-- Encabezado de Sección -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">COMPETICIONES FEDERADAS</div>
+    <h1 style="font-size: 2.2rem; font-weight: 600;">Ligas y Torneos</h1>
+    <p style="color: var(--text-secondary); font-size: 1.05rem;">Consulta las tablas de clasificación, calendarios de juego y equipos participantes</p>
+  </div>
+
+  <!-- Grid de Ligas -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.75rem;">
+    {% for league in leagues %}
+      <div class="card card-interactive" style="border-top: 3px solid var(--obsidian-dark); position: relative; overflow: hidden;">
+        
+        <!-- Cabecera de Liga -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.95rem;">
+            {% if league.logo %}
+              <img src="{{ league.logo.url }}" alt="{{ league.name }}"
+                style="width: 52px; height: 52px; border-radius: var(--radius-md); object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.12)); border: 1px solid var(--platinum-border); background: #FFFFFF; padding: 2px;">
+            {% else %}
+              <div style="width: 52px; height: 52px; border-radius: var(--radius-md); background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid var(--gold-border);">
+                🏆
+              </div>
+            {% endif %}
+            <div>
+              <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.15rem;">{{ league.name }}</h2>
+              <span style="font-size: 0.82rem; color: var(--text-secondary);">
+                {% if "endesa" in league.slug or "acb" in league.slug %}
+                  España &bull; Competición Nacional
+                {% elif "euro" in league.slug %}
+                  Europa &bull; Competición Internacional
+                {% else %}
+                  Competición Oficial
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          <span class="badge" style="background: var(--gold-light); color: #926004; border: 1px solid var(--gold-border);">
+            Oficial
+          </span>
+        </div>
+
+        <!-- Descripción y Temporada Activa -->
+        <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem;">
+          {{ league.description|default:"Competición oficial de baloncesto profesional de primer nivel." }}
+        </p>
+
+        <!-- Temporadas Disponibles -->
+        <div style="margin-bottom: 1.75rem;">
+          <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">Temporadas Registradas</span>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% for season in league.seasons.all %}
+              <span style="background: var(--bg-subtle); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 500; color: var(--text-title); border: 1px solid var(--platinum-border);">
+                {{ season.name }} {% if season.is_current %}<strong style="color: var(--gold-primary);">&bull; Activa</strong>{% endif %}
+              </span>
+            {% empty %}
+              <span style="color: var(--text-muted); font-size: 0.85rem;">Próximamente</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Botón de Detalle -->
+        <a href="{% url 'teams:league_detail' league.slug %}" class="btn btn-primary" style="width: 100%;">
+          Ver Clasificación y Calendario &rarr;
+        </a>
+
+      </div>
+    {% empty %}
+      <div class="card" style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
+        <p style="color: var(--text-secondary);">No hay ligas activas registradas en este momento.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,2 +1,8 @@
-# Enrutamiento WebSocket a definir en feature/live-matches-ws
-websocket_urlpatterns = []
+from django.urls import re_path
+from .consumers import MatchLiveConsumer
+
+websocket_urlpatterns = [
+    re_path(r"^ws/matches/(?P<match_id>\d+)/live/$", MatchLiveConsumer.as_asgi()),
+    re_path(r"^ws/matches/(?P<match_id>\d+)/$", MatchLiveConsumer.as_asgi()),
+]
+

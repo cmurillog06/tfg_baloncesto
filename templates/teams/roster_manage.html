@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Plantilla | {{ team.name }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 1180px; margin: 0 auto; padding-bottom: 3rem;">
+  
+  <!-- Encabezado del Panel de Entrenador -->
+  <div class="card" style="margin-bottom: 2rem; border-top: 4px solid var(--gold-primary); padding: 1.75rem 2rem; box-shadow: var(--shadow-card);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: {{ team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; box-shadow: var(--shadow-subtle); flex-shrink: 0;">
+          {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 50%;">
+          {% else %}
+            {{ team.acronym }}
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">PANEL DE CUERPO TÉCNICO</div>
+          <h1 style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-display); margin-bottom: 0.25rem; color: var(--text-title); line-height: 1.2;">
+            Gestión de Plantilla &bull; {{ team.name }}
+          </h1>
+          <span style="color: var(--text-secondary); font-size: 0.88rem;">
+            Primer Entrenador: <strong style="color: var(--text-title);">{{ request.user.get_full_name|default:request.user.username }}</strong> &bull; Temporada: <strong style="color: var(--gold-primary);">{{ current_season.name|default:season.name }}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <a href="{% url 'teams:team_detail' team.slug %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+          &larr; Ver Vista Pública
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-responsive-2" style="gap: 2rem; align-items: start;">
+    
+    <!-- COLUMNA IZQUIERDA: PLANTILLA ACTIVA -->
+    <div class="card" style="padding: 1.75rem; box-shadow: var(--shadow-card);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--text-title); margin: 0 0 0.2rem 0;">Jugadores en Plantilla</h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">Fichas oficiales activas en la temporada en curso</span>
+        </div>
+        <span class="badge badge-admin" style="font-size: 0.82rem; padding: 0.35rem 0.85rem; font-weight: 700;">
+          {{ memberships|length }} Jugadores
+        </span>
+      </div>
+
+      {% if memberships %}
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          {% for m in memberships %}
+            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.9rem 1.15rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.2s ease; flex-wrap: wrap; gap: 0.75rem;">
+              
+              <!-- Identificación del Jugador (Dorsal, Foto, Nombre, Posición, Biometría) -->
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                
+                <!-- Dorsal en Acta -->
+                <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1.5px solid var(--gold-border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-width: 38px; text-align: center;">
+                  #{{ m.jersey_number }}
+                </span>
+
+                <!-- Avatar o Foto -->
+                <div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #FFFFFF; border: 1.5px solid var(--platinum-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  {% if m.player.photo %}
+                    <img src="{{ m.player.photo.url }}" alt="{{ m.player.full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  {% else %}
+                    <span style="font-size: 1.15rem;">👤</span>
+                  {% endif %}
+                </div>
+
+                <!-- Datos Técnicos y Biométricos -->
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem;">
+                    <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); text-decoration: none; font-size: 0.98rem; font-weight: 700; line-height: 1.2;">
+                      {{ m.player.full_name }}
+                    </a>
+                    {% if m.is_captain %}
+                      <span class="badge badge-admin" style="font-size: 0.68rem; padding: 0.15rem 0.5rem; background: var(--gold-light); color: var(--gold-dark); border-color: var(--gold-primary);">★ Capitán</span>
+                    {% endif %}
+                  </div>
+                  <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                    <strong>{{ m.player.get_position_display }}</strong>
+                    {% if m.player.height_cm %} &bull; {{ m.player.height_cm }} cm{% endif %}
+                    {% if m.player.weight_kg %} &bull; {{ m.player.weight_kg }} kg{% endif %}
+                    {% if m.player.birth_date %} &bull; {{ m.player.birth_date|date:"d/m/Y" }}{% endif %}
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Acciones: Editar Ficha y Dar de Baja -->
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                
+                <!-- Botón Editar Ficha y Datos Biométricos -->
+                <button type="button" class="btn btn-secondary btn-sm"
+                  onclick="openEditPlayerModal(
+                    '{{ m.id }}',
+                    '{{ m.player.first_name|escapejs }}',
+                    '{{ m.player.last_name|escapejs }}',
+                    '{{ m.player.position|escapejs }}',
+                    '{{ m.jersey_number }}',
+                    '{{ m.player.height_cm|default:'' }}',
+                    '{{ m.player.weight_kg|default:'' }}',
+                    '{{ m.player.birth_date|date:'Y-m-d'|default:'' }}',
+                    '{{ m.is_captain|yesno:'true,false' }}',
+                    '{% if m.player.photo %}{{ m.player.photo.url }}{% endif %}'
+                  )"
+                  style="padding: 0.35rem 0.7rem; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; color: var(--text-title);"
+                  title="Modificar datos biométricos, dorsal, posición o fotografía">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  Editar
+                </button>
+
+                <!-- Botón Dar de Baja -->
+                <button type="button" class="btn btn-secondary btn-sm"
+                  onclick="openBajaModal('{{ m.id }}', '{{ m.player.full_name|escapejs }}')"
+                  style="color: var(--state-red); border-color: rgba(220,38,38,0.25); padding: 0.35rem 0.65rem; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;"
+                  title="Dar de baja de la plantilla activa">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Baja
+                </button>
+
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏀</div>
+          <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.25rem;">No hay jugadores en la plantilla</p>
+          <span style="font-size: 0.85rem;">Utiliza el formulario lateral para añadir o inscribir jugadores en el equipo.</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- COLUMNA DERECHA: PESTAÑAS DE INCORPORACIÓN DE JUGADORES -->
+    <div class="card" style="padding: 1.75rem; box-shadow: var(--shadow-card);">
+      
+      <!-- Selector de Pestañas: Crear Nuevo vs Inscribir Existente -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: var(--bg-subtle); padding: 0.35rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); margin-bottom: 1.5rem;">
+        <button type="button" id="tab-btn-create" onclick="switchRosterTab('create')" class="btn btn-sm" style="font-weight: 700; font-size: 0.82rem; border-radius: var(--radius-sm); border: none; transition: all 0.2s ease;">
+          + Nuevo Jugador
+        </button>
+        <button type="button" id="tab-btn-enroll" onclick="switchRosterTab('enroll')" class="btn btn-sm" style="font-weight: 700; font-size: 0.82rem; border-radius: var(--radius-sm); border: none; transition: all 0.2s ease;">
+          Inscribir Existente
+        </button>
+      </div>
+
+      <!-- 1. FORMULARIO: CREAR NUEVO JUGADOR CON BIOMETRÍA COMPLETA -->
+      <div id="panel-tab-create">
+        <div style="margin-bottom: 1.25rem;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 0.2rem 0; color: var(--text-title);">Añadir Nuevo Jugador</h3>
+          <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0;">Registra la ficha técnica, datos biométricos, posición y dorsal oficial.</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_player">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Nombre *</label>
+              {{ player_create_form.first_name }}
+              {% if player_create_form.first_name.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.first_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Apellidos *</label>
+              {{ player_create_form.last_name }}
+              {% if player_create_form.last_name.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.last_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Posición FIBA *</label>
+              {{ player_create_form.position }}
+              {% if player_create_form.position.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.position.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Dorsal (0-99) *</label>
+              {{ player_create_form.jersey_number }}
+              {% if player_create_form.jersey_number.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.jersey_number.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Datos Biométricos -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Altura (cm)</label>
+              {{ player_create_form.height_cm }}
+              {% if player_create_form.height_cm.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.height_cm.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Peso (kg)</label>
+              {{ player_create_form.weight_kg }}
+              {% if player_create_form.weight_kg.errors %}
+                <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.weight_kg.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Fecha de Nacimiento</label>
+            {{ player_create_form.birth_date }}
+            {% if player_create_form.birth_date.errors %}
+              <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.birth_date.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.1rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Fotografía Oficial del Jugador</label>
+            {{ player_create_form.photo }}
+            {% if player_create_form.photo.errors %}
+              <div style="color: var(--state-red); font-size: 0.78rem; margin-top: 0.25rem;">{{ player_create_form.photo.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.35rem; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+            {{ player_create_form.is_captain }}
+            <label for="{{ player_create_form.is_captain.id_for_label }}" style="font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-title); margin: 0;">
+              Designar como Capitán del Equipo
+            </label>
+          </div>
+
+          {% if player_create_form.non_field_errors %}
+            <div style="background: var(--state-red-light); color: var(--state-red); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+              {{ player_create_form.non_field_errors.0 }}
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-gold" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; font-weight: 700;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Guardar e Inscribir en Plantilla
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. FORMULARIO: INSCRIBIR JUGADOR EXISTENTE DE LA BASE DE DATOS -->
+      <div id="panel-tab-enroll" style="display: none;">
+        <div style="margin-bottom: 1.25rem;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 0.2rem 0; color: var(--text-title);">Inscribir Jugador Existente</h3>
+          <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0;">Asigna a un jugador federado disponible a tu plantilla con su dorsal.</p>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_membership">
+
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">Seleccionar Jugador Federado</label>
+            {{ membership_form.player }}
+            {% if membership_form.player.errors %}
+              <div style="color: var(--state-red); font-size: 0.8rem; margin-top: 0.3rem;">{{ membership_form.player.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">Dorsal en Camiseta (0 - 99)</label>
+            {{ membership_form.jersey_number }}
+            {% if membership_form.jersey_number.errors %}
+              <div style="color: var(--state-red); font-size: 0.8rem; margin-top: 0.3rem;">{{ membership_form.jersey_number.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.35rem; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+            {{ membership_form.is_captain }}
+            <label for="{{ membership_form.is_captain.id_for_label }}" style="font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-title); margin: 0;">Designar como Capitán</label>
+          </div>
+
+          {% if membership_form.non_field_errors %}
+            <div style="background: var(--state-red-light); color: var(--state-red); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+              {{ membership_form.non_field_errors.0 }}
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; font-weight: 700;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Inscribir en Plantilla
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE EDICIÓN DE DATOS BIOMÉTRICOS, DORSAL, POSICIÓN Y FOTOGRAFÍA -->
+<!-- ========================================================================= -->
+<div id="modal-edit-player-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+      <div>
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin: 0 0 0.15rem 0; color: var(--text-title);">
+          Modificar Ficha de Jugador
+        </h3>
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">Actualiza datos biométricos, posición, dorsal o fotografía</span>
+      </div>
+      <button type="button" onclick="closeEditPlayerModal()" style="background: none; border: none; font-size: 1.35rem; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</button>
+    </div>
+
+    <form id="form-edit-player" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="edit_player">
+      <input type="hidden" name="membership_id" id="edit-membership-id" value="">
+
+      <!-- Vista previa de foto actual -->
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+        <div id="edit-photo-preview-container" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: #FFFFFF; border: 1.5px solid var(--gold-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <img id="edit-player-photo-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+          <span id="edit-player-photo-placeholder" style="font-size: 1.4rem;">👤</span>
+        </div>
+        <div style="flex: 1;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.25rem; display: block;">Cambiar Fotografía (JPG, PNG, WebP &bull; Máx 5 MB)</label>
+          <input type="file" name="photo" id="edit-player-photo" class="form-control-file" accept="image/jpeg,image/png,image/webp,image/*" style="font-size: 0.82rem;" onchange="validateAndPreviewImage(this, 'edit-player-photo-img', 'edit-player-photo-placeholder')">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Nombre *</label>
+          <input type="text" name="first_name" id="edit-player-firstname" class="form-control" minlength="2" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Apellidos *</label>
+          <input type="text" name="last_name" id="edit-player-lastname" class="form-control" minlength="2" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Posición FIBA *</label>
+          <select name="position" id="edit-player-position" class="form-control" required>
+            <option value="PG">Base</option>
+            <option value="SG">Escolta</option>
+            <option value="SF">Alero</option>
+            <option value="PF">Ala-Pívot</option>
+            <option value="C">Pívot</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Dorsal (0-99) *</label>
+          <input type="number" name="jersey_number" id="edit-player-jersey" class="form-control" min="0" max="99" required>
+        </div>
+      </div>
+
+      <!-- Biometría -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Altura (cm)</label>
+          <input type="number" name="height_cm" id="edit-player-height" class="form-control" placeholder="ej. 198" min="120" max="245">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Peso (kg)</label>
+          <input type="number" name="weight_kg" id="edit-player-weight" class="form-control" placeholder="ej. 92.5" step="0.1" min="40" max="190">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.15rem;">
+        <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Fecha de Nacimiento</label>
+        <input type="date" name="birth_date" id="edit-player-birthdate" class="form-control">
+      </div>
+
+      <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+        <input type="checkbox" name="is_captain" id="edit-player-captain" class="form-check-input">
+        <label for="edit-player-captain" style="font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--text-title); margin: 0;">
+          Designar como Capitán del Equipo
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" onclick="closeEditPlayerModal()" class="btn btn-secondary">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-gold" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE CONFIRMACIÓN DE BAJA -->
+<!-- ========================================================================= -->
+<div id="modal-baja-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="card" style="max-width: 460px; width: 100%; padding: 2rem; border-top: 4px solid var(--state-red); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); text-align: center; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; border: 1px solid rgba(220, 38, 38, 0.2);">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </div>
+
+    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-title);">
+      Confirmar Baja de Jugador
+    </h3>
+    
+    <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.75rem;">
+      ¿Estás seguro de que deseas dar de baja a <strong id="modal-player-name" style="color: var(--text-title);"></strong> de la plantilla activa? Podrás volver a darlo de alta en cualquier momento.
+    </p>
+
+    <!-- Formulario que se envía al confirmar -->
+    <form id="form-confirm-baja" method="post" style="display: flex; gap: 1rem; justify-content: center;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="remove_membership">
+      <input type="hidden" name="membership_id" id="modal-membership-id" value="">
+
+      <button type="button" onclick="closeBajaModal()" class="btn btn-secondary" style="flex: 1;">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary" style="background: var(--state-red); border-color: var(--state-red); color: #FFFFFF; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; font-weight: 700;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        Sí, Dar de Baja
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+</style>
+
+<script>
+function switchRosterTab(tab) {
+  const btnCreate = document.getElementById('tab-btn-create');
+  const btnEnroll = document.getElementById('tab-btn-enroll');
+  const panelCreate = document.getElementById('panel-tab-create');
+  const panelEnroll = document.getElementById('panel-tab-enroll');
+
+  if (tab === 'create') {
+    btnCreate.style.background = '#FFFFFF';
+    btnCreate.style.color = 'var(--text-title)';
+    btnCreate.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+
+    btnEnroll.style.background = 'transparent';
+    btnEnroll.style.color = 'var(--text-secondary)';
+    btnEnroll.style.boxShadow = 'none';
+
+    panelCreate.style.display = 'block';
+    panelEnroll.style.display = 'none';
+  } else {
+    btnEnroll.style.background = '#FFFFFF';
+    btnEnroll.style.color = 'var(--text-title)';
+    btnEnroll.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+
+    btnCreate.style.background = 'transparent';
+    btnCreate.style.color = 'var(--text-secondary)';
+    btnCreate.style.boxShadow = 'none';
+
+    panelCreate.style.display = 'none';
+    panelEnroll.style.display = 'block';
+  }
+}
+
+// Inicializar pestaña
+document.addEventListener('DOMContentLoaded', function() {
+  const activeTab = "{{ active_tab|default:'create' }}";
+  switchRosterTab(activeTab === 'new' || activeTab === 'create' ? 'create' : 'enroll');
+});
+
+// Modal de Edición de Jugador
+function openEditPlayerModal(membershipId, firstName, lastName, position, jersey, height, weight, birthDate, isCaptain, photoUrl) {
+  document.getElementById('edit-membership-id').value = membershipId;
+  document.getElementById('edit-player-firstname').value = firstName;
+  document.getElementById('edit-player-lastname').value = lastName;
+  document.getElementById('edit-player-position').value = position;
+  document.getElementById('edit-player-jersey').value = jersey;
+  document.getElementById('edit-player-height').value = height || '';
+  document.getElementById('edit-player-weight').value = weight || '';
+  document.getElementById('edit-player-birthdate').value = birthDate || '';
+  document.getElementById('edit-player-captain').checked = (isCaptain === 'true' || isCaptain === true);
+
+  const imgEl = document.getElementById('edit-player-photo-img');
+  const placeholderEl = document.getElementById('edit-player-photo-placeholder');
+  if (photoUrl) {
+    imgEl.src = photoUrl;
+    imgEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+  } else {
+    imgEl.style.display = 'none';
+    placeholderEl.style.display = 'block';
+  }
+
+  const modal = document.getElementById('modal-edit-player-container');
+  modal.style.display = 'flex';
+}
+
+function closeEditPlayerModal() {
+  const modal = document.getElementById('modal-edit-player-container');
+  modal.style.display = 'none';
+}
+
+// Modal de Baja
+function openBajaModal(membershipId, playerName) {
+  document.getElementById('modal-membership-id').value = membershipId;
+  document.getElementById('modal-player-name').innerText = playerName;
+  const modal = document.getElementById('modal-baja-container');
+  modal.style.display = 'flex';
+}
+
+function closeBajaModal() {
+  const modal = document.getElementById('modal-baja-container');
+  modal.style.display = 'none';
+}
+
+// Validación y vista previa de imagen en tiempo real
+function validateAndPreviewImage(input, imgId, placeholderId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const validExts = ['jpg', 'jpeg', 'png', 'webp'];
+
+  if (!validTypes.includes(file.type) && !validExts.includes(ext)) {
+    alert('Formato de archivo no válido (' + file.name + '). Por favor, selecciona una imagen en formato JPG, PNG o WebP.');
+    input.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert('La imagen seleccionada supera el tamaño máximo permitido de 5 MB.');
+    input.value = '';
+    return;
+  }
+
+  if (imgId) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById(imgId);
+      const placeholder = document.getElementById(placeholderId);
+      if (img) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+      }
+      if (placeholder) {
+        placeholder.style.display = 'none';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Cerrar con Escape o clic en fondo
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeEditPlayerModal();
+    closeBajaModal();
+  }
+});
+
+window.addEventListener('click', function(e) {
+  const editModal = document.getElementById('modal-edit-player-container');
+  if (e.target === editModal) closeEditPlayerModal();
+
+  const bajaModal = document.getElementById('modal-baja-container');
+  if (e.target === bajaModal) closeBajaModal();
+});
+</script>
+{% endblock %}

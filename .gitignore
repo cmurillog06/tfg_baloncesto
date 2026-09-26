@@ -15,8 +15,17 @@ __pycache__/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
 staticfiles/
+
+# Multimedia: rastrear logos de equipos, ligas y fotos de jugadores para portabilidad de demostración
+media/*
+!media/teams/
+!media/leagues/
+!media/players/
+media/players/*.png
+!media/avatars/
+media/avatars/*
+!media/avatars/.gitkeep
 
 # Variables de entorno
 .env
@@ -36,3 +45,7 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# Scripts temporales / scratch
+scratch*.py
+scratch/

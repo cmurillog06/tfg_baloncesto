@@ -1,0 +1,1152 @@
+{% extends "base.html" %}
+
+{% block title %}Pronóstico de Partidos | Quinto Cuarto{% endblock %}
+
+{% block extra_css %}
+<!-- KaTeX para renderizado matemático oficial de alta precisión -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+
+<style>
+  /* Contenedor principal adaptable */
+  .pred-page-container {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding-bottom: 3.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Tarjetas base de la vista */
+  .pred-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 2.5rem;
+    padding: 2.25rem 2rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .pred-card-gold {
+    border-top: 4px solid var(--gold-primary);
+  }
+
+  /* Fila 2 Formulario: Equipos y Botón */
+  .pred-form-teams-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto;
+    gap: 1rem;
+    align-items: flex-end;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .pred-vs-divider {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pred-vs-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--obsidian-dark);
+    color: #FFFFFF;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  .pred-btn-submit {
+    height: 44px;
+    padding: 0 1.35rem;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 12px rgba(9, 13, 22, 0.12);
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* Grid Principal de Predicción */
+  .pred-main-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pred-team-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pred-team-logo {
+    width: 76px;
+    height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.6rem;
+  }
+  .pred-team-initial {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    margin-bottom: 0.6rem;
+  }
+  .pred-team-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-title);
+    margin: 0 0 0.25rem 0;
+    word-break: break-word;
+  }
+  .pred-prob-val {
+    font-size: 2.85rem;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    line-height: 1;
+  }
+  .pred-score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 190px;
+    padding: 1.1rem 1.25rem;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--platinum-border);
+    box-sizing: border-box;
+  }
+  .pred-score-digits {
+    font-family: var(--font-mono);
+    font-size: 2.35rem;
+    font-weight: 800;
+    color: var(--text-title);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Secciones desplegables de detalles y tarjetas de fórmulas */
+  .pred-details {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pred-details-inner {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .pred-math-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+    gap: 1.1rem;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .pred-math-card {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .pred-math-subcard {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Duelos por posición */
+  .pred-duel-card {
+    padding: 0.85rem 1.15rem;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--platinum-border);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .pred-duel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .pred-duel-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .pred-duel-team-a {
+    text-align: left;
+    min-width: 0;
+  }
+  .pred-duel-team-b {
+    text-align: right;
+    min-width: 0;
+  }
+  .pred-duel-team-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.1rem;
+  }
+  .pred-duel-team-title-row-b {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.1rem;
+    flex-direction: row-reverse;
+  }
+  .pred-duel-name {
+    font-size: 0.82rem;
+    color: var(--text-title);
+    font-weight: 700;
+  }
+  .pred-duel-val {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .pred-duel-stats {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .pred-duel-stats-b {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 0.45rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .pred-duel-vs {
+    text-align: center;
+    min-width: 32px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--text-muted);
+  }
+
+  /* Fórmulas KaTeX y Scroll Horizontal Interno */
+  .pred-math-box {
+    text-align: center;
+    margin: 0.4rem 0;
+    color: var(--text-title);
+    background: var(--bg-subtle);
+    padding: 0.6rem;
+    border-radius: var(--radius-sm);
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+  .katex-display {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0.2rem 0 !important;
+    margin: 0.4em 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+  }
+
+  /* ===================================================
+     RESPONSIVE PARA MÓVIL (<= 768px)
+     =================================================== */
+  @media (max-width: 768px) {
+    .pred-page-container {
+      padding-bottom: 2rem !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .pred-card {
+      padding: 1.25rem 0.85rem !important;
+      margin-bottom: 1.25rem !important;
+      border-radius: var(--radius-lg) !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    /* Header */
+    .pred-header-h1 {
+      font-size: 1.55rem !important;
+      line-height: 1.25 !important;
+    }
+    .pred-header-desc {
+      font-size: 0.92rem !important;
+    }
+
+    /* Formulario */
+    .pred-form-teams-row {
+      grid-template-columns: 1fr auto 1fr !important;
+      gap: 0.75rem 0.4rem !important;
+      align-items: flex-end !important;
+    }
+    .pred-form-submit-col {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+      margin-top: 0.35rem !important;
+    }
+    .pred-btn-submit {
+      width: 100% !important;
+    }
+
+    /* Tarjeta principal de pronóstico */
+    .pred-main-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 1rem 0.5rem !important;
+      align-items: start !important;
+    }
+    .pred-team-col-a {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+    }
+    .pred-team-col-b {
+      grid-column: 2 !important;
+      grid-row: 1 !important;
+    }
+    .pred-score-card {
+      grid-column: 1 / -1 !important;
+      grid-row: 2 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      padding: 0.85rem 1rem !important;
+      margin-top: 0.5rem !important;
+    }
+    .pred-team-logo {
+      width: 60px !important;
+      height: 60px !important;
+    }
+    .pred-team-initial {
+      width: 58px !important;
+      height: 58px !important;
+      font-size: 1.2rem !important;
+    }
+    .pred-team-title {
+      font-size: 1.1rem !important;
+      line-height: 1.2 !important;
+    }
+    .pred-prob-val {
+      font-size: 2.1rem !important;
+    }
+    .pred-score-digits {
+      font-size: 2rem !important;
+    }
+
+    /* Detalles y contenedor interior en móvil */
+    .pred-details-inner {
+      padding: 0.85rem 0.65rem !important;
+      border-radius: var(--radius-md) !important;
+    }
+
+    /* Grid de fórmulas: estrictamente 1 columna en móvil */
+    .pred-math-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 1rem !important;
+      width: 100% !important;
+    }
+    .pred-math-card {
+      padding: 0.85rem 0.75rem !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    .pred-math-subcard {
+      padding: 0.55rem 0.65rem !important;
+      width: 100% !important;
+    }
+    .pred-math-box {
+      padding: 0.5rem 0.35rem !important;
+    }
+
+    /* Rendimiento 4 cards: 1 columna en móvil */
+    .pred-stats-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+      width: 100% !important;
+    }
+
+    /* Duelos por posiciones */
+    .pred-duel-card {
+      padding: 0.85rem 0.75rem !important;
+    }
+    .pred-duel-grid {
+      grid-template-columns: 1fr auto 1fr !important;
+      gap: 0.5rem !important;
+    }
+    .pred-duel-team-title-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.15rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+    .pred-duel-team-title-row-b {
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      gap: 0.15rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+    .pred-duel-name {
+      font-size: 0.78rem !important;
+      line-height: 1.2 !important;
+      word-break: break-word !important;
+    }
+    .pred-duel-val {
+      font-size: 0.95rem !important;
+      line-height: 1.1 !important;
+    }
+    .pred-duel-stats,
+    .pred-duel-stats-b {
+      font-size: 0.68rem !important;
+      gap: 0.25rem !important;
+    }
+    .pred-duel-vs {
+      min-width: 24px !important;
+      font-size: 0.68rem !important;
+    }
+  }
+
+  /* Ajuste para pantallas muy pequeñas (<= 380px) */
+  @media (max-width: 380px) {
+    .pred-card {
+      padding: 0.95rem 0.55rem !important;
+    }
+    .pred-details-inner {
+      padding: 0.75rem 0.5rem !important;
+    }
+    .pred-math-card {
+      padding: 0.75rem 0.5rem !important;
+    }
+    .pred-prob-val {
+      font-size: 1.85rem !important;
+    }
+    .pred-score-digits {
+      font-size: 1.75rem !important;
+    }
+    .pred-duel-name {
+      font-size: 0.74rem !important;
+    }
+    .pred-duel-val {
+      font-size: 0.88rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pred-page-container">
+
+  <!-- 1. Encabezado de la Sección -->
+  <div style="margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+      <a href="{% url 'analytics:dashboard' %}" class="btn btn-secondary btn-sm">&larr; Estadísticas</a>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">
+        PRONÓSTICO DE PARTIDOS
+      </span>
+    </div>
+    <h1 class="pred-header-h1" style="font-size: 2.1rem; font-weight: 700; margin: 0 0 0.35rem 0; color: var(--text-title);">
+      ¿Quién tiene más posibilidades de ganar?
+    </h1>
+    <p class="pred-header-desc" style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">
+      Descubre qué equipo tiene más opciones de ganar el partido y el resultado estimado según los puntos y jugadas de toda la temporada.
+    </p>
+  </div>
+
+  <!-- 2. Formulario de Selección de Equipos -->
+  <div class="card pred-card pred-card-gold">
+    <form method="get" action="{% url 'analytics:predictive_model' %}">
+      
+      <!-- Fila 1: Competición y Ventaja de Campo -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; align-items: flex-end;">
+        <div>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            Competición / Temporada
+          </label>
+          <select name="season" onchange="window.location.href='?season=' + this.value;" class="form-control" style="font-size: 0.9rem; font-weight: 600;">
+            {% for s in all_seasons %}
+              <option value="{{ s.id }}" {% if current_season and current_season.id == s.id %}selected{% endif %}>
+                {{ s.league.name }} ({{ s.name }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            Lugar del Encuentro
+          </label>
+          <select name="hca" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600;">
+            <option value="3.5" {% if hca == 3.5 %}selected{% endif %}>Pabellón del Equipo 1 (+3.5 puntos por jugar en casa)</option>
+            <option value="0.0" {% if hca == 0.0 %}selected{% endif %}>Pista Neutral (Sin ventaja de campo)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fila 2: Selectores de Equipos y Botón -->
+      <div class="pred-form-teams-row">
+        
+        <!-- Equipo Local (1) -->
+        <div>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            Equipo Local (1)
+          </label>
+          <select name="team_a" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; border-left: 3px solid var(--gold-primary);">
+            {% for t in teams %}
+              <option value="{{ t.slug }}" {% if team_a and team_a.id == t.id %}selected{% endif %} {% if team_b and team_b.id == t.id %}disabled style="color: #94A3B8;"{% endif %}>
+                {{ t.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Separador VS -->
+        <div class="pred-vs-divider">
+          <div class="pred-vs-circle">
+            VS
+          </div>
+        </div>
+
+        <!-- Equipo Visitante (2) -->
+        <div>
+          <label style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+            Equipo Visitante (2)
+          </label>
+          <select name="team_b" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; border-left: 3px solid var(--state-blue);">
+            {% for t in teams %}
+              <option value="{{ t.slug }}" {% if team_b and team_b.id == t.id %}selected{% endif %} {% if team_a and team_a.id == t.id %}disabled style="color: #94A3B8;"{% endif %}>
+                {{ t.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Botón Calcular -->
+        <div class="pred-form-submit-col">
+          <button type="submit" class="btn btn-primary pred-btn-submit">
+            <span>Calcular Pronóstico</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+  </div>
+
+  {% if prediction %}
+    <!-- 3. TARJETA PRINCIPAL DEL PRONÓSTICO -->
+    <div class="card pred-card pred-card-gold">
+      
+      <div class="pred-main-grid">
+        
+        <!-- EQUIPO LOCAL (1) -->
+        <div class="pred-team-col pred-team-col-a">
+          {% if team_a.logo %}
+            <div class="pred-team-logo">
+              <img src="{{ team_a.logo.url }}" alt="{{ team_a.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));">
+            </div>
+          {% else %}
+            <div class="pred-team-initial" style="background: {{ team_a.primary_color|default:'var(--gold-primary)' }};">
+              {{ team_a.acronym }}
+            </div>
+          {% endif %}
+          <h2 class="pred-team-title">
+            {{ team_a.name }}
+          </h2>
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+            LOCAL {% if hca > 0 %}(+{{ hca }} pts por jugar en casa){% endif %}
+          </span>
+
+          <div class="pred-prob-val" style="color: var(--gold-primary);">
+            {{ prediction.logistic.prob_a_pct }}%
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 700; color: {% if prediction.logistic.prob_a_pct >= 55 %}#16A34A{% elif prediction.logistic.prob_a_pct > 45 %}var(--gold-primary){% else %}var(--text-secondary){% endif %}; margin-top: 0.3rem;">
+            {% if prediction.logistic.prob_a_pct >= 55 %}Favorito para ganar{% elif prediction.logistic.prob_a_pct > 45 %}Partido muy igualado{% else %}Opciones de ganar{% endif %}
+          </span>
+        </div>
+
+        <!-- CENTRO: RESULTADO ESTIMADO -->
+        <div class="pred-score-card">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">
+            RESULTADO ESTIMADO
+          </span>
+          <div class="pred-score-digits">
+            {{ prediction.projected_score.score_a }} - {{ prediction.projected_score.score_b }}
+          </div>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+            Diferencia estimada: <strong>{{ prediction.projected_score.margin }} pts</strong>
+          </span>
+        </div>
+
+        <!-- EQUIPO VISITANTE (2) -->
+        <div class="pred-team-col pred-team-col-b">
+          {% if team_b.logo %}
+            <div class="pred-team-logo">
+              <img src="{{ team_b.logo.url }}" alt="{{ team_b.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));">
+            </div>
+          {% else %}
+            <div class="pred-team-initial" style="background: {{ team_b.primary_color|default:'var(--state-blue)' }};">
+              {{ team_b.acronym }}
+            </div>
+          {% endif %}
+          <h2 class="pred-team-title">
+            {{ team_b.name }}
+          </h2>
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+            VISITANTE
+          </span>
+
+          <div class="pred-prob-val" style="color: var(--state-blue);">
+            {{ prediction.logistic.prob_b_pct }}%
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 700; color: {% if prediction.logistic.prob_b_pct >= 55 %}#16A34A{% elif prediction.logistic.prob_b_pct > 45 %}var(--gold-primary){% else %}var(--text-secondary){% endif %}; margin-top: 0.3rem;">
+            {% if prediction.logistic.prob_b_pct >= 55 %}Favorito para ganar{% elif prediction.logistic.prob_b_pct > 45 %}Partido muy igualado{% else %}Opciones de ganar{% endif %}
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Barra Visual de Probabilidad Proporcional -->
+      <div style="position: relative; margin-top: 0.85rem; margin-bottom: 0.25rem;">
+        <div style="display: flex; height: 16px; border-radius: 9999px; overflow: hidden; background: #E2E8F0; border: 1.5px solid var(--platinum-border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="width: {{ prediction.logistic.prob_a_css }}%; background: linear-gradient(90deg, #996515, var(--gold-primary)); transition: width 0.6s ease; min-width: 6px;" title="{{ team_a.name }}: {{ prediction.logistic.prob_a_pct }}%"></div>
+          <div style="width: {{ prediction.logistic.prob_b_css }}%; background: linear-gradient(90deg, var(--state-blue), #1E3A8A); transition: width 0.6s ease; min-width: 6px;" title="{{ team_b.name }}: {{ prediction.logistic.prob_b_pct }}%"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-top: 0.5rem;">
+          <span style="color: var(--gold-primary);">{{ team_a.name }}: {{ prediction.logistic.prob_a_pct }}%</span>
+          <span style="color: var(--state-blue);">{{ team_b.name }}: {{ prediction.logistic.prob_b_pct }}%</span>
+        </div>
+      </div>
+
+      <!-- Resumen descriptivo claro y directo -->
+      <div style="margin-top: 1.5rem; padding: 1.1rem 1.35rem; background: var(--bg-subtle); border-radius: var(--radius-md); border-left: 4px solid var(--gold-primary); font-size: 0.95rem; color: var(--text-title); line-height: 1.55; border: 1px solid var(--platinum-border); border-left-width: 4px; border-left-color: var(--gold-primary);">
+        <strong>Resumen del partido:</strong> El favorito para ganar es <strong>{{ prediction.fav_team.name }}</strong> con un <strong>{{ prediction.fav_pct }}%</strong> de opciones de victoria, frente al <strong>{{ prediction.underdog_pct }}%</strong> del <strong>{{ prediction.underdog_team.name }}</strong>.
+      </div>
+
+      <!-- Fórmulas Matemáticas de la Tarjeta Principal -->
+      <details class="pred-details" style="margin-top: 1.5rem; border-top: 1px solid var(--platinum-border); padding-top: 1rem;">
+        <summary style="font-size: 0.82rem; font-weight: 700; color: var(--text-title); cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <span>Ver cómo se calculan las probabilidades y los puntos (Detalles y fórmulas)</span>
+          <span style="color: var(--gold-primary); font-size: 0.78rem;">Ver cálculos &darr;</span>
+        </summary>
+        <div class="pred-details-inner" style="margin-top: 1rem; padding: 1.15rem 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55;">
+          <div class="pred-math-grid">
+            
+            <!-- 1. Regresión Logística -->
+            <div class="pred-math-card" style="background: #FFFFFF; padding: 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <strong style="color: var(--gold-primary); display: block; margin-bottom: 0.35rem; font-size: 0.88rem;">
+                  1. Opciones de Ganar (Probabilidad de Victoria)
+                </strong>
+                <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                  Calcula el porcentaje de opciones de ganar comparando cómo juega cada equipo y sumando los puntos de jugar en casa:
+                </p>
+                <div class="pred-math-box" style="text-align: center; font-size: 0.86rem; margin: 0.4rem 0; color: var(--text-title); background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); overflow-x: auto;">
+                  $$P(\text{Victoria}) = \frac{1}{1 + e^{-0.08 \times (\text{Diferencia de Rendimiento} + \text{Ventaja de Campo})}}$$
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--platinum-border); padding-top: 0.5rem;">
+                <strong style="font-size: 0.74rem; color: var(--text-title); display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                  Significado de cada dato:
+                </strong>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+                  <div><strong>$P(\text{Victoria})$:</strong> Opciones estimadas de ganar el partido ($0\%$ a $100\%$).</div>
+                  <div><strong>$\text{Diferencia de Rendimiento}$:</strong> Diferencia entre lo que domina el equipo local y lo que domina el visitante.</div>
+                  <div><strong>$\text{Ventaja de Campo}$:</strong> Puntos extra por jugar en casa ($+3.5$ pts en su pabellón, $0$ en pista neutral).</div>
+                  <div><strong>$e$:</strong> Número matemático para calcular curvas suaves de probabilidad ($\approx 2.718$).</div>
+                  <div><strong>$0.08$:</strong> Ajuste estadístico estándar para partidos de baloncesto.</div>
+                </div>
+
+                <!-- Sustitución con datos reales del partido -->
+                <div class="pred-math-subcard" style="margin-top: 0.75rem; border-top: 1px solid var(--platinum-border); padding-top: 0.5rem; background: var(--bg-subtle); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  <strong style="font-size: 0.73rem; color: var(--gold-primary); display: block; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    Cálculo con los datos de esta temporada:
+                  </strong>
+                  <div style="font-size: 0.76rem; color: var(--text-title); line-height: 1.6;">
+                    <div>Rendimiento de {{ team_a.name }}: $\mathbf{ {{ prediction.logistic.net_rtg_a }} }$, Rendimiento de {{ team_b.name }}: $\mathbf{ {{ prediction.logistic.net_rtg_b }} }$</div>
+                    <div>Diferencia de Rendimiento: ${{ prediction.logistic.net_rtg_a }} - ({{ prediction.logistic.net_rtg_b }}) = \mathbf{ {{ prediction.h2h_data.stats_a.net_rating|default:'0.0' }} }$</div>
+                    <div>Ventaja por jugar en casa: $\mathbf{+{{ prediction.hca }}\text{ pts}}$</div>
+                    <div style="margin-top: 0.3rem; border-top: 1px dashed var(--platinum-border); padding-top: 0.3rem; font-size: 0.73rem; color: var(--text-secondary);">
+                      $$P(\text{Victoria}) = \frac{1}{1 + e^{-0.08 \times ({{ prediction.logistic.delta_net }})}} = \mathbf{ {{ prediction.logistic.prob_a_pct }} \% }$$
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- 2. Marcador Estimado -->
+            <div class="pred-math-card" style="background: #FFFFFF; padding: 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <strong style="color: var(--gold-primary); display: block; margin-bottom: 0.35rem; font-size: 0.88rem;">
+                  2. Resultado Estimado (Puntos de cada equipo)
+                </strong>
+                <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                  Calcula cuántos puntos meterá cada equipo según cuántos ataques habrá en el partido y los puntos que suele meter por ataque:
+                </p>
+                <div class="pred-math-box" style="text-align: center; font-size: 0.86rem; margin: 0.4rem 0; color: var(--text-title); background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); overflow-x: auto;">
+                  $$\text{Puntos} = \text{Ataques del Partido} \times \frac{\text{Ataque Esperado}}{100}$$
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--platinum-border); padding-top: 0.5rem;">
+                <strong style="font-size: 0.74rem; color: var(--text-title); display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                  Significado de cada dato:
+                </strong>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+                  <div><strong>$\text{Puntos}$:</strong> Puntos que se calcula que meterá el equipo al final del partido.</div>
+                  <div><strong>$\text{Ataques (Ritmo)}$:</strong> Cantidad media de ataques que hace el equipo en un partido ($\frac{\text{Ataques Totales}}{\text{Partidos}}$).</div>
+                  <div><strong>$\text{Ataques del Partido}$:</strong> Total estimado de ataques en este encuentro (la media de ambos equipos).</div>
+                  <div><strong>$\text{Ataque Esperado}$:</strong> Puntos que metería el equipo por cada 100 ataques frente a la defensa del rival.</div>
+                  <div><strong>$100$:</strong> Número para calcular la proporción sobre 100 ataques.</div>
+                </div>
+
+                <!-- Sustitución con datos reales del partido -->
+                <div class="pred-math-subcard" style="margin-top: 0.75rem; border-top: 1px solid var(--platinum-border); padding-top: 0.5rem; background: var(--bg-subtle); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  <strong style="font-size: 0.73rem; color: var(--gold-primary); display: block; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    Cálculo con los datos de esta temporada:
+                  </strong>
+                  <div style="font-size: 0.76rem; color: var(--text-title); line-height: 1.6;">
+                    <div>
+                      <strong>Ritmo de juego de los equipos:</strong>
+                      <div style="color: var(--text-secondary); font-size: 0.73rem; margin-top: 0.2rem;">
+                        <div>{{ team_a.name }}: $\frac{ {{ prediction.h2h_data.stats_a.possessions }} \text{ ataques} }{ {{ prediction.h2h_data.stats_a.games }} \text{ partidos} } = \mathbf{ {{ prediction.projected_score.pace_a }} }\text{ ataques/partido}$</div>
+                        <div>{{ team_b.name }}: $\frac{ {{ prediction.h2h_data.stats_b.possessions }} \text{ ataques} }{ {{ prediction.h2h_data.stats_b.games }} \text{ partidos} } = \mathbf{ {{ prediction.projected_score.pace_b }} }\text{ ataques/partido}$</div>
+                        <div>$$\text{Ataques del Partido} = \frac{ {{ prediction.projected_score.pace_a }} + {{ prediction.projected_score.pace_b }} }{2} = \mathbf{ {{ prediction.projected_score.expected_pace }} }\text{ ataques}$$</div>
+                      </div>
+                    </div>
+                    <div style="margin-top: 0.45rem; border-top: 1px dashed var(--platinum-border); padding-top: 0.45rem;">
+                      <strong>Puntos estimados:</strong>
+                      <div style="color: var(--text-secondary); font-size: 0.73rem; margin-top: 0.2rem;">
+                        <div>Puntos {{ team_a.name }}: ${{ prediction.projected_score.expected_pace }} \times \frac{ {{ prediction.projected_score.expected_ortg_a }} }{100} = \mathbf{ {{ prediction.projected_score.score_a }} }\text{ pts}$</div>
+                        <div>Puntos {{ team_b.name }}: ${{ prediction.projected_score.expected_pace }} \times \frac{ {{ prediction.projected_score.expected_ortg_b }} }{100} = \mathbf{ {{ prediction.projected_score.score_b }} }\text{ pts}$</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- 4. COMPARATIVA DE RENDIMIENTO Y EFICIENCIA -->
+    <div class="card pred-card">
+      
+      <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+        <h3 style="font-size: 1.35rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.25rem 0;">
+          Rendimiento de los Equipos en la Temporada
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">
+          Así atacan, defienden y rinden ambos equipos según los partidos jugados hasta ahora:
+        </p>
+      </div>
+
+      <div class="pred-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem;">
+        
+        <!-- 1. Balance General -->
+        <div style="padding: 1.25rem 1.15rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.04em; display: block;">
+              Balance General
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-top: 0.15rem;">
+              Diferencia de puntos
+            </span>
+            <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; margin-top: 0.4rem; line-height: 1.45;">
+              ¿El equipo suele meter más o recibir más? Si el número es positivo (+), mete más de lo que le meten. Si es negativo (-), recibe más de lo que anota.
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 1rem; padding-top: 0.65rem; border-top: 1px dashed var(--platinum-border);">
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--gold-primary);">{{ prediction.h2h_data.stats_a.net_rating }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_a.acronym }}</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">vs</span>
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--state-blue);">{{ prediction.h2h_data.stats_b.net_rating }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_b.acronym }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Nivel de Ataque -->
+        <div style="padding: 1.25rem 1.15rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.04em; display: block;">
+              Nivel de Ataque
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-top: 0.15rem;">
+              Puntos a favor
+            </span>
+            <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; margin-top: 0.4rem; line-height: 1.45;">
+              ¿Cómo de bien ataca? Mide cuántos puntos mete el equipo por cada 100 ataques. Cuanto más alto sea el número, mejor ataca y más canastas mete.
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 1rem; padding-top: 0.65rem; border-top: 1px dashed var(--platinum-border);">
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--gold-primary);">{{ prediction.h2h_data.stats_a.ortg }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_a.acronym }}</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">vs</span>
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--state-blue);">{{ prediction.h2h_data.stats_b.ortg }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_b.acronym }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Solidez en Defensa -->
+        <div style="padding: 1.25rem 1.15rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.04em; display: block;">
+              Nivel de Defensa
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-top: 0.15rem;">
+              Puntos en contra
+            </span>
+            <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; margin-top: 0.4rem; line-height: 1.45;">
+              ¿Cómo de bien defiende? Mide cuántos puntos le meten los rivales por cada 100 ataques. Cuanto más bajo sea el número, mejor defiende porque menos le meten.
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 1rem; padding-top: 0.65rem; border-top: 1px dashed var(--platinum-border);">
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--gold-primary);">{{ prediction.h2h_data.stats_a.drtg }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_a.acronym }}</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">vs</span>
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--state-blue);">{{ prediction.h2h_data.stats_b.drtg }}</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_b.acronym }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Victorias Esperadas -->
+        <div style="padding: 1.25rem 1.15rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.04em; display: block;">
+              Victorias Esperadas
+            </span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-top: 0.15rem;">
+              Porcentaje que merece
+            </span>
+            <span style="font-size: 0.76rem; color: var(--text-secondary); display: block; margin-top: 0.4rem; line-height: 1.45;">
+              ¿Cuántos partidos debería ganar? Calcula qué porcentaje de victorias merece el equipo comparando todos los puntos que ha metido frente a todos los que ha recibido.
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 1rem; padding-top: 0.65rem; border-top: 1px dashed var(--platinum-border);">
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--gold-primary);">{{ prediction.pythagorean.win_exp_a_pct }}%</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_a.acronym }}</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">vs</span>
+            <div>
+              <strong style="font-size: 1.35rem; font-family: var(--font-mono); color: var(--state-blue);">{{ prediction.pythagorean.win_exp_b_pct }}%</strong>
+              <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">{{ team_b.acronym }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Fórmulas Matemáticas de Ratings y Pitagórica -->
+      <details class="pred-details" style="margin-top: 1.5rem; border-top: 1px solid var(--platinum-border); padding-top: 1rem;">
+        <summary style="font-size: 0.82rem; font-weight: 700; color: var(--text-title); cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <span>Ver cómo se calculan las jugadas, el ataque, la defensa y las victorias esperadas (Detalles y fórmulas)</span>
+          <span style="color: var(--gold-primary); font-size: 0.78rem;">Ver cálculos &darr;</span>
+        </summary>
+        <div class="pred-details-inner" style="margin-top: 1rem; padding: 1.15rem 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55;">
+          <div class="pred-math-grid">
+            
+            <!-- Posesiones y Net Rating -->
+            <div class="pred-math-card" style="background: #FFFFFF; padding: 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <strong style="color: var(--gold-primary); display: block; margin-bottom: 0.35rem; font-size: 0.88rem;">
+                  1. Jugadas de Ataque, Puntos a Favor y en Contra
+                </strong>
+                <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                  Una jugada (posesión) es cada vez que un equipo tiene el balón para intentar meter canasta. Se calcula sumando tiros y pérdidas, y restando rebotes en ataque:
+                </p>
+                <div class="pred-math-box" style="text-align: center; font-size: 0.82rem; margin: 0.4rem 0; color: var(--text-title); background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); line-height: 1.5; overflow-x: auto;">
+                  $$\text{Ataques} = \text{Tiros de Campo} + (0.44 \times \text{Tiros Libres}) - \text{Rebotes en Ataque} + \text{Pérdidas}$$
+                  $$\text{Nivel de Ataque} = \frac{\text{Puntos a Favor}}{\text{Ataques}} \times 100, \quad \text{Nivel de Defensa} = \frac{\text{Puntos en Contra}}{\text{Ataques}} \times 100$$
+                  $$\text{Balance General} = \text{Nivel de Ataque} - \text{Nivel de Defensa}$$
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--platinum-border); padding-top: 0.5rem;">
+                <strong style="font-size: 0.74rem; color: var(--text-title); display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                  Significado de cada dato:
+                </strong>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 0.25rem 0.6rem; font-size: 0.75rem; color: var(--text-secondary);">
+                  <div><strong>$\text{Ataques}$:</strong> Veces que el equipo tuvo el balón para intentar anotar.</div>
+                  <div><strong>$\text{Tiros de Campo}$:</strong> Tiros de 2 puntos y triples lanzados.</div>
+                  <div><strong>$\text{Tiros Libres}$:</strong> Tiros desde la línea de personal.</div>
+                  <div><strong>$\text{Rebotes en Ataque}$:</strong> Rebotes ofensivos logrados.</div>
+                  <div><strong>$\text{Pérdidas}$:</strong> Balones perdidos antes de tirar.</div>
+                  <div><strong>$\text{Puntos a Favor}$:</strong> Total de puntos metidos en la temporada.</div>
+                  <div><strong>$\text{Puntos en Contra}$:</strong> Total de puntos recibidos en contra.</div>
+                  <div><strong>$\text{Nivel de Ataque}$:</strong> Puntos que mete por cada 100 ataques.</div>
+                  <div><strong>$\text{Nivel de Defensa}$:</strong> Puntos que le meten por cada 100 ataques.</div>
+                  <div><strong>$\text{Balance General}$:</strong> Diferencia ($\text{Ataque} - \text{Defensa}$).</div>
+                </div>
+
+                <!-- Sustitución con datos reales del partido -->
+                <div class="pred-math-subcard" style="margin-top: 0.75rem; border-top: 1px solid var(--platinum-border); padding-top: 0.5rem; background: var(--bg-subtle); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  <strong style="font-size: 0.73rem; color: var(--gold-primary); display: block; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    Cálculo con los datos de esta temporada:
+                  </strong>
+                  <div style="font-size: 0.76rem; color: var(--text-title); line-height: 1.6;">
+                    <div>
+                      <strong>{{ team_a.name }}:</strong> Tiros = ${{ prediction.h2h_data.stats_a.total_fga }}$, Tiros Libres = ${{ prediction.h2h_data.stats_a.total_fta }}$, Rebotes en Ataque = ${{ prediction.h2h_data.stats_a.total_orb }}$, Pérdidas = ${{ prediction.h2h_data.stats_a.total_tov }}$
+                      <span style="display: block; color: var(--text-secondary); font-size: 0.73rem;">
+                        $$\text{Ataques} = {{ prediction.h2h_data.stats_a.total_fga }} + (0.44 \times {{ prediction.h2h_data.stats_a.total_fta }}) - {{ prediction.h2h_data.stats_a.total_orb }} + {{ prediction.h2h_data.stats_a.total_tov }} = \mathbf{ {{ prediction.h2h_data.stats_a.possessions }} }\text{ ataques}$$
+                      </span>
+                    </div>
+                    <div style="margin-top: 0.45rem; border-top: 1px dashed var(--platinum-border); padding-top: 0.45rem;">
+                      <strong>{{ team_b.name }}:</strong> Tiros = ${{ prediction.h2h_data.stats_b.total_fga }}$, Tiros Libres = ${{ prediction.h2h_data.stats_b.total_fta }}$, Rebotes en Ataque = ${{ prediction.h2h_data.stats_b.total_orb }}$, Pérdidas = ${{ prediction.h2h_data.stats_b.total_tov }}$
+                      <span style="display: block; color: var(--text-secondary); font-size: 0.73rem;">
+                        $$\text{Ataques} = {{ prediction.h2h_data.stats_b.total_fga }} + (0.44 \times {{ prediction.h2h_data.stats_b.total_fta }}) - {{ prediction.h2h_data.stats_b.total_orb }} + {{ prediction.h2h_data.stats_b.total_tov }} = \mathbf{ {{ prediction.h2h_data.stats_b.possessions }} }\text{ ataques}$$
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expectativa Pitagórica -->
+            <div class="pred-math-card" style="background: #FFFFFF; padding: 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); display: flex; flex-direction: column; gap: 0.75rem;">
+              <div>
+                <strong style="color: var(--gold-primary); display: block; margin-bottom: 0.35rem; font-size: 0.88rem;">
+                  2. Porcentaje de Victorias que Merece el Equipo
+                </strong>
+                <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                  Compara el total de puntos anotados y recibidos para estimar qué porcentaje de victorias debería llevar según su juego:
+                </p>
+                <div class="pred-math-box" style="text-align: center; font-size: 0.9rem; margin: 0.4rem 0; color: var(--text-title); background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); overflow-x: auto;">
+                  $$W = \frac{\text{Puntos a Favor}^{13.91}}{\text{Puntos a Favor}^{13.91} + \text{Puntos en Contra}^{13.91}}$$
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--platinum-border); padding-top: 0.5rem;">
+                <strong style="font-size: 0.74rem; color: var(--text-title); display: block; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                  Significado de cada dato:
+                </strong>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+                  <div><strong>$W$:</strong> Porcentaje estimado de victorias que debería conseguir ($0\%$ a $100\%$).</div>
+                  <div><strong>$\text{Puntos a Favor}$:</strong> Total de puntos anotados en la temporada.</div>
+                  <div><strong>$\text{Puntos en Contra}$:</strong> Total de puntos recibidos en contra.</div>
+                  <div><strong>$13.91$:</strong> Ajuste estadístico estándar para baloncesto.</div>
+                </div>
+
+                <!-- Sustitución con datos reales de los equipos -->
+                <div class="pred-math-subcard" style="margin-top: 0.75rem; border-top: 1px solid var(--platinum-border); padding-top: 0.5rem; background: var(--bg-subtle); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  <strong style="font-size: 0.73rem; color: var(--gold-primary); display: block; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    Cálculo con los datos de esta temporada:
+                  </strong>
+                  <div style="font-size: 0.76rem; color: var(--text-title); line-height: 1.6;">
+                    <div>
+                      <strong>{{ team_a.name }}:</strong> Puntos a favor = ${{ prediction.h2h_data.stats_a.points_for }}$, Puntos en contra = ${{ prediction.h2h_data.stats_a.points_against }}$
+                      <span style="display: block; color: var(--text-secondary); font-size: 0.73rem;">
+                        $$W = \frac{1}{1 + \left(\frac{ {{ prediction.h2h_data.stats_a.points_against }} }{ {{ prediction.h2h_data.stats_a.points_for }} }\right)^{13.91}} = \mathbf{ {{ prediction.pythagorean.win_exp_a_pct }} \% }\text{ de victorias esperadas}$$
+                      </span>
+                    </div>
+                    <div style="margin-top: 0.45rem; border-top: 1px dashed var(--platinum-border); padding-top: 0.45rem;">
+                      <strong>{{ team_b.name }}:</strong> Puntos a favor = ${{ prediction.h2h_data.stats_b.points_for }}$, Puntos en contra = ${{ prediction.h2h_data.stats_b.points_against }}$
+                      <span style="display: block; color: var(--text-secondary); font-size: 0.73rem;">
+                        $$W = \frac{1}{1 + \left(\frac{ {{ prediction.h2h_data.stats_b.points_against }} }{ {{ prediction.h2h_data.stats_b.points_for }} }\right)^{13.91}} = \mathbf{ {{ prediction.pythagorean.win_exp_b_pct }} \% }\text{ de victorias esperadas}$$
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- 5. DUELO POR POSICIONES DE JUEGO -->
+    <div class="card pred-card">
+      
+      <div style="margin-bottom: 1.15rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.65rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.2rem 0;">
+          Comparativa por Posiciones de Juego
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+          Rendimiento medio de los jugadores de cada equipo agrupados por su puesto en la pista:
+        </p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+        {% for duel in prediction.positional_duels %}
+          <div class="pred-duel-card">
+            
+            <!-- Cabecera del Duelo Compacta -->
+            <div class="pred-duel-header">
+              <div style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
+                <strong style="font-size: 0.95rem; color: var(--text-title);">{{ duel.name }}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                  {{ duel.subtitle }}
+                </span>
+              </div>
+
+              <div>
+                {% if duel.leader == 'a' %}
+                  <span class="badge" style="background: rgba(197, 155, 39, 0.15); color: var(--gold-primary); font-weight: 700; border: 1px solid var(--gold-border); font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                    Ventaja para {{ team_a.name }}
+                  </span>
+                {% elif duel.leader == 'b' %}
+                  <span class="badge" style="background: rgba(30, 58, 138, 0.12); color: var(--state-blue); font-weight: 700; border: 1px solid rgba(30, 58, 138, 0.25); font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                    Ventaja para {{ team_b.name }}
+                  </span>
+                {% else %}
+                  <span class="badge" style="background: #E2E8F0; color: var(--text-secondary); font-weight: 700; font-size: 0.72rem; padding: 0.2rem 0.55rem;">
+                    Máxima igualdad
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Comparativa Visual Compacta -->
+            <div class="pred-duel-grid">
+              
+              <!-- Equipo A -->
+              <div class="pred-duel-team-a">
+                <div class="pred-duel-team-title-row">
+                  <strong class="pred-duel-name">{{ team_a.name }}</strong>
+                  <span class="pred-duel-val" style="color: var(--gold-primary);">
+                    {{ duel.data_a.avg_pir }} Valoración
+                  </span>
+                </div>
+                <div class="pred-duel-stats">
+                  <span><strong>{{ duel.data_a.avg_pts }}</strong> pts</span> &bull;
+                  <span><strong>{{ duel.data_a.avg_reb }}</strong> reb</span> &bull;
+                  <span><strong>{{ duel.data_a.avg_ast }}</strong> asist</span>
+                </div>
+              </div>
+
+              <!-- VS Central -->
+              <div class="pred-duel-vs">
+                VS
+              </div>
+
+              <!-- Equipo B -->
+              <div class="pred-duel-team-b">
+                <div class="pred-duel-team-title-row-b">
+                  <strong class="pred-duel-name">{{ team_b.name }}</strong>
+                  <span class="pred-duel-val" style="color: var(--state-blue);">
+                    {{ duel.data_b.avg_pir }} Valoración
+                  </span>
+                </div>
+                <div class="pred-duel-stats-b">
+                  <span><strong>{{ duel.data_b.avg_pts }}</strong> pts</span> &bull;
+                  <span><strong>{{ duel.data_b.avg_reb }}</strong> reb</span> &bull;
+                  <span><strong>{{ duel.data_b.avg_ast }}</strong> asist</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Fórmulas Matemáticas de la Valoración -->
+      <details class="pred-details" style="margin-top: 1.5rem; border-top: 1px solid var(--platinum-border); padding-top: 1rem;">
+        <summary style="font-size: 0.82rem; font-weight: 700; color: var(--text-title); cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <span>Ver cómo se calcula la Valoración Oficial (ACB y FIBA)</span>
+          <span style="color: var(--gold-primary); font-size: 0.78rem;">Ver fórmula &darr;</span>
+        </summary>
+        <div class="pred-details-inner" style="margin-top: 1rem; padding: 1.15rem 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55;">
+          <div class="pred-math-card" style="background: #FFFFFF; padding: 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+            <strong style="color: var(--gold-primary); display: block; margin-bottom: 0.35rem; font-size: 0.88rem;">
+              Fórmula Oficial de Valoración (ACB / FIBA)
+            </strong>
+            <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+              La valoración mide el rendimiento sumando las acciones buenas (puntos, rebotes, asistencias) y restando los fallos (tiros errados, pérdidas, faltas):
+            </p>
+            <div class="pred-math-box" style="text-align: center; font-size: 0.85rem; margin: 0.6rem 0; color: var(--text-title); background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); overflow-x: auto;">
+              $$\text{Valoración} = (\text{Puntos} + \text{Rebotes} + \text{Asistencias} + \text{Recuperaciones} + \text{Tapones a favor} + \text{Faltas recibidas}) - (\text{Tiros fallados} + \text{Tiros libres fallados} + \text{Pérdidas} + \text{Tapones recibidos} + \text{Faltas cometidas})$$
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 0.35rem 0.85rem; font-size: 0.76rem; color: var(--text-secondary); border-top: 1px solid var(--platinum-border); padding-top: 0.6rem; margin-top: 0.6rem;">
+              <div><strong>Puntos:</strong> Puntos anotados en juego y tiros libres</div>
+              <div><strong>Rebotes:</strong> Balones atrapados tras tiro fallado</div>
+              <div><strong>Asistencias:</strong> Pases que terminan en canasta</div>
+              <div><strong>Recuperaciones:</strong> Balones robados al rival</div>
+              <div><strong>Tapones a favor:</strong> Tiros del rival bloqueados</div>
+              <div><strong>Faltas recibidas:</strong> Infracciones recibidas del rival</div>
+              <div><strong>Tiros fallados:</strong> Tiros de 2 y triples que no entraron</div>
+              <div><strong>Tiros libres fallados:</strong> Tiros libres no convertidos</div>
+              <div><strong>Pérdidas:</strong> Balones perdidos o entregados</div>
+              <div><strong>Tapones recibidos:</strong> Tiros propios bloqueados</div>
+              <div><strong>Faltas cometidas:</strong> Infracciones cometidas sobre el rival</div>
+              <div><strong>Normativa:</strong> Fórmula oficial de la Liga ACB y FIBA</div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

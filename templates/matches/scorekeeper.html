@@ -1,0 +1,2581 @@
+{% extends "base.html" %}
+
+{% block title %}Mesa Arbitral Digital &bull; {{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 1240px; margin: 0 auto; padding-bottom: 3rem;">
+  
+  <!-- Cabecera de Mesa Arbitral -->
+  <div class="card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--gold-primary); padding: 1.25rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--obsidian-dark); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; border: 1px solid var(--gold-border);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div>
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CONSOLA OFICIAL DE MESA ARBITRAL</div>
+          <h1 style="font-size: 1.55rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.15rem 0;">{{ match.home_team.name }} vs {{ match.away_team.name }}</h1>
+          <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            {% if match.referee %}
+              <span>1er Árbitro: <strong>{{ match.referee.get_full_name|default:match.referee.username }}</strong></span>
+              <span style="color: var(--platinum-border);">&bull;</span>
+            {% endif %}
+            {% if match.second_referee %}
+              <span>2º Árbitro: <strong>{{ match.second_referee.get_full_name|default:match.second_referee.username }}</strong></span>
+              <span style="color: var(--platinum-border);">&bull;</span>
+            {% endif %}
+            <span>Anotador: <strong>{% if match.table_official %}{{ match.table_official.get_full_name|default:match.table_official.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}</strong></span>
+            <span style="color: var(--platinum-border);">&bull;</span>
+            <span>Cronometrador: <strong>{% if match.timekeeper %}{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}{% else %}Laura Gómez (Cronometradora){% endif %}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <a href="{% url 'matches:match_live' match.id %}" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;" title="Ver marcador público">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+          Ver Retransmisión ↗
+        </a>
+
+        <button type="button" id="btn-close-scoresheet-top" onclick="openSignatureModal()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 600; transition: all 0.2s ease;" title="Disponible únicamente al concluir el 4º cuarto (00:00)">
+          <svg id="icon-close-scoresheet" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span id="text-close-scoresheet">Firmar y Cerrar Acta</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PANEL DE CONTROL DE RELOJ Y PERIODOS -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 2rem; background: var(--obsidian-dark); border: 1px solid var(--gold-border); color: #FFFFFF;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+      
+      <!-- Cronómetro Central -->
+      <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">RELOJ DE JUEGO</div>
+          <div id="clock-display" style="font-family: var(--font-mono); font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800; color: #FFFFFF; line-height: 1; letter-spacing: 0.02em;">
+            {{ match.game_clock }}
+          </div>
+        </div>
+
+        <!-- Botones de Control de Tiempo -->
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" id="btn-clock-toggle" onclick="toggleClock()" class="btn btn-gold" style="padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.95rem;">
+            ▶ Iniciar Reloj
+          </button>
+          <button type="button" onclick="adjustClock(10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            +10s
+          </button>
+          <button type="button" onclick="adjustClock(-10)" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            -10s
+          </button>
+          <button type="button" onclick="resetClock('10:00')" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.08); color: #FFFFFF; border-color: rgba(255,255,255,0.2);">
+            ↺ 10:00
+          </button>
+        </div>
+      </div>
+
+      <!-- Selector Rápido de Periodos (Q1, Q2, HT, Q3, Q4, OT) -->
+      <div>
+        <div style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">PERIODO / CUARTO</div>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          <button type="button" onclick="setPeriod('Q1', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q1">1Q</button>
+          <button type="button" onclick="setPeriod('Q2', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q2">2Q</button>
+          <button type="button" onclick="setPeriod('HT', '15:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-HT">Descanso</button>
+          <button type="button" onclick="setPeriod('Q3', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q3">3Q</button>
+          <button type="button" onclick="setPeriod('Q4', '10:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-Q4">4Q</button>
+          <button type="button" onclick="setPeriod('OT1', '05:00')" class="btn btn-secondary btn-sm btn-period" id="btn-p-OT1">Prórroga</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONSOLAS DE ANOTACIÓN Y PLANTILLAS BIDIRECCIONALES -->
+  <div class="grid-responsive-2" style="margin-bottom: 2.25rem;">
+    
+    <!-- 1. CONSOLA EQUIPO LOCAL -->
+    <div class="card" style="border-top: 4px solid {{ match.home_team.primary_color|default:'#090D16' }}; padding: 1.5rem; display: flex; flex-direction: column;">
+      
+      <!-- Cabecera y Marcador Local -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            {% if match.home_team.logo %}
+              <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));">
+            {% else %}
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                {{ match.home_team.acronym }}
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-title); line-height: 1.2;">{{ match.home_team.name }}</h2>
+            <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">EQUIPO LOCAL</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--text-title); background: var(--bg-subtle); padding: 0.15rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); min-width: 80px; text-align: center;" id="score-home">
+            {{ match.home_score }}
+          </div>
+          <button type="button" onclick="openScoreCorrectionModal('{{ match.home_team.id }}', '{{ match.home_team.name|escapejs }}', '{{ match.home_team.acronym|escapejs }}', '{{ match.home_team.primary_color|default:'#090D16' }}', 'home')" class="btn btn-secondary btn-sm" title="Corregir marcador (-1 pt asignado a jugador)" style="padding: 0.5rem 0.65rem; color: var(--text-secondary); border-color: var(--platinum-border);">
+            -1
+          </button>
+        </div>
+      </div>
+
+      <!-- Control de Tiempos Muertos FIBA y Faltas de Equipo (Equipo Local) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1.15rem;">
+        
+        <!-- Tiempos Muertos -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Tiempo Muerto:</span>
+            <div id="home-timeouts-indicators" style="display: flex; gap: 0.25rem; align-items: center;">
+              <!-- Indicadores generados dinámicamente -->
+            </div>
+          </div>
+          <button type="button" id="btn-timeout-home"
+            onclick="requestTeamTimeout('{{ match.home_team.id }}', '{{ match.home_team.name|escapejs }}', 'home')"
+            class="btn btn-secondary btn-sm"
+            style="padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;"
+            {% if home_timeouts.remaining <= 0 or match.status != 'LIVE' %}disabled style="opacity: 0.45; cursor: not-allowed;"{% endif %}
+            title="Solicitar Tiempo Muerto Oficial">
+            <span>⏱️</span>
+            <span id="home-timeouts-count">({{ home_timeouts.used }}/{{ home_timeouts.limit }})</span>
+          </button>
+        </div>
+
+        <!-- Faltas de Equipo y Bonus -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Faltas:</span>
+            <span id="home-team-fouls-display" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.86rem; color: var(--text-title);">
+              {{ home_fouls_info.count|default:0 }}/5
+            </span>
+          </div>
+          <span id="home-bonus-badge" class="badge-bonus-status {% if home_fouls_info.in_bonus %}active{% endif %}" title="Al cometer 5 faltas de equipo, todas las faltas defensivas conceden 2 tiros libres al rival">
+            {% if home_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Sección Plantilla de Jugadores Local -->
+      <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Plantilla en Acta
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Haz clic sobre un jugador en pista para registrar acciones</span>
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          <button type="button" id="btn-substitutions-home" onclick="openSubstitutionModal('{{ match.home_team.id }}', '{{ match.home_team.name|escapejs }}', '{{ match.home_team.acronym|escapejs }}', '{{ match.home_team.primary_color|default:'#090D16' }}', 'home')" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; padding: 0.25rem 0.6rem; font-weight: 700; display: {% if home_has_five %}inline-flex{% else %}none{% endif %}; align-items: center; gap: 0.3rem;" title="Sustituir jugador de pista por banquillo">
+            <span>🔄</span> Cambios
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerta si falta quinteto completo (5 en pista) -->
+      <div id="alert-no-quinteto-home" style="display: {% if not home_has_five %}flex{% else %}none{% endif %}; align-items: center; justify-content: space-between; background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); color: var(--state-red); padding: 0.55rem 0.85rem; border-radius: var(--radius-md); font-size: 0.78rem; font-weight: 600; margin-bottom: 0.75rem;">
+        <span>⚠️ Quinteto incompleto (5 jugadores requeridos en pista).</span>
+        <button type="button" onclick="openStartingFiveModal('{{ match.home_team.id }}', '{{ match.home_team.name|escapejs }}', '{{ match.home_team.acronym|escapejs }}', '{{ match.home_team.primary_color|default:'#090D16' }}', 'home')" class="btn btn-sm" style="background: var(--state-red); color: #fff; padding: 0.2rem 0.55rem; font-size: 0.72rem; font-weight: 700;">Elegir 5</button>
+      </div>
+
+      <div class="player-roster-grid">
+        {% for m in home_roster %}
+          <button type="button" class="player-action-card {% if m.player.id in home_on_court_ids %}card-on-court{% else %}card-bench{% endif %}"
+            id="player-card-{{ m.player.id }}"
+            data-team-id="{{ match.home_team.id }}"
+            data-team-name="{{ match.home_team.name }}"
+            data-team-acronym="{{ match.home_team.acronym }}"
+            data-team-color="{{ match.home_team.primary_color|default:'#090D16' }}"
+            data-player-id="{{ m.player.id }}"
+            data-jersey="{{ m.jersey_number }}"
+            data-player-name="{{ m.player.full_name }}"
+            data-player-pos="{{ m.player.get_position_display }}"
+            data-player-photo="{% if m.player.photo %}{{ m.player.photo.url }}{% endif %}"
+            data-side="home"
+            data-is-on-court="{% if m.player.id in home_on_court_ids %}true{% else %}false{% endif %}"
+            onclick="handlePlayerCardClick(this)">
+            {% if m.player.photo %}
+              <div style="position: relative; width: 38px; height: 38px; flex-shrink: 0;">
+                <img src="{{ m.player.photo.url }}" alt="{{ m.player.full_name }}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #FFFFFF;">
+                <span style="position: absolute; bottom: -2px; right: -3px; background: {{ match.home_team.primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.62rem; font-weight: 800; font-family: var(--font-mono); padding: 0.05rem 0.25rem; border-radius: 6px; border: 1px solid #FFFFFF; line-height: 1;">
+                  #{{ m.jersey_number }}
+                </span>
+              </div>
+            {% else %}
+              <div class="player-jersey-badge" style="background: {{ match.home_team.primary_color|default:'#090D16' }};">
+                #{{ m.jersey_number }}
+              </div>
+            {% endif %}
+            <div class="player-info-meta">
+              <div class="player-name">{{ m.player.full_name }}</div>
+              <div class="player-status-tag"></div>
+            </div>
+            <div class="player-action-trigger" title="Abrir opciones">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </button>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-md);">
+            No hay jugadores activos registrados en la plantilla local.
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <!-- 2. CONSOLA EQUIPO VISITANTE -->
+    <div class="card" style="border-top: 4px solid {{ match.away_team.primary_color|default:'#090D16' }}; padding: 1.5rem; display: flex; flex-direction: column;">
+      
+      <!-- Cabecera y Marcador Visitante -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            {% if match.away_team.logo %}
+              <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));">
+            {% else %}
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                {{ match.away_team.acronym }}
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-title); line-height: 1.2;">{{ match.away_team.name }}</h2>
+            <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">EQUIPO VISITANTE</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--text-title); background: var(--bg-subtle); padding: 0.15rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); min-width: 80px; text-align: center;" id="score-away">
+            {{ match.away_score }}
+          </div>
+          <button type="button" onclick="openScoreCorrectionModal('{{ match.away_team.id }}', '{{ match.away_team.name|escapejs }}', '{{ match.away_team.acronym|escapejs }}', '{{ match.away_team.primary_color|default:'#090D16' }}', 'away')" class="btn btn-secondary btn-sm" title="Corregir marcador (-1 pt asignado a jugador)" style="padding: 0.5rem 0.65rem; color: var(--text-secondary); border-color: var(--platinum-border);">
+            -1
+          </button>
+        </div>
+      </div>
+
+      <!-- Control de Tiempos Muertos FIBA y Faltas de Equipo (Equipo Visitante) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 1.15rem;">
+        
+        <!-- Tiempos Muertos -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Tiempo Muerto:</span>
+            <div id="away-timeouts-indicators" style="display: flex; gap: 0.25rem; align-items: center;">
+              <!-- Indicadores generados dinámicamente -->
+            </div>
+          </div>
+          <button type="button" id="btn-timeout-away"
+            onclick="requestTeamTimeout('{{ match.away_team.id }}', '{{ match.away_team.name|escapejs }}', 'away')"
+            class="btn btn-secondary btn-sm"
+            style="padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;"
+            {% if away_timeouts.remaining <= 0 or match.status != 'LIVE' %}disabled style="opacity: 0.45; cursor: not-allowed;"{% endif %}
+            title="Solicitar Tiempo Muerto Oficial">
+            <span>⏱️</span>
+            <span id="away-timeouts-count">({{ away_timeouts.used }}/{{ away_timeouts.limit }})</span>
+          </button>
+        </div>
+
+        <!-- Faltas de Equipo y Bonus -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Faltas:</span>
+            <span id="away-team-fouls-display" style="font-family: var(--font-mono); font-weight: 800; font-size: 0.86rem; color: var(--text-title);">
+              {{ away_fouls_info.count|default:0 }}/5
+            </span>
+          </div>
+          <span id="away-bonus-badge" class="badge-bonus-status {% if away_fouls_info.in_bonus %}active{% endif %}" title="Al cometer 5 faltas de equipo, todas las faltas defensivas conceden 2 tiros libres al rival">
+            {% if away_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Sección Plantilla de Jugadores Visitante -->
+      <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Plantilla en Acta
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Haz clic sobre un jugador en pista para registrar acciones</span>
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          <button type="button" id="btn-substitutions-away" onclick="openSubstitutionModal('{{ match.away_team.id }}', '{{ match.away_team.name|escapejs }}', '{{ match.away_team.acronym|escapejs }}', '{{ match.away_team.primary_color|default:'#090D16' }}', 'away')" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; padding: 0.25rem 0.6rem; font-weight: 700; display: {% if away_has_five %}inline-flex{% else %}none{% endif %}; align-items: center; gap: 0.3rem;" title="Sustituir jugador de pista por banquillo">
+            <span>🔄</span> Cambios
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerta si falta quinteto completo (5 en pista) -->
+      <div id="alert-no-quinteto-away" style="display: {% if not away_has_five %}flex{% else %}none{% endif %}; align-items: center; justify-content: space-between; background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); color: var(--state-red); padding: 0.55rem 0.85rem; border-radius: var(--radius-md); font-size: 0.78rem; font-weight: 600; margin-bottom: 0.75rem;">
+        <span>⚠️ Quinteto incompleto (5 jugadores requeridos en pista).</span>
+        <button type="button" onclick="openStartingFiveModal('{{ match.away_team.id }}', '{{ match.away_team.name|escapejs }}', '{{ match.away_team.acronym|escapejs }}', '{{ match.away_team.primary_color|default:'#090D16' }}', 'away')" class="btn btn-sm" style="background: var(--state-red); color: #fff; padding: 0.2rem 0.55rem; font-size: 0.72rem; font-weight: 700;">Elegir 5</button>
+      </div>
+
+      <div class="player-roster-grid">
+        {% for m in away_roster %}
+          <button type="button" class="player-action-card {% if m.player.id in away_on_court_ids %}card-on-court{% else %}card-bench{% endif %}"
+            id="player-card-{{ m.player.id }}"
+            data-team-id="{{ match.away_team.id }}"
+            data-team-name="{{ match.away_team.name }}"
+            data-team-acronym="{{ match.away_team.acronym }}"
+            data-team-color="{{ match.away_team.primary_color|default:'#090D16' }}"
+            data-player-id="{{ m.player.id }}"
+            data-jersey="{{ m.jersey_number }}"
+            data-player-name="{{ m.player.full_name }}"
+            data-player-pos="{{ m.player.get_position_display }}"
+            data-player-photo="{% if m.player.photo %}{{ m.player.photo.url }}{% endif %}"
+            data-side="away"
+            data-is-on-court="{% if m.player.id in away_on_court_ids %}true{% else %}false{% endif %}"
+            onclick="handlePlayerCardClick(this)">
+            {% if m.player.photo %}
+              <div style="position: relative; width: 38px; height: 38px; flex-shrink: 0;">
+                <img src="{{ m.player.photo.url }}" alt="{{ m.player.full_name }}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #FFFFFF;">
+                <span style="position: absolute; bottom: -2px; right: -3px; background: {{ match.away_team.primary_color|default:'#090D16' }}; color: #FFFFFF; font-size: 0.62rem; font-weight: 800; font-family: var(--font-mono); padding: 0.05rem 0.25rem; border-radius: 6px; border: 1px solid #FFFFFF; line-height: 1;">
+                  #{{ m.jersey_number }}
+                </span>
+              </div>
+            {% else %}
+              <div class="player-jersey-badge" style="background: {{ match.away_team.primary_color|default:'#090D16' }};">
+                #{{ m.jersey_number }}
+              </div>
+            {% endif %}
+            <div class="player-info-meta">
+              <div class="player-name">{{ m.player.full_name }}</div>
+              <div class="player-status-tag"></div>
+            </div>
+            <div class="player-action-trigger" title="Abrir opciones">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </button>
+        {% empty %}
+          <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-subtle); border-radius: var(--radius-md);">
+            No hay jugadores activos registrados en la plantilla visitante.
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- REGISTRO CRONOLÓGICO DE EVENTOS EN DIRECTO -->
+  <div class="card" style="padding: 1.5rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-title);">Historial Reciente de la Mesa</h3>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-secondary);">Registros oficiales guardados en tiempo real</span>
+    </div>
+
+    <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 280px; overflow-y: auto;">
+      {% for ev in recent_events %}
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-subtle); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border);">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary);">{{ ev.get_period_display }} &bull; {{ ev.game_clock }}</span>
+            <strong style="color: var(--text-title);">{{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}</strong>
+            <span>&bull; {% if ev.description %}{{ ev.description }}{% else %}{{ ev.get_event_type_display }}{% endif %}</span>
+          </div>
+          {% if ev.points != 0 %}
+            <strong style="color: {% if ev.points > 0 %}var(--gold-primary){% else %}var(--state-red){% endif %}; font-family: var(--font-mono); font-size: 0.95rem;">{% if ev.points > 0 %}+{% endif %}{{ ev.points }}</strong>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div id="no-events-scorekeeper" style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.85rem;">
+          No hay eventos registrados todavía en el encuentro.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DE ACCIONES POR JUGADOR (FIBA LIVESTATS STYLE - PROPUESTA 1) -->
+<div id="modal-player-action" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.75); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div class="card" style="max-width: 580px; width: 100%; padding: 1.75rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45); animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- Cabecera del Jugador Activo -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.35rem; padding-bottom: 1rem; border-bottom: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+          <img id="modal-player-photo" src="" alt="Foto Jugador" style="display: none; width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--gold-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.18); background: #FFFFFF;">
+          <div id="modal-player-jersey" style="width: 62px; height: 62px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; font-family: var(--font-mono); border: 2.5px solid var(--gold-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.18);">
+            #--
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;" id="modal-player-team">
+            EQUIPO
+          </div>
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-title); margin: 0 0 0.15rem 0;" id="modal-player-name">
+            Nombre Jugador
+          </h2>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);" id="modal-player-position"></span>
+        </div>
+      </div>
+
+      <button type="button" onclick="closePlayerModal()" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-primary)'" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'">
+        ✕
+      </button>
+    </div>
+
+    <!-- SECCIÓN 1: PUNTOS / ANOTACIÓN -->
+    <div style="margin-bottom: 1.35rem;">
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m4.93 4.93 4.24 4.24"></path><path d="m14.83 9.17 4.24-4.24"></path><path d="m14.83 14.83 4.24 4.24"></path><path d="m9.17 14.83-4.24 4.24"></path><circle cx="12" cy="12" r="4"></circle></svg>
+        Puntos y Canastas
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+        <button type="button" onclick="executePlayerScore(1, '1PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+1</span>
+          <span class="pts-label">Tiro Libre</span>
+        </button>
+        <button type="button" onclick="executePlayerScore(2, '2PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+2</span>
+          <span class="pts-label">Canasta (2P)</span>
+        </button>
+        <button type="button" onclick="executePlayerScore(3, '3PT_MADE')" class="btn-action-pts">
+          <span class="pts-badge">+3</span>
+          <span class="pts-label">Triple (3P)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: ACCIONES DE JUEGO -->
+    <div style="margin-bottom: 1.35rem;">
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary);"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+        Acciones de Juego
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; margin-bottom: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('REBOUND')" class="btn-action-stat">
+          + Rebote
+        </button>
+        <button type="button" onclick="executePlayerStat('ASSIST')" class="btn-action-stat">
+          + Asistencia
+        </button>
+        <button type="button" onclick="executePlayerStat('STEAL')" class="btn-action-stat">
+          + Robo
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('BLOCK')" class="btn-action-stat">
+          + Tapón
+        </button>
+        <button type="button" onclick="executePlayerStat('TURNOVER')" class="btn-action-stat stat-turnover">
+          + Pérdida
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: FALTAS Y TIROS FALLADOS -->
+    <div>
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-red);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+        Faltas y Tiros Fallados
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 0.55rem;">
+        <button type="button" onclick="executePlayerFoul('PF')" class="btn-action-foul">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          Falta Personal
+        </button>
+        <button type="button" onclick="executePlayerStat('MISS_FT')" class="btn-action-miss">
+          Fallo Tiro Libre
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;">
+        <button type="button" onclick="executePlayerStat('MISS_2PT')" class="btn-action-miss">
+          Fallo Tiro de 2
+        </button>
+        <button type="button" onclick="executePlayerStat('MISS_3PT')" class="btn-action-miss">
+          Fallo Triple
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST FLOTANTE DE CONFIRMACIÓN DE ACCIÓN (QUINTO CUARTO LUXURY DESIGN) -->
+<div id="scorekeeper-toast" style="display: none; position: fixed; bottom: 2rem; right: 2rem; background: rgba(255, 255, 255, 0.96); color: var(--text-title); border: 1px solid var(--platinum-border); border-left: 4px solid var(--gold-primary); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(197, 155, 39, 0.15); padding: 0.85rem 1.25rem; border-radius: var(--radius-lg); z-index: 1100; align-items: center; gap: 0.85rem; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-width: 440px;">
+  <div id="scorekeeper-toast-icon-box" style="width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--gold-light); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; border: 1px solid var(--gold-border);">
+    <span id="scorekeeper-toast-icon">🏀</span>
+  </div>
+  <div style="flex: 1; min-width: 0;">
+    <div style="font-size: 0.68rem; font-weight: 800; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.35rem;">
+      <span>MESA ARBITRAL</span> &bull; <span>ACTA EN DIRECTO</span>
+    </div>
+    <div id="scorekeeper-toast-text" style="font-size: 0.88rem; font-weight: 700; color: var(--text-title); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      Acción registrada correctamente
+    </div>
+  </div>
+  <button type="button" onclick="document.getElementById('scorekeeper-toast').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.2rem; margin-left: 0.25rem; font-size: 0.95rem; line-height: 1; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Cerrar aviso">&times;</button>
+</div>
+
+<!-- MODAL DE CORRECCIÓN DE MARCADOR (-1) CON ASIGNACIÓN OBLIGATORIA A JUGADOR -->
+<div id="modal-score-correction" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.75); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div class="card" style="max-width: 540px; width: 100%; padding: 1.75rem; border-top: 4px solid var(--state-red); box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45); animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- Cabecera del Modal de Corrección -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(220, 38, 38, 0.1); color: var(--state-red); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; border: 1.5px solid rgba(220, 38, 38, 0.3); flex-shrink: 0; font-family: var(--font-mono);">
+          -1
+        </div>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-title);">Corrección de Marcador</h3>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);" id="modal-correction-team-subtitle">Selecciona el jugador que anotó la canasta a corregir</span>
+        </div>
+      </div>
+
+      <button type="button" onclick="closeScoreCorrectionModal()" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--state-red)'" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'">
+        ✕
+      </button>
+    </div>
+
+    <!-- Lista de Jugadores Elegibles (con puntos > 0) -->
+    <div style="margin-bottom: 1.5rem;">
+      <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.65rem;">
+        Jugadores con Puntos Anotados:
+      </div>
+      <div id="modal-correction-players-list" style="display: flex; flex-direction: column; gap: 0.55rem; max-height: 320px; overflow-y: auto; padding-right: 0.25rem;">
+        <!-- Rellenado dinámicamente por JavaScript -->
+      </div>
+    </div>
+
+    <!-- Pie del Modal -->
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+      <button type="button" onclick="closeScoreCorrectionModal()" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.5rem 1.25rem;">
+        Cancelar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DE SELECCIÓN DE QUINTETO INICIAL / 5 EN PISTA (QUINTO CUARTO DESIGN SYSTEM) -->
+<div id="modal-starting-five" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.75); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div class="card" style="max-width: 560px; width: 100%; padding: 1.75rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45); animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--gold-light); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; border: 1.5px solid var(--gold-border); flex-shrink: 0;">
+          🏀
+        </div>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-title);" id="modal-starting-five-title">Quinteto en Pista</h3>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);" id="modal-starting-five-subtitle">Selecciona exactamente 5 jugadores activos para el juego</span>
+        </div>
+      </div>
+
+      <button type="button" onclick="closeStartingFiveModal()" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-primary)'" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'">
+        ✕
+      </button>
+    </div>
+
+    <!-- Indicador de cuenta -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; background: var(--bg-subtle); padding: 0.65rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+      <div style="font-size: 0.84rem; color: var(--text-title); font-weight: 600;">
+        Jugadores seleccionados:
+      </div>
+      <strong id="starting-five-count" style="color: var(--gold-primary); font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800;">0/5</strong>
+    </div>
+
+    <!-- Lista de jugadores con checkboxes -->
+    <div id="modal-starting-five-players-list" style="display: flex; flex-direction: column; gap: 0.45rem; max-height: 300px; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 1.25rem;">
+      <!-- Rellenado dinámicamente por JavaScript -->
+    </div>
+
+    <!-- Pie del Modal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+      <button type="button" onclick="closeStartingFiveModal()" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.55rem 1.25rem;">
+        Cancelar
+      </button>
+      <button type="button" id="btn-submit-starting-five" onclick="submitStartingFive()" class="btn btn-gold" style="font-size: 0.88rem; padding: 0.55rem 1.35rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem;" disabled>
+        <span>Confirmar Quinteto</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DE SUSTITUCIÓN DE JUGADORES (QUINTO CUARTO DESIGN SYSTEM) -->
+<div id="modal-substitution" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.75); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div class="card" style="max-width: 620px; width: 100%; padding: 1.75rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45); animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.1); color: var(--state-blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; border: 1.5px solid rgba(59, 130, 246, 0.3); flex-shrink: 0;">
+          🔄
+        </div>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-title);" id="modal-sub-title">Sustitución de Jugadores</h3>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);" id="modal-sub-subtitle">Intercambio de un jugador en pista por un jugador del banquillo</span>
+        </div>
+      </div>
+
+      <button type="button" onclick="closeSubstitutionModal()" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;" onmouseover="this.style.color='var(--text-title)'; this.style.borderColor='var(--gold-primary)'" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--platinum-border)'">
+        ✕
+      </button>
+    </div>
+
+    <div class="grid-responsive-2" style="gap: 1rem; margin-bottom: 1.5rem;">
+      
+      <!-- Columna 1: Sale de Pista (los 5 en pista) -->
+      <div>
+        <div style="font-size: 0.76rem; font-weight: 700; color: var(--state-red); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+          <span>🔻</span> SALE DE PISTA
+        </div>
+        <div id="sub-players-out-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 260px; overflow-y: auto; padding-right: 0.2rem;">
+          <!-- Opciones de radio generadas dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Columna 2: Entra a Pista (los del banquillo) -->
+      <div>
+        <div style="font-size: 0.76rem; font-weight: 700; color: var(--state-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+          <span>🔺</span> ENTRA A PISTA
+        </div>
+        <div id="sub-players-in-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 260px; overflow-y: auto; padding-right: 0.2rem;">
+          <!-- Opciones de radio generadas dinámicamente -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pie del Modal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+      <button type="button" onclick="closeSubstitutionModal()" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.55rem 1.25rem;">
+        Cancelar
+      </button>
+      <button type="button" id="btn-submit-substitution" onclick="submitSubstitution()" class="btn btn-gold" style="font-size: 0.88rem; padding: 0.55rem 1.35rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem;" disabled>
+        <span>Confirmar</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+<div id="modal-scoresheet-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+      <div style="width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--gold-light); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      </div>
+      <div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-title);">Firma y Cierre de Acta Oficial</h3>
+        <span style="font-size: 0.82rem; color: var(--text-secondary);">Esta acción finalizará el partido y homologará el resultado oficial</span>
+      </div>
+    </div>
+
+    <form id="form-close-scoresheet" onsubmit="event.preventDefault(); submitCloseScoresheet();">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">1er Árbitro (Principal)</label>
+          <input type="text" id="input-referee-name" class="form-control" value="{% if match.referee %}{{ match.referee.get_full_name|default:match.referee.username }}{% endif %}" placeholder="ej. Juan Carlos García González" required>
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">2º Árbitro (Auxiliar)</label>
+          <input type="text" id="input-second-referee-name" class="form-control" value="{% if match.second_referee %}{{ match.second_referee.get_full_name|default:match.second_referee.username }}{% endif %}" placeholder="ej. Antonio Conde Ruiz">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <label class="form-label" style="margin: 0; font-weight: 600;">Nº Licencia / Código Federativo del Árbitro</label>
+          <span style="font-size: 0.72rem; color: var(--gold-primary); font-weight: 700;">Seguridad Presencial</span>
+        </div>
+        <input type="text" id="input-referee-license" class="form-control" placeholder="ej. FEB-48192 o PIN Arbitral" required>
+        <small style="color: var(--text-muted); font-size: 0.73rem; display: block; margin-top: 0.25rem;">
+          Código o licencia personal que solo el árbitro conoce y valida presencialmente en la mesa para homologar el acta.
+        </small>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">Oficial 1: Anotador</label>
+          <input type="text" id="input-table-sig" class="form-control" value="{% if match.table_official %}{{ match.table_official.get_full_name|default:match.table_official.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}" style="font-weight: 600;">
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 0.82rem;">Oficial 2: Cronometrador</label>
+          <input type="text" id="input-timekeeper-sig" class="form-control" value="{% if match.timekeeper %}{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}{% else %}Laura Gómez (Cronometradora){% endif %}" style="font-weight: 600;">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" style="font-weight: 600;">Informe de Incidencias Arbitrales (Opcional)</label>
+        <textarea id="input-report" class="form-control" rows="2" placeholder="Sin incidencias destacables..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 1rem; margin-top: 1.75rem;">
+        <button type="button" onclick="closeSignatureModal()" class="btn btn-secondary" style="flex: 1;">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" style="flex: 1.3; background: var(--gold-primary); border-color: var(--gold-primary); color: #FFFFFF; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Firmar y Concluir Partido
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.btn-period.active {
+  background: var(--gold-primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--gold-primary) !important;
+}
+
+/* Grilla de Plantilla de Jugadores */
+.player-roster-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+@media (min-width: 900px) {
+  .player-roster-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.player-action-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  width: 100%;
+}
+.player-action-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-primary);
+  box-shadow: 0 6px 16px rgba(197, 155, 39, 0.16);
+  background: #FFFFFF;
+}
+
+.player-action-card.player-fouled-out {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.04);
+  cursor: not-allowed;
+}
+.player-action-card.player-fouled-out:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(220, 38, 38, 0.08);
+}
+.player-foul-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+  display: inline-block;
+  white-space: nowrap;
+}
+.player-foul-badge.fouled-out {
+  background: var(--state-red);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+}
+
+.badge-bonus-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.badge-bonus-status.active {
+  background: var(--state-red);
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+  animation: pulseBonus 2s infinite ease-in-out;
+}
+
+@keyframes pulseBonus {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.92; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5); }
+}
+
+.player-jersey-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.player-info-meta {
+  flex: 1;
+  min-width: 0;
+}
+.player-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.player-status-tag {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.player-action-trigger {
+  color: var(--gold-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.player-action-card:hover .player-action-trigger {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* Botones de Acción dentro del Modal */
+.btn-action-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0.5rem;
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 0.15rem;
+}
+.btn-action-pts:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-primary);
+  box-shadow: 0 6px 18px rgba(197, 155, 39, 0.28);
+}
+.pts-badge {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--gold-primary);
+}
+.pts-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.btn-action-stat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  color: var(--text-title);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-stat:hover {
+  background: #FFFFFF;
+  border-color: var(--gold-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+.stat-turnover {
+  color: var(--state-red);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.stat-turnover:hover {
+  border-color: var(--state-red);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.btn-action-foul {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.5rem;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--state-red);
+  font-weight: 700;
+  font-size: 0.84rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-foul:hover {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: var(--state-red);
+  transform: translateY(-1px);
+}
+
+.btn-action-miss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-miss:hover {
+  background: #FFFFFF;
+  border-color: var(--text-secondary);
+  color: var(--text-title);
+  transform: translateY(-1px);
+}
+.card-on-court {
+  border-color: var(--gold-primary) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(197, 155, 39, 0.16);
+}
+.card-bench {
+  opacity: 0.65;
+  background: var(--bg-subtle) !important;
+  border-color: var(--platinum-border) !important;
+}
+.card-bench:hover {
+  opacity: 0.92;
+}
+
+.sub-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-subtle);
+  border: 1.5px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.82rem;
+  user-select: none;
+}
+.sub-radio-card:hover {
+  border-color: var(--gold-primary);
+  background: #FFFFFF;
+}
+.sub-radio-card.selected-out {
+  border-color: var(--state-red);
+  background: rgba(220, 38, 38, 0.06);
+}
+.sub-radio-card.selected-in {
+  border-color: var(--state-green);
+  background: rgba(16, 185, 129, 0.08);
+}
+.sub-radio-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.starting-five-check-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  background: var(--bg-subtle);
+  border: 1.5px solid var(--platinum-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.starting-five-check-card:hover {
+  border-color: var(--gold-primary);
+  background: #FFFFFF;
+}
+.starting-five-check-card.checked {
+  border-color: var(--gold-primary);
+  background: rgba(197, 155, 39, 0.08);
+}
+.starting-five-check-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+</style>
+
+<!-- LÓGICA WEBSOCKET, MODALES Y CRONÓMETRO DE MESA -->
+<script>
+const matchId = "{{ match.id }}";
+const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
+
+let socket = null;
+let clockInterval = null;
+let isClockRunning = false;
+function getInitialClockSeconds(clockStr) {
+  if (!clockStr) return 600;
+  const parts = String(clockStr).trim().split(':');
+  if (parts.length === 2) {
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+  return 600;
+}
+let currentSeconds = getInitialClockSeconds("{{ match.game_clock|default:'10:00' }}");
+let currentPeriod = "{{ match.current_period|default:'Q1' }}";
+
+let currentModalPlayer = {
+  teamId: null,
+  teamName: '',
+  teamAcronym: '',
+  teamColor: '',
+  playerId: null,
+  jerseyNumber: '',
+  playerName: '',
+  playerPosition: '',
+  playerPhoto: '',
+  side: 'home'
+};
+
+// Estado local de puntos y faltas por jugador para validación y control de 5ª falta en tiempo real
+let playerPointsState = JSON.parse('{{ player_points_json|default:"{}"|escapejs }}');
+let playerFoulsState = JSON.parse('{{ player_fouls_json|default:"{}"|escapejs }}');
+
+// Estado local de jugadores en pista (Quinteto / Substituciones)
+let homeOnCourtState = JSON.parse('{{ home_on_court_json|default:"[]"|escapejs }}');
+let awayOnCourtState = JSON.parse('{{ away_on_court_json|default:"[]"|escapejs }}');
+let homePeriodQuintetoConfirmed = {% if home_has_five %}true{% else %}false{% endif %};
+let awayPeriodQuintetoConfirmed = {% if away_has_five %}true{% else %}false{% endif %};
+
+let currentStartingFiveSide = 'home';
+let currentStartingFiveTeamId = null;
+let currentSubSide = 'home';
+let currentSubTeamId = null;
+let selectedSubOutId = null;
+let selectedSubInId = null;
+
+// Estado local de tiempos muertos (FIBA)
+let homeTimeoutsState = { limit: {{ home_timeouts.limit|default:2 }}, used: {{ home_timeouts.used|default:0 }}, remaining: {{ home_timeouts.remaining|default:2 }} };
+let awayTimeoutsState = { limit: {{ away_timeouts.limit|default:2 }}, used: {{ away_timeouts.used|default:0 }}, remaining: {{ away_timeouts.remaining|default:2 }} };
+
+// Estado local de faltas de equipo y bonus (FIBA)
+let homeFoulsState = { count: {{ home_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ home_fouls_info.in_bonus|yesno:"true,false" }} };
+let awayFoulsState = { count: {{ away_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ away_fouls_info.in_bonus|yesno:"true,false" }} };
+
+function renderTeamFouls(side, foulsInfo) {
+  if (!foulsInfo) return;
+  const countEl = document.getElementById(`${side}-team-fouls-display`);
+  const badgeEl = document.getElementById(`${side}-bonus-badge`);
+
+  const count = foulsInfo.count !== undefined ? foulsInfo.count : 0;
+  const inBonus = foulsInfo.in_bonus !== undefined ? foulsInfo.in_bonus : (count >= 5);
+
+  if (countEl) {
+    countEl.innerText = `${count}/5`;
+    if (inBonus) {
+      countEl.style.color = 'var(--state-red)';
+    } else {
+      countEl.style.color = 'var(--text-title)';
+    }
+  }
+
+  if (badgeEl) {
+    if (inBonus) {
+      badgeEl.className = 'badge-bonus-status active';
+      badgeEl.innerHTML = 'Bonus';
+      badgeEl.setAttribute('title', 'Equipo en Bonus: todas las faltas defensivas otorgan 2 tiros libres al rival');
+    } else {
+      badgeEl.className = 'badge-bonus-status';
+      badgeEl.innerHTML = 'Sin Bonus';
+      badgeEl.setAttribute('title', `Faltan ${Math.max(0, 5 - count)} faltas para entrar en bonus`);
+    }
+  }
+}
+
+function updatePlayerCardFouls(playerId, fouls) {
+  const card = document.getElementById(`player-card-${playerId}`);
+  if (!card) return;
+  const pMeta = card.querySelector('.player-info-meta');
+  if (!pMeta) return;
+
+  const foulsCount = parseInt(fouls || 0, 10);
+  const statusDiv = pMeta.querySelector('.player-status-tag') || pMeta.querySelector('.player-pos');
+  if (!statusDiv) return;
+
+  let foulBadge = statusDiv.querySelector('.player-foul-badge');
+
+  if (foulsCount >= 5) {
+    card.classList.add('player-fouled-out');
+    if (!foulBadge) {
+      foulBadge = document.createElement('span');
+      statusDiv.appendChild(foulBadge);
+    }
+    foulBadge.className = 'player-foul-badge fouled-out';
+    foulBadge.innerHTML = 'Expulsado';
+    card.setAttribute('title', 'Jugador expulsado del partido por acumulación de 5 faltas personales');
+
+    // Si el modal de este jugador estaba abierto, cerrarlo automáticamente
+    if (String(currentModalPlayer.playerId) === String(playerId)) {
+      closePlayerModal();
+    }
+  } else {
+    card.classList.remove('player-fouled-out');
+    card.removeAttribute('title');
+    if (foulBadge) {
+      foulBadge.remove();
+    }
+  }
+}
+
+function updateRosterOnCourtStatus(side, onCourtIds) {
+  const cards = document.querySelectorAll(`.player-action-card[data-side="${side}"]`);
+  const onCourtIdSet = new Set((onCourtIds || []).map(id => parseInt(id, 10)));
+
+  cards.forEach(card => {
+    const pId = parseInt(card.dataset.playerId, 10);
+    const isOnCourt = onCourtIdSet.has(pId);
+    card.dataset.isOnCourt = isOnCourt ? "true" : "false";
+
+    if (isOnCourt) {
+      card.classList.remove('card-bench');
+      card.classList.add('card-on-court');
+    } else {
+      card.classList.remove('card-on-court');
+      card.classList.add('card-bench');
+    }
+  });
+
+  const alertBanner = document.getElementById(`alert-no-quinteto-${side}`);
+  const btnSubstitutions = document.getElementById(`btn-substitutions-${side}`);
+  const isPeriodConfirmed = (side === 'home' ? homePeriodQuintetoConfirmed : awayPeriodQuintetoConfirmed) && (onCourtIdSet.size === 5);
+
+  if (isPeriodConfirmed) {
+    if (alertBanner) alertBanner.style.display = 'none';
+    if (btnSubstitutions) btnSubstitutions.style.display = 'inline-flex';
+  } else {
+    if (alertBanner) alertBanner.style.display = 'flex';
+    if (btnSubstitutions) btnSubstitutions.style.display = 'none';
+  }
+}
+
+function connectWebSocket() {
+  socket = new WebSocket(wsUrl);
+
+  socket.onmessage = function(e) {
+    const payload = JSON.parse(e.data);
+    const data = payload.data;
+
+    if (payload.type === 'initial_state' && data) {
+      document.getElementById('score-home').innerText = data.home_team.score;
+      document.getElementById('score-away').innerText = data.away_team.score;
+      document.getElementById('clock-display').innerText = data.clock;
+      parseClockStringToSeconds(data.clock);
+      highlightActivePeriod(data.period);
+
+      if (data.player_points) {
+        playerPointsState = Object.assign({}, data.player_points);
+      }
+
+      if (data.player_fouls) {
+        playerFoulsState = Object.assign({}, data.player_fouls);
+        Object.keys(playerFoulsState).forEach(pId => {
+          updatePlayerCardFouls(pId, playerFoulsState[pId]);
+        });
+      }
+
+      if (data.home_on_court) {
+        homeOnCourtState = data.home_on_court;
+        updateRosterOnCourtStatus('home', homeOnCourtState);
+      }
+      if (data.away_on_court) {
+        awayOnCourtState = data.away_on_court;
+        updateRosterOnCourtStatus('away', awayOnCourtState);
+      }
+
+      if (data.home_team && data.home_team.timeouts) {
+        homeTimeoutsState = data.home_team.timeouts;
+        renderTimeoutIndicators('home', homeTimeoutsState);
+      }
+      if (data.away_team && data.away_team.timeouts) {
+        awayTimeoutsState = data.away_team.timeouts;
+        renderTimeoutIndicators('away', awayTimeoutsState);
+      }
+
+      if (data.home_team && data.home_team.fouls) {
+        homeFoulsState = data.home_team.fouls;
+        renderTeamFouls('home', homeFoulsState);
+      }
+      if (data.away_team && data.away_team.fouls) {
+        awayFoulsState = data.away_team.fouls;
+        renderTeamFouls('away', awayFoulsState);
+      }
+
+      if (data.is_running && !isClockRunning) {
+        isClockRunning = true;
+        const btn = document.getElementById('btn-clock-toggle');
+        if (btn) {
+          btn.innerText = '⏸ Pausar Reloj';
+          btn.classList.replace('btn-gold', 'btn-secondary');
+        }
+        if (!clockInterval) {
+          clockInterval = setInterval(() => {
+            if (currentSeconds > 0) {
+              currentSeconds--;
+              updateClockDisplay();
+              updateSignatureButtonState();
+            } else {
+              clearInterval(clockInterval);
+              isClockRunning = false;
+              if (btn) {
+                btn.innerText = '▶ Iniciar Reloj';
+                btn.classList.replace('btn-secondary', 'btn-gold');
+              }
+              updateSignatureButtonState();
+            }
+          }, 1000);
+        }
+      }
+      updateSignatureButtonState();
+    } else if (payload.type === 'match_update' && data) {
+      document.getElementById('score-home').innerText = data.home_score;
+      document.getElementById('score-away').innerText = data.away_score;
+      if (data.clock) document.getElementById('clock-display').innerText = data.clock;
+      if (data.period) highlightActivePeriod(data.period);
+      if (data.new_event) prependTimelineEvent(data.new_event);
+
+      if (data.player_stat) {
+        playerPointsState[String(data.player_stat.player_id)] = data.player_stat.points;
+        playerFoulsState[String(data.player_stat.player_id)] = data.player_stat.fouls_committed;
+        updatePlayerCardFouls(data.player_stat.player_id, data.player_stat.fouls_committed);
+      }
+
+      if (data.home_timeouts) {
+        homeTimeoutsState = data.home_timeouts;
+        renderTimeoutIndicators('home', homeTimeoutsState);
+      }
+      if (data.away_timeouts) {
+        awayTimeoutsState = data.away_timeouts;
+        renderTimeoutIndicators('away', awayTimeoutsState);
+      }
+
+      if (data.home_fouls) {
+        homeFoulsState = data.home_fouls;
+        renderTeamFouls('home', homeFoulsState);
+      }
+      if (data.away_fouls) {
+        awayFoulsState = data.away_fouls;
+        renderTeamFouls('away', awayFoulsState);
+      }
+      updateSignatureButtonState();
+    } else if (payload.type === 'substitution_update' && data) {
+      if (data.home_on_court) {
+        homeOnCourtState = data.home_on_court;
+        if (!data.player_out_id) homePeriodQuintetoConfirmed = true;
+        updateRosterOnCourtStatus('home', homeOnCourtState);
+      }
+      if (data.away_on_court) {
+        awayOnCourtState = data.away_on_court;
+        if (!data.player_out_id) awayPeriodQuintetoConfirmed = true;
+        updateRosterOnCourtStatus('away', awayOnCourtState);
+      }
+      if (data.new_event) prependTimelineEvent(data.new_event);
+
+      const msg = data.player_out_id && data.player_in_id
+        ? (data.new_event ? data.new_event.description : 'Sustitución efectuada correctamente')
+        : `Quinteto en pista registrado para ${data.team_name || 'el equipo'}`;
+
+      showScorekeeperToast(
+        msg,
+        '🔄',
+        'var(--gold-light)',
+        'var(--gold-primary)',
+        'var(--gold-primary)'
+      );
+    } else if (payload.type === 'timeout_update' && data) {
+      if (data.home_timeouts) {
+        homeTimeoutsState = data.home_timeouts;
+        renderTimeoutIndicators('home', homeTimeoutsState);
+      }
+      if (data.away_timeouts) {
+        awayTimeoutsState = data.away_timeouts;
+        renderTimeoutIndicators('away', awayTimeoutsState);
+      }
+      if (data.clock) {
+        document.getElementById('clock-display').innerText = data.clock;
+        parseClockStringToSeconds(data.clock);
+      }
+      if (data.is_running === false && isClockRunning) {
+        clearInterval(clockInterval);
+        isClockRunning = false;
+        const btn = document.getElementById('btn-clock-toggle');
+        if (btn) {
+          btn.innerText = '▶ Iniciar Reloj';
+          btn.classList.replace('btn-secondary', 'btn-gold');
+        }
+      }
+      if (data.new_event) prependTimelineEvent(data.new_event);
+      updateSignatureButtonState();
+    } else if (payload.type === 'clock_update' && data) {
+      if (data.clock) {
+        document.getElementById('clock-display').innerText = data.clock;
+        parseClockStringToSeconds(data.clock);
+      }
+      if (data.period) highlightActivePeriod(data.period);
+      updateSignatureButtonState();
+    } else if (payload.type === 'event_update' && data) {
+      if (data.player_stat) {
+        playerPointsState[String(data.player_stat.player_id)] = data.player_stat.points;
+        playerFoulsState[String(data.player_stat.player_id)] = data.player_stat.fouls_committed;
+        updatePlayerCardFouls(data.player_stat.player_id, data.player_stat.fouls_committed);
+      }
+      if (data.home_fouls) {
+        homeFoulsState = data.home_fouls;
+        renderTeamFouls('home', homeFoulsState);
+      }
+      if (data.away_fouls) {
+        awayFoulsState = data.away_fouls;
+        renderTeamFouls('away', awayFoulsState);
+      }
+      if (data.is_fouled_out) {
+        showScorekeeperToast(
+          `¡5ª FALTA! #${currentModalPlayer.jerseyNumber || ''} ${data.fouled_out_player_name || 'Jugador'} queda expulsado del partido.`,
+          '🚨',
+          'rgba(220, 38, 38, 0.15)',
+          'var(--state-red)',
+          'var(--state-red)'
+        );
+      }
+      if (data.is_bonus_foul) {
+        showScorekeeperToast(
+          `🚨 ¡BONUS ACTIVO (${data.bonus_team_name || 'Equipo'})! 2 Tiros Libres concedidos al rival.`,
+          '🚨',
+          'rgba(220, 38, 38, 0.15)',
+          'var(--state-red)',
+          'var(--state-red)'
+        );
+      }
+      if (data.new_event) prependTimelineEvent(data.new_event);
+      updateSignatureButtonState();
+    } else if (payload.type === 'error') {
+      showScorekeeperToast(
+        payload.message || 'Error en la acción arbitral',
+        '⚠️',
+        'rgba(220, 38, 38, 0.12)',
+        'var(--state-red)',
+        'var(--state-red)'
+      );
+    } else if (payload.type === 'scoresheet_closed') {
+      window.location.href = "{% url 'matches:scoresheet_detail' match.id %}";
+    }
+  };
+
+  socket.onclose = function() {
+    setTimeout(connectWebSocket, 2500);
+  };
+}
+
+/* Manejador de Clic en Tarjeta de Jugador */
+function handlePlayerCardClick(btn) {
+  const d = btn.dataset;
+  const pId = parseInt(d.playerId, 10);
+  const fouls = playerFoulsState[String(d.playerId)] || 0;
+
+  if (fouls >= 5) {
+    showScorekeeperToast(
+      `El jugador #${d.jersey} ${d.playerName} está ELIMINADO por acumulación de 5 faltas personales. No puede realizar más acciones.`,
+      '🚫',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    return;
+  }
+
+  // Verificar si el quinteto del periodo está confirmado
+  const isPeriodConfirmed = (d.side === 'home' ? homePeriodQuintetoConfirmed : awayPeriodQuintetoConfirmed);
+  const onCourtList = d.side === 'home' ? homeOnCourtState : awayOnCourtState;
+
+  if (!isPeriodConfirmed || !onCourtList || onCourtList.length !== 5) {
+    showScorekeeperToast(
+      `Configura y confirma el quinteto (5 en pista) para ${d.teamName} para este periodo.`,
+      '⚠️',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    openStartingFiveModal(d.teamId, d.teamName, d.teamAcronym, d.teamColor, d.side);
+    return;
+  }
+
+  // Si el jugador está en el banquillo, abrir modal de sustitución con este jugador preseleccionado para entrar
+  if (d.isOnCourt === 'false') {
+    showScorekeeperToast(
+      `El jugador #${d.jersey} está en el banquillo. Realiza una sustitución para que entre a pista.`,
+      '🔄',
+      'var(--gold-light)',
+      'var(--gold-primary)',
+      'var(--gold-primary)'
+    );
+    openSubstitutionModal(d.teamId, d.teamName, d.teamAcronym, d.teamColor, d.side, pId);
+    return;
+  }
+
+  openPlayerModal(
+    d.teamId,
+    d.teamName,
+    d.teamAcronym,
+    d.teamColor,
+    d.playerId,
+    d.jersey,
+    d.playerName,
+    d.playerPos || 'Jugador',
+    d.playerPhoto || '',
+    d.side
+  );
+}
+
+/* Modal de Acciones por Jugador */
+function openPlayerModal(teamId, teamName, teamAcronym, teamColor, playerId, jersey, name, position, photoUrl, side) {
+  currentModalPlayer = {
+    teamId, teamName, teamAcronym, teamColor, playerId, jerseyNumber: jersey, playerName: name, playerPosition: position, playerPhoto: photoUrl, side
+  };
+
+  const photoEl = document.getElementById('modal-player-photo');
+  const jerseyEl = document.getElementById('modal-player-jersey');
+  const teamEl = document.getElementById('modal-player-team');
+  const nameEl = document.getElementById('modal-player-name');
+  const posEl = document.getElementById('modal-player-position');
+
+  if (photoUrl) {
+    if (photoEl) {
+      photoEl.src = photoUrl;
+      photoEl.style.display = 'block';
+    }
+    if (jerseyEl) {
+      jerseyEl.style.display = 'none';
+    }
+  } else {
+    if (photoEl) {
+      photoEl.style.display = 'none';
+    }
+    if (jerseyEl) {
+      jerseyEl.style.display = 'flex';
+      jerseyEl.innerText = `#${jersey}`;
+      jerseyEl.style.background = teamColor || 'var(--obsidian-dark)';
+    }
+  }
+
+  if (teamEl) teamEl.innerText = `${teamName} (${teamAcronym})`;
+  if (nameEl) nameEl.innerText = name;
+  if (posEl) posEl.innerHTML = `Dorsal <strong>#${jersey}</strong>`;
+
+  const modal = document.getElementById('modal-player-action');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePlayerModal() {
+  const modal = document.getElementById('modal-player-action');
+  if (modal) modal.style.display = 'none';
+}
+
+function showScorekeeperToast(msg, icon = '🏀', iconBg = 'var(--gold-light)', iconColor = 'var(--gold-primary)', borderColor = 'var(--gold-primary)') {
+  const toast = document.getElementById('scorekeeper-toast');
+  const txt = document.getElementById('scorekeeper-toast-text');
+  const iconEl = document.getElementById('scorekeeper-toast-icon');
+  const iconBox = document.getElementById('scorekeeper-toast-icon-box');
+
+  if (toast && txt) {
+    txt.innerText = msg;
+    if (iconEl) iconEl.innerText = icon;
+    if (iconBox) {
+      iconBox.style.background = iconBg;
+      iconBox.style.color = iconColor;
+    }
+    toast.style.borderLeftColor = borderColor;
+    toast.style.display = 'flex';
+
+    clearTimeout(window._toastTimeout);
+    window._toastTimeout = setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2800);
+  }
+}
+
+function executePlayerScore(points, eventType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (points < 0 || eventType === 'CORRECTION') {
+    executeScoreCorrection(
+      currentModalPlayer.teamId,
+      currentModalPlayer.playerId,
+      currentModalPlayer.playerName,
+      currentModalPlayer.jerseyNumber
+    );
+    return;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'score_point',
+      team_id: currentModalPlayer.teamId,
+      points: points,
+      player_id: currentModalPlayer.playerId,
+      event_type: eventType
+    }));
+
+    const desc = points === 1 ? '+1 Tiro Libre' : (points === 2 ? '+2 Canasta' : '+3 Triple');
+    showScorekeeperToast(
+      `${desc} anotado por #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      '🏀',
+      'var(--gold-light)',
+      'var(--gold-primary)',
+      'var(--gold-primary)'
+    );
+  }
+  closePlayerModal();
+}
+
+function executePlayerStat(statType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'record_stat',
+      team_id: currentModalPlayer.teamId,
+      player_id: currentModalPlayer.playerId,
+      stat_type: statType
+    }));
+
+    const statConfig = {
+      'REBOUND': { label: '+1 Rebote', icon: '🔄', bg: 'var(--state-blue-light)', color: 'var(--state-blue)', border: 'var(--state-blue)' },
+      'ASSIST': { label: '+1 Asistencia', icon: '🎯', bg: 'var(--gold-light)', color: 'var(--gold-primary)', border: 'var(--gold-primary)' },
+      'STEAL': { label: '+1 Robo', icon: '⚡', bg: 'var(--state-green-light)', color: 'var(--state-green)', border: 'var(--state-green)' },
+      'BLOCK': { label: '+1 Tapón', icon: '🛡️', bg: 'var(--state-green-light)', color: 'var(--state-green)', border: 'var(--state-green)' },
+      'TURNOVER': { label: '+1 Pérdida', icon: '⚠️', bg: 'var(--state-red-light)', color: 'var(--state-red)', border: 'var(--state-red)' },
+      'MISS_2PT': { label: 'Fallo Tiro de 2', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' },
+      'MISS_3PT': { label: 'Fallo Triple', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' },
+      'MISS_FT': { label: 'Fallo Tiro Libre', icon: '❌', bg: 'var(--bg-subtle)', color: 'var(--text-secondary)', border: 'var(--platinum-border)' }
+    };
+    const cfg = statConfig[statType] || { label: statType, icon: '🏀', bg: 'var(--gold-light)', color: 'var(--gold-primary)', border: 'var(--gold-primary)' };
+    showScorekeeperToast(
+      `${cfg.label} registrado para #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      cfg.icon,
+      cfg.bg,
+      cfg.color,
+      cfg.border
+    );
+  }
+  closePlayerModal();
+}
+
+function executePlayerFoul(foulType) {
+  if (!currentModalPlayer.playerId || !currentModalPlayer.teamId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'record_foul',
+      team_id: currentModalPlayer.teamId,
+      player_id: currentModalPlayer.playerId,
+      foul_type: foulType
+    }));
+
+    showScorekeeperToast(
+      `Falta personal registrada para #${currentModalPlayer.jerseyNumber} ${currentModalPlayer.playerName}`,
+      '🚨',
+      'var(--state-red-light)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+  }
+  closePlayerModal();
+}
+
+/* Modal de Quinteto Inicial (5 Jugadores en Pista) */
+function openStartingFiveModal(teamId, teamName, teamAcronym, teamColor, side) {
+  currentStartingFiveSide = side;
+  currentStartingFiveTeamId = teamId;
+
+  const titleEl = document.getElementById('modal-starting-five-title');
+  const subEl = document.getElementById('modal-starting-five-subtitle');
+  if (titleEl) titleEl.innerText = `Quinteto en Pista: ${teamName}`;
+  if (subEl) subEl.innerText = `Selecciona exactamente 5 jugadores activos para ${teamAcronym}`;
+
+  const listEl = document.getElementById('modal-starting-five-players-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const cards = document.querySelectorAll(`.player-action-card[data-side="${side}"]`);
+  const onCourtList = side === 'home' ? homeOnCourtState : awayOnCourtState;
+  const onCourtIdSet = new Set((onCourtList || []).map(id => parseInt(id, 10)));
+
+  cards.forEach(card => {
+    const d = card.dataset;
+    const pId = parseInt(d.playerId, 10);
+    const fouls = playerFoulsState[String(pId)] || 0;
+    const isFouledOut = fouls >= 5;
+    const isChecked = onCourtIdSet.has(pId) && !isFouledOut;
+
+    const row = document.createElement('label');
+    row.className = `starting-five-check-card ${isChecked ? 'checked' : ''} ${isFouledOut ? 'disabled' : ''}`;
+    row.id = `starting-five-card-${pId}`;
+
+    const leftDiv = document.createElement('div');
+    leftDiv.style.cssText = 'display: flex; align-items: center; gap: 0.65rem; min-width: 0;';
+
+    if (d.playerPhoto) {
+      leftDiv.innerHTML = `
+        <img src="${d.playerPhoto}" alt="${d.playerName}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            #${d.jersey} ${d.playerName}
+          </div>
+          ${isFouledOut ? '<div style="font-size: 0.72rem; color: var(--state-red); font-weight: 700;">(Expulsado)</div>' : ''}
+        </div>
+      `;
+    } else {
+      leftDiv.innerHTML = `
+        <div style="width: 34px; height: 34px; border-radius: 50%; background: ${d.teamColor || teamColor}; color: #FFFFFF; font-weight: 800; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0;">
+          #${d.jersey}
+        </div>
+        <div style="min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${d.playerName}
+          </div>
+          ${isFouledOut ? '<div style="font-size: 0.72rem; color: var(--state-red); font-weight: 700;">(Expulsado)</div>' : ''}
+        </div>
+      `;
+    }
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = 'starting_five_player';
+    checkbox.value = pId;
+    checkbox.checked = isChecked;
+    checkbox.disabled = isFouledOut;
+    checkbox.style.cssText = 'width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold-primary);';
+
+    checkbox.onchange = function() {
+      const currentChecked = document.querySelectorAll('#modal-starting-five-players-list input[type="checkbox"]:checked');
+      if (this.checked && currentChecked.length > 5) {
+        this.checked = false;
+        row.classList.remove('checked');
+        showScorekeeperToast('Solo puedes seleccionar un máximo de 5 jugadores para el quinteto.', '⚠️', 'rgba(220, 38, 38, 0.12)', 'var(--state-red)', 'var(--state-red)');
+        return;
+      }
+      if (this.checked) {
+        row.classList.add('checked');
+      } else {
+        row.classList.remove('checked');
+      }
+      updateStartingFiveCount();
+    };
+
+    row.appendChild(leftDiv);
+    row.appendChild(checkbox);
+    listEl.appendChild(row);
+  });
+
+  updateStartingFiveCount();
+  const modal = document.getElementById('modal-starting-five');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeStartingFiveModal() {
+  const modal = document.getElementById('modal-starting-five');
+  if (modal) modal.style.display = 'none';
+}
+
+function updateStartingFiveCount() {
+  const allCheckboxes = document.querySelectorAll('#modal-starting-five-players-list input[type="checkbox"]');
+  const checkedBoxes = document.querySelectorAll('#modal-starting-five-players-list input[type="checkbox"]:checked');
+  const count = checkedBoxes.length;
+  const countEl = document.getElementById('starting-five-count');
+  const btn = document.getElementById('btn-submit-starting-five');
+
+  if (countEl) {
+    countEl.innerText = `${count}/5`;
+    if (count === 5) {
+      countEl.style.color = 'var(--state-green)';
+    } else {
+      countEl.style.color = 'var(--gold-primary)';
+    }
+  }
+
+  // Si ya hay 5 seleccionados, deshabilitar y atenuar los jugadores restantes no seleccionados
+  allCheckboxes.forEach(cb => {
+    const card = cb.closest('.starting-five-check-card');
+    const isFouledOut = card && card.classList.contains('disabled');
+    if (!isFouledOut) {
+      if (count >= 5 && !cb.checked) {
+        cb.disabled = true;
+        if (card) {
+          card.style.opacity = '0.45';
+          card.style.cursor = 'not-allowed';
+          card.style.pointerEvents = 'none';
+        }
+      } else {
+        cb.disabled = false;
+        if (card) {
+          card.style.opacity = '1';
+          card.style.cursor = 'pointer';
+          card.style.pointerEvents = 'auto';
+        }
+      }
+    }
+  });
+
+  if (btn) {
+    if (count === 5) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+function submitStartingFive() {
+  const checkedBoxes = document.querySelectorAll('#modal-starting-five-players-list input[type="checkbox"]:checked');
+  const playerIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value, 10));
+
+  if (playerIds.length !== 5) {
+    alert('Debes seleccionar exactamente 5 jugadores para configurar el quinteto en pista.');
+    return;
+  }
+
+  if (currentStartingFiveSide === 'home') {
+    homePeriodQuintetoConfirmed = true;
+    homeOnCourtState = playerIds;
+    updateRosterOnCourtStatus('home', playerIds);
+  } else {
+    awayPeriodQuintetoConfirmed = true;
+    awayOnCourtState = playerIds;
+    updateRosterOnCourtStatus('away', playerIds);
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'set_starting_five',
+      team_id: currentStartingFiveTeamId,
+      player_ids: playerIds
+    }));
+  }
+
+  closeStartingFiveModal();
+}
+
+/* Modal de Sustituciones de Jugadores (Banquillo <-> En Pista) */
+function openSubstitutionModal(teamId, teamName, teamAcronym, teamColor, side, preselectInPlayerId = null) {
+  currentSubSide = side;
+  currentSubTeamId = teamId;
+  selectedSubOutId = null;
+  selectedSubInId = preselectInPlayerId ? parseInt(preselectInPlayerId, 10) : null;
+
+  const titleEl = document.getElementById('modal-sub-title');
+  const subEl = document.getElementById('modal-sub-subtitle');
+  if (titleEl) titleEl.innerText = `Sustituciones: ${teamName}`;
+  if (subEl) subEl.innerText = `Intercambio de jugadores para ${teamAcronym}`;
+
+  const outListEl = document.getElementById('sub-players-out-list');
+  const inListEl = document.getElementById('sub-players-in-list');
+  if (!outListEl || !inListEl) return;
+
+  outListEl.innerHTML = '';
+  inListEl.innerHTML = '';
+
+  const cards = document.querySelectorAll(`.player-action-card[data-side="${side}"]`);
+  const onCourtList = side === 'home' ? homeOnCourtState : awayOnCourtState;
+  const onCourtIdSet = new Set((onCourtList || []).map(id => parseInt(id, 10)));
+
+  const onCourtPlayers = [];
+  const benchPlayers = [];
+
+  cards.forEach(card => {
+    const d = card.dataset;
+    const pId = parseInt(d.playerId, 10);
+    const fouls = playerFoulsState[String(pId)] || 0;
+    const isFouledOut = fouls >= 5;
+
+    const pData = {
+      id: pId,
+      jersey: d.jersey,
+      name: d.playerName,
+      pos: d.playerPos || 'Jugador',
+      photo: d.playerPhoto || '',
+      fouls: fouls,
+      isFouledOut: isFouledOut,
+      teamColor: d.teamColor || teamColor
+    };
+
+    if (onCourtIdSet.has(pId)) {
+      onCourtPlayers.push(pData);
+    } else {
+      benchPlayers.push(pData);
+    }
+  });
+
+  // Renderizar opciones SALE DE PISTA (los que están en pista)
+  if (onCourtPlayers.length === 0) {
+    outListEl.innerHTML = '<div style="font-size: 0.78rem; color: var(--state-red); padding: 0.5rem; text-align: center;">No hay quinteto configurado en pista.</div>';
+  } else {
+    onCourtPlayers.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'sub-radio-card';
+      card.id = `sub-out-${p.id}`;
+      card.onclick = () => selectSubOut(p.id);
+
+      card.innerHTML = `
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: ${p.teamColor}; color: #FFFFFF; font-weight: 800; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;">
+          #${p.jersey}
+        </div>
+        <div style="min-width: 0; flex: 1;">
+          <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${p.name}
+          </div>
+          ${p.isFouledOut ? '<div style="font-size: 0.7rem; color: var(--state-red); font-weight: 700;">(Expulsado)</div>' : ''}
+        </div>
+      `;
+      outListEl.appendChild(card);
+    });
+  }
+
+  // Renderizar opciones ENTRA A PISTA (los que están en banquillo no expulsados)
+  if (benchPlayers.length === 0) {
+    inListEl.innerHTML = '<div style="font-size: 0.78rem; color: var(--text-secondary); padding: 0.5rem; text-align: center;">No hay jugadores disponibles en el banquillo.</div>';
+  } else {
+    benchPlayers.forEach(p => {
+      const card = document.createElement('div');
+      card.className = `sub-radio-card ${p.isFouledOut ? 'disabled' : ''} ${selectedSubInId === p.id ? 'selected-in' : ''}`;
+      card.id = `sub-in-${p.id}`;
+      if (!p.isFouledOut) {
+        card.onclick = () => selectSubIn(p.id);
+      }
+
+      card.innerHTML = `
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: ${p.teamColor}; color: #FFFFFF; font-weight: 800; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0;">
+          #${p.jersey}
+        </div>
+        <div style="min-width: 0; flex: 1;">
+          <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${p.name}
+          </div>
+          ${p.isFouledOut ? '<div style="font-size: 0.7rem; color: var(--state-red); font-weight: 700;">(Expulsado)</div>' : ''}
+        </div>
+      `;
+      inListEl.appendChild(card);
+    });
+  }
+
+  checkSubValidity();
+  const modal = document.getElementById('modal-substitution');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeSubstitutionModal() {
+  const modal = document.getElementById('modal-substitution');
+  if (modal) modal.style.display = 'none';
+  selectedSubOutId = null;
+  selectedSubInId = null;
+}
+
+function selectSubOut(pId) {
+  selectedSubOutId = pId;
+  document.querySelectorAll('#sub-players-out-list .sub-radio-card').forEach(c => c.classList.remove('selected-out'));
+  const card = document.getElementById(`sub-out-${pId}`);
+  if (card) card.classList.add('selected-out');
+  checkSubValidity();
+}
+
+function selectSubIn(pId) {
+  selectedSubInId = pId;
+  document.querySelectorAll('#sub-players-in-list .sub-radio-card').forEach(c => c.classList.remove('selected-in'));
+  const card = document.getElementById(`sub-in-${pId}`);
+  if (card) card.classList.add('selected-in');
+  checkSubValidity();
+}
+
+function checkSubValidity() {
+  const btn = document.getElementById('btn-submit-substitution');
+  if (btn) {
+    if (selectedSubOutId && selectedSubInId) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+function submitSubstitution() {
+  if (!selectedSubOutId || !selectedSubInId) {
+    alert('Debes seleccionar tanto el jugador que sale como el que entra a pista.');
+    return;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'substitute_player',
+      team_id: currentSubTeamId,
+      player_out_id: selectedSubOutId,
+      player_in_id: selectedSubInId
+    }));
+  }
+
+  closeSubstitutionModal();
+}
+
+/* Modal de Corrección de Marcador (-1 pt asignado obligatoriamente a un jugador con puntos) */
+function openScoreCorrectionModal(teamId, teamName, teamAcronym, teamColor, side) {
+  const subEl = document.getElementById('modal-correction-team-subtitle');
+  if (subEl) {
+    subEl.innerText = `${teamName} (${teamAcronym}) • Asigna la corrección a un jugador con canasta anotada`;
+  }
+
+  const listEl = document.getElementById('modal-correction-players-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const cards = document.querySelectorAll(`.player-action-card[data-side="${side}"]`);
+  const eligiblePlayers = [];
+
+  cards.forEach(card => {
+    const d = card.dataset;
+    const pId = String(d.playerId);
+    const pts = playerPointsState[pId] || 0;
+    if (pts > 0) {
+      eligiblePlayers.push({
+        playerId: d.playerId,
+        jersey: d.jersey,
+        playerName: d.playerName,
+        playerPos: d.playerPos || 'Jugador',
+        playerPhoto: d.playerPhoto || '',
+        points: pts,
+        teamColor: d.teamColor || teamColor
+      });
+    }
+  });
+
+  if (eligiblePlayers.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 2rem 1.25rem; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px dashed var(--platinum-border);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+        <strong style="display: block; color: var(--text-title); font-size: 0.95rem; margin-bottom: 0.25rem;">Ningún jugador tiene canastas anotadas</strong>
+        <span style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; display: block;">
+          Para poder restar -1 punto al marcador, al menos un jugador de este equipo debe tener puntos registrados en su casillero.
+        </span>
+      </div>
+    `;
+  } else {
+    // Ordenar de mayor a menor puntos anotados
+    eligiblePlayers.sort((a, b) => b.points - a.points);
+
+    eligiblePlayers.forEach(p => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); border-radius: var(--radius-md); gap: 0.75rem; transition: all 0.15s ease;';
+
+      const leftDiv = document.createElement('div');
+      leftDiv.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; min-width: 0;';
+
+      if (p.playerPhoto) {
+        leftDiv.innerHTML = `
+          <img src="${p.playerPhoto}" alt="${p.playerName}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              #${p.jersey} ${p.playerName}
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-secondary);">
+              ${p.playerPos} &bull; <strong style="color: var(--gold-primary); font-family: var(--font-mono);">${p.points} pts acumulados</strong>
+            </div>
+          </div>
+        `;
+      } else {
+        leftDiv.innerHTML = `
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: ${p.teamColor}; color: #FFFFFF; font-weight: 800; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0;">
+            #${p.jersey}
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${p.playerName}
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-secondary);">
+              ${p.playerPos} &bull; <strong style="color: var(--gold-primary); font-family: var(--font-mono);">${p.points} pts acumulados</strong>
+            </div>
+          </div>
+        `;
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-secondary btn-sm';
+      btn.style.cssText = 'color: var(--state-red); border-color: rgba(220, 38, 38, 0.35); background: rgba(220, 38, 38, 0.06); font-weight: 700; padding: 0.45rem 0.85rem; white-space: nowrap; display: flex; align-items: center; gap: 0.3rem;';
+      btn.innerHTML = '<span>Restar 1 punto</span>';
+      btn.onclick = function() {
+        executeScoreCorrection(teamId, p.playerId, p.playerName, p.jersey);
+      };
+
+      row.appendChild(leftDiv);
+      row.appendChild(btn);
+      listEl.appendChild(row);
+    });
+  }
+
+  const modal = document.getElementById('modal-score-correction');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeScoreCorrectionModal() {
+  const modal = document.getElementById('modal-score-correction');
+  if (modal) modal.style.display = 'none';
+}
+
+function executeScoreCorrection(teamId, playerId, playerName, jersey) {
+  if (!teamId || !playerId) return;
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'score_point',
+      team_id: teamId,
+      points: -1,
+      player_id: playerId,
+      event_type: 'CORRECTION'
+    }));
+
+    showScorekeeperToast(
+      `Corrección (-1 pt) aplicada a #${jersey} ${playerName}`,
+      '✏️',
+      'rgba(220, 38, 38, 0.1)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+  }
+  closeScoreCorrectionModal();
+  closePlayerModal();
+}
+
+/* Control de Tiempo y Reloj */
+function setPeriod(periodCode, initialClock) {
+  const previousPeriod = currentPeriod;
+  currentPeriod = periodCode;
+  resetClock(initialClock);
+
+  // Al comenzar un nuevo cuarto de juego, activar la selección de quinteto para el periodo
+  if (periodCode !== previousPeriod && periodCode !== 'HT') {
+    homePeriodQuintetoConfirmed = false;
+    awayPeriodQuintetoConfirmed = false;
+
+    updateRosterOnCourtStatus('home', homeOnCourtState);
+    updateRosterOnCourtStatus('away', awayOnCourtState);
+
+    const alertHome = document.getElementById('alert-no-quinteto-home');
+    const alertAway = document.getElementById('alert-no-quinteto-away');
+    const periodLabels = { 'Q1': '1Q', 'Q2': '2Q', 'Q3': '3Q', 'Q4': '4Q', 'OT1': 'Prórroga' };
+    const pLabel = periodLabels[periodCode] || periodCode;
+
+    if (alertHome) {
+      const span = alertHome.querySelector('span');
+      if (span) span.innerText = `⚠️ Inicio de ${pLabel}: Confirma el quinteto en pista para este cuarto.`;
+    }
+    if (alertAway) {
+      const span = alertAway.querySelector('span');
+      if (span) span.innerText = `⚠️ Inicio de ${pLabel}: Confirma el quinteto en pista para este cuarto.`;
+    }
+
+    showScorekeeperToast(
+      `🏀 Inicio de ${pLabel}: Confirma el quinteto en pista de cada equipo para comenzar el cuarto.`,
+      '🏀',
+      'var(--gold-light)',
+      'var(--gold-primary)',
+      'var(--gold-primary)'
+    );
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'period_change',
+      period: periodCode,
+      game_clock: initialClock
+    }));
+  }
+  highlightActivePeriod(periodCode);
+  updateSignatureButtonState();
+}
+
+function highlightActivePeriod(periodCode) {
+  document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-p-${periodCode}`);
+  if (btn) btn.classList.add('active');
+}
+
+function toggleClock() {
+  const btn = document.getElementById('btn-clock-toggle');
+  if (isClockRunning) {
+    clearInterval(clockInterval);
+    isClockRunning = false;
+    btn.innerText = '▶ Iniciar Reloj';
+    btn.classList.replace('btn-secondary', 'btn-gold');
+    syncClockToWebSocket(false);
+    updateSignatureButtonState();
+  } else {
+    isClockRunning = true;
+    btn.innerText = '⏸ Pausar Reloj';
+    btn.classList.replace('btn-gold', 'btn-secondary');
+    syncClockToWebSocket(true);
+    updateSignatureButtonState();
+    clockInterval = setInterval(() => {
+      if (currentSeconds > 0) {
+        currentSeconds--;
+        updateClockDisplay();
+        syncClockToWebSocket(true);
+        updateSignatureButtonState();
+      } else {
+        clearInterval(clockInterval);
+        isClockRunning = false;
+        btn.innerText = '▶ Iniciar Reloj';
+        btn.classList.replace('btn-secondary', 'btn-gold');
+        syncClockToWebSocket(false);
+        updateSignatureButtonState();
+
+        if (currentPeriod === 'Q4' || currentPeriod === 'OT1' || currentPeriod === 'OT2') {
+          const eligibility = checkScoresheetClosingEligibility();
+          if (eligibility.canClose) {
+            showScorekeeperToast(
+              '🏆 ¡Final del partido! El tiempo ha concluido (00:00). Ya puedes firmar y cerrar el acta oficial.',
+              '✍️',
+              'var(--gold-light)',
+              'var(--gold-primary)',
+              'var(--gold-primary)'
+            );
+          } else {
+            showScorekeeperToast(
+              eligibility.reason,
+              '⚖️',
+              'rgba(220, 38, 38, 0.12)',
+              'var(--state-red)',
+              'var(--state-red)'
+            );
+          }
+        }
+      }
+    }, 1000);
+  }
+}
+
+function adjustClock(deltaSec) {
+  currentSeconds = Math.max(0, currentSeconds + deltaSec);
+  updateClockDisplay();
+  syncClockToWebSocket(isClockRunning);
+  updateSignatureButtonState();
+}
+
+function resetClock(clockStr) {
+  if (isClockRunning) toggleClock();
+  parseClockStringToSeconds(clockStr);
+  updateClockDisplay();
+  syncClockToWebSocket(false);
+  updateSignatureButtonState();
+}
+
+function parseClockStringToSeconds(str) {
+  if (!str) return;
+  const parts = str.split(':');
+  if (parts.length === 2) {
+    currentSeconds = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  }
+}
+
+function updateClockDisplay() {
+  const m = Math.floor(currentSeconds / 60);
+  const s = currentSeconds % 60;
+  const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  document.getElementById('clock-display').innerText = formatted;
+}
+
+function syncClockToWebSocket(runningState) {
+  const clockStr = document.getElementById('clock-display').innerText;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'clock_update',
+      game_clock: clockStr,
+      is_running: runningState !== undefined ? runningState : isClockRunning,
+      period: currentPeriod,
+      status: 'LIVE'
+    }));
+  }
+}
+
+function prependTimelineEvent(ev) {
+  const timeline = document.getElementById('events-timeline');
+  if (!timeline) return;
+  const emptyPlaceholder = document.getElementById('no-events-scorekeeper');
+  if (emptyPlaceholder) emptyPlaceholder.remove();
+
+  const div = document.createElement('div');
+  div.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.85rem; border: 1px solid var(--platinum-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04); animation: slideDown 0.3s ease;';
+  
+  const playerText = ev.player_name ? `: ${ev.player_name}` : '';
+  const ptsHtml = ev.points !== 0 ? `<strong style="color: ${ev.points > 0 ? 'var(--gold-primary)' : 'var(--state-red)'}; font-family: var(--font-mono); font-size: 0.95rem;">${ev.points > 0 ? '+' : ''}${ev.points}</strong>` : '';
+  const detailText = ev.description || ev.event_type || '';
+
+  div.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary);">${ev.period || ''} &bull; ${ev.clock || ''}</span>
+      <strong style="color: var(--text-title);">${ev.team_acronym || ''}${playerText}</strong>
+      <span>&bull; ${detailText}</span>
+    </div>
+    ${ptsHtml}
+  `;
+  timeline.insertBefore(div, timeline.firstChild);
+}
+
+/* Control de Tiempos Muertos FIBA */
+function renderTimeoutIndicators(side, info) {
+  const container = document.getElementById(`${side}-timeouts-indicators`);
+  const countEl = document.getElementById(`${side}-timeouts-count`);
+  const btn = document.getElementById(`btn-timeout-${side}`);
+
+  if (!container || !info) return;
+
+  container.innerHTML = '';
+  const limit = info.limit !== undefined ? info.limit : 2;
+  const used = info.used !== undefined ? info.used : 0;
+  const remaining = info.remaining !== undefined ? info.remaining : Math.max(0, limit - used);
+
+  for (let i = 0; i < limit; i++) {
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.2s ease;';
+
+    if (i < used) {
+      dot.style.background = 'var(--gold-primary)';
+      dot.style.border = '1.5px solid var(--gold-primary)';
+      dot.style.boxShadow = '0 0 6px rgba(197, 155, 39, 0.4)';
+      dot.title = 'Tiempo muerto consumido';
+    } else {
+      dot.style.background = 'transparent';
+      dot.style.border = '1.5px solid var(--platinum-border)';
+      dot.style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,0.06)';
+      dot.title = 'Tiempo muerto disponible';
+    }
+    container.appendChild(dot);
+  }
+
+  if (countEl) {
+    countEl.innerText = `(${used}/${limit})`;
+  }
+
+  if (btn) {
+    if (remaining > 0) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.title = `Solicitar Tiempo Muerto (${remaining} restante${remaining > 1 ? 's' : ''})`;
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.45';
+      btn.style.cursor = 'not-allowed';
+      btn.title = 'Sin tiempos muertos disponibles en esta mitad/periodo';
+    }
+  }
+}
+
+function requestTeamTimeout(teamId, teamName, side) {
+  const info = side === 'home' ? homeTimeoutsState : awayTimeoutsState;
+  if (info && info.remaining <= 0) {
+    showScorekeeperToast('No quedan tiempos muertos disponibles para este equipo en este periodo.', '⚠️', 'var(--state-red-light)', 'var(--state-red)', 'var(--state-red)');
+    return;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'request_timeout',
+      team_id: teamId
+    }));
+
+    // Pausar reloj localmente de inmediato para feedback instantáneo
+    if (isClockRunning) {
+      clearInterval(clockInterval);
+      isClockRunning = false;
+      const clockBtn = document.getElementById('btn-clock-toggle');
+      if (clockBtn) {
+        clockBtn.innerText = '▶ Iniciar Reloj';
+        clockBtn.classList.replace('btn-secondary', 'btn-gold');
+      }
+    }
+
+    showScorekeeperToast(
+      `⏱️ Tiempo Muerto concedido a ${teamName}. Reloj de partido detenido.`,
+      '⏱️',
+      'var(--gold-light)',
+      'var(--gold-primary)',
+      'var(--gold-primary)'
+    );
+  }
+}
+
+/* Verificación de Elegibilidad para Firma y Cierre de Acta Oficial */
+function checkScoresheetClosingEligibility() {
+  const validClosingPeriods = ['Q4', 'OT1', 'OT2', 'FINISHED'];
+
+  // 1. Validar Periodo (Solo 4Q o Prórroga)
+  if (!validClosingPeriods.includes(currentPeriod)) {
+    const periodLabels = { 'NS': 'Por comenzar', 'Q1': '1º Cuarto (1Q)', 'Q2': '2º Cuarto (2Q)', 'HT': 'Descanso', 'Q3': '3º Cuarto (3Q)' };
+    const pName = periodLabels[currentPeriod] || currentPeriod;
+    return {
+      canClose: false,
+      reason: `El acta solo puede firmarse al concluir el último cuarto (4Q) o prórroga. El partido se encuentra actualmente en el ${pName}.`
+    };
+  }
+
+  // 2. Validar Reloj de Juego (debe ser 00:00 y estar detenido)
+  if (currentSeconds > 0 || isClockRunning) {
+    const m = Math.floor(currentSeconds / 60);
+    const s = currentSeconds % 60;
+    const timeFormatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return {
+      canClose: false,
+      reason: `El partido sigue en juego (${timeFormatted} restantes). El reloj debe llegar a 00:00 en el 4º cuarto para poder firmar y cerrar el acta oficial.`
+    };
+  }
+
+  // 3. Validar Desempate (Reglamento FIBA/ACB)
+  const homeScoreEl = document.getElementById('score-home');
+  const awayScoreEl = document.getElementById('score-away');
+  const homeScore = homeScoreEl ? parseInt(homeScoreEl.innerText.trim() || '0', 10) : 0;
+  const awayScore = awayScoreEl ? parseInt(awayScoreEl.innerText.trim() || '0', 10) : 0;
+
+  if (homeScore === awayScore) {
+    return {
+      canClose: false,
+      reason: `El marcador está empatado (${homeScore} - ${awayScore}). En baloncesto oficial no puede haber empate al concluir el 4º cuarto; debe disputarse una Prórroga (OT).`
+    };
+  }
+
+  return { canClose: true };
+}
+
+function updateSignatureButtonState() {
+  const btn = document.getElementById('btn-close-scoresheet-top');
+  const icon = document.getElementById('icon-close-scoresheet');
+  if (!btn) return;
+
+  const eligibility = checkScoresheetClosingEligibility();
+
+  if (eligibility.canClose) {
+    btn.className = 'btn btn-gold btn-sm';
+    btn.style.opacity = '1';
+    btn.style.boxShadow = '0 4px 14px rgba(197, 155, 39, 0.35)';
+    btn.style.cursor = 'pointer';
+    btn.setAttribute('title', 'El tiempo ha concluido (00:00). Haz clic para firmar y homologar el acta oficial.');
+    if (icon) {
+      icon.innerHTML = '<path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>';
+    }
+  } else {
+    btn.className = 'btn btn-secondary btn-sm';
+    btn.style.opacity = '0.7';
+    btn.style.boxShadow = 'none';
+    btn.style.cursor = 'pointer';
+    btn.setAttribute('title', eligibility.reason);
+    if (icon) {
+      icon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>';
+    }
+  }
+}
+
+/* Modales y Event Listeners */
+function openSignatureModal() {
+  const eligibility = checkScoresheetClosingEligibility();
+  if (!eligibility.canClose) {
+    showScorekeeperToast(
+      eligibility.reason,
+      '⏳',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    return;
+  }
+  document.getElementById('modal-scoresheet-container').style.display = 'flex';
+}
+
+function closeSignatureModal() {
+  document.getElementById('modal-scoresheet-container').style.display = 'none';
+}
+
+function submitCloseScoresheet() {
+  const eligibility = checkScoresheetClosingEligibility();
+  if (!eligibility.canClose) {
+    showScorekeeperToast(
+      eligibility.reason,
+      '⏳',
+      'rgba(220, 38, 38, 0.12)',
+      'var(--state-red)',
+      'var(--state-red)'
+    );
+    closeSignatureModal();
+    return;
+  }
+
+  const refereeNameInput = document.getElementById('input-referee-name');
+  const secondRefereeNameInput = document.getElementById('input-second-referee-name');
+  const refereeLicenseInput = document.getElementById('input-referee-license');
+  const tableSigInput = document.getElementById('input-table-sig');
+  const timekeeperSigInput = document.getElementById('input-timekeeper-sig');
+  const reportInput = document.getElementById('input-report');
+
+  const refereeName = refereeNameInput ? refereeNameInput.value.trim() : '';
+  const secondRefereeName = secondRefereeNameInput ? secondRefereeNameInput.value.trim() : '';
+  const refereeLicense = refereeLicenseInput ? refereeLicenseInput.value.trim() : '';
+  const tableSig = tableSigInput ? tableSigInput.value.trim() : 'Carlos Murillo (Anotador)';
+  const timekeeperSig = timekeeperSigInput ? timekeeperSigInput.value.trim() : 'Laura Gómez (Cronometradora)';
+  const report = reportInput ? reportInput.value.trim() : '';
+
+  if (!refereeName || !refereeLicense) {
+    alert('Por favor, introduce el nombre y el número de licencia/PIN del árbitro principal.');
+    return;
+  }
+
+  const fullRefereeSig = `${refereeName} (Lic. ${refereeLicense})`;
+  const fullSecondRefereeSig = secondRefereeName ? `${secondRefereeName} (Lic. FEB-31084)` : '';
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      action: 'close_scoresheet',
+      referee_signature: fullRefereeSig,
+      second_referee_signature: fullSecondRefereeSig,
+      table_official_signature: tableSig,
+      timekeeper_signature: timekeeperSig,
+      incidents_report: report
+    }));
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePlayerModal();
+    closeScoreCorrectionModal();
+    closeSignatureModal();
+    closeStartingFiveModal();
+    closeSubstitutionModal();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  connectWebSocket();
+
+  // Renderizar estado inicial de quintetos / jugadores en pista
+  updateRosterOnCourtStatus('home', homeOnCourtState);
+  updateRosterOnCourtStatus('away', awayOnCourtState);
+
+  // Renderizar estado inicial de tiempos muertos, faltas de equipo y faltas de jugadores
+  renderTimeoutIndicators('home', homeTimeoutsState);
+  renderTimeoutIndicators('away', awayTimeoutsState);
+  renderTeamFouls('home', homeFoulsState);
+  renderTeamFouls('away', awayFoulsState);
+
+  if (playerFoulsState) {
+    Object.keys(playerFoulsState).forEach(pId => {
+      updatePlayerCardFouls(pId, playerFoulsState[pId]);
+    });
+  }
+
+  updateSignatureButtonState();
+
+  const actionModal = document.getElementById('modal-player-action');
+  if (actionModal) {
+    actionModal.addEventListener('click', function(e) {
+      if (e.target === this) closePlayerModal();
+    });
+  }
+
+  const startingFiveModal = document.getElementById('modal-starting-five');
+  if (startingFiveModal) {
+    startingFiveModal.addEventListener('click', function(e) {
+      if (e.target === this) closeStartingFiveModal();
+    });
+  }
+
+  const subModal = document.getElementById('modal-substitution');
+  if (subModal) {
+    subModal.addEventListener('click', function(e) {
+      if (e.target === this) closeSubstitutionModal();
+    });
+  }
+
+  const corrModal = document.getElementById('modal-score-correction');
+  if (corrModal) {
+    corrModal.addEventListener('click', function(e) {
+      if (e.target === this) closeScoreCorrectionModal();
+    });
+  }
+
+  const sigModal = document.getElementById('modal-scoresheet-container');
+  if (sigModal) {
+    sigModal.addEventListener('click', function(e) {
+      if (e.target === this) closeSignatureModal();
+    });
+  }
+});
+</script>
+{% endblock %}

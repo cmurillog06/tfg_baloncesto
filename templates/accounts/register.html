@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Cuenta | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="position: relative; max-width: 1060px; margin: 1.5rem auto 3.5rem; padding: 1rem;">
+  
+  <!-- Resplandores Ambientales de Fondo (Profundidad Visual) -->
+  <div style="position: absolute; top: -50px; right: -50px; width: 340px; height: 340px; background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%); filter: blur(50px); pointer-events: none; z-index: 0;"></div>
+  <div style="position: absolute; bottom: -50px; left: -50px; width: 340px; height: 340px; background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 70%); filter: blur(50px); pointer-events: none; z-index: 0;"></div>
+
+  <!-- Contenedor Dividido de Registro (Split-Screen Luxury Card) -->
+  <div class="card register-split-card" style="position: relative; z-index: 1; padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1.22fr; border-radius: var(--radius-2xl); box-shadow: 0 25px 50px -12px rgba(9, 13, 22, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8); border: 1px solid rgba(212, 175, 55, 0.35); background: #FFFFFF;">
+    
+    <!-- Línea Superior de Destello Dorado -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold-primary), transparent); z-index: 10;"></div>
+
+    <!-- Columna Izquierda: Mensaje y Eslogan Alineado (Tono Oro Champagne / Arena Cálida) -->
+    <div class="register-left-col" style="background: linear-gradient(145deg, #FDF8F0 0%, #F6EBD7 45%, #EADBBD 100%); color: #4A3B2C; padding: 3rem 2.75rem; display: flex; flex-direction: column; justify-content: flex-start; position: relative; overflow: hidden; border-right: 1px solid rgba(212, 175, 55, 0.3);">
+      
+      <!-- Resplandores Cálidos de Fondo -->
+      <div style="position: absolute; top: -50px; right: -50px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
+      <div style="position: absolute; bottom: -50px; left: -50px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, transparent 70%); filter: blur(35px); pointer-events: none;"></div>
+
+      <!-- Contenido Principal -->
+      <div style="position: relative; z-index: 2;">
+        
+        <!-- Cabecera de Marca -->
+        <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 2rem;">
+          <div style="width: 50px; height: 50px; border-radius: var(--radius-md); background: #FFFFFF; border: 1.5px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);">
+            🏀
+          </div>
+          <div>
+            <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; color: #1E293B; letter-spacing: -0.02em; line-height: 1.2;">
+              Quinto <span class="gold-text">Cuarto</span>
+            </div>
+            <div style="font-size: 0.76rem; color: #8C5803; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
+              Alta de Usuarios
+            </div>
+          </div>
+        </div>
+
+        <div style="display: inline-block; font-size: 0.78rem; font-weight: 700; color: #8C5803; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.85rem; background: rgba(212, 175, 55, 0.2); padding: 0.3rem 0.85rem; border-radius: var(--radius-full); border: 1px solid rgba(212, 175, 55, 0.5);">
+          ¿Por qué Quinto Cuarto?
+        </div>
+
+        <h2 style="font-size: 2.05rem; font-weight: 700; line-height: 1.28; margin-bottom: 1.25rem; color: #1E293B; font-family: var(--font-display);">
+          Donde cada posesión, cada decisión y cada segundo <span style="color: #926004;">marcan la diferencia</span>
+        </h2>
+        
+        <p style="color: #574328; font-size: 1.05rem; line-height: 1.65; margin: 0;">
+          Una nueva forma de vivir y gestionar el baloncesto, uniendo tecnología en tiempo real con la emoción de cada partido.
+        </p>
+
+      </div>
+
+    </div>
+
+    <!-- Columna Derecha: Formulario de Registro -->
+    <div class="register-right-col" style="padding: 3rem 2.75rem; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
+      
+      <div>
+        <div style="margin-bottom: 2rem;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.35rem;">NUEVA CUENTA</div>
+          <h1 style="font-size: 2.15rem; font-weight: 700; color: var(--text-title); margin-bottom: 0.4rem; font-family: var(--font-display); letter-spacing: -0.02em;">Crear Cuenta</h1>
+          <p style="color: var(--text-secondary); font-size: 1rem;">Rellena tus datos para registrar tu usuario en la plataforma</p>
+        </div>
+
+        <form method="post" action="{% url 'accounts:register' %}" novalidate id="register-form">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem; font-size: 0.92rem;">
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="register-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="id_username" class="form-label" style="font-weight: 600; font-size: 0.98rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Nombre de Usuario</label>
+              {{ form.username }}
+              <small style="display: block; font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">De 3 a 30 caracteres (con letras, ej: usuario23)</small>
+              {% if form.username.errors %}
+                <div class="form-error" style="font-size: 0.85rem;">{% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="id_email" class="form-label" style="font-weight: 600; font-size: 0.98rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Correo Electrónico</label>
+              {{ form.email }}
+              <small style="display: block; font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">Máximo 50 caracteres (único y no registrado)</small>
+              {% if form.email.errors %}
+                <div class="form-error" style="font-size: 0.85rem;">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="register-form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; margin-bottom: 1.25rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="id_password1" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Contraseña</label>
+              {{ form.password1 }}
+              <small style="display: block; font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">De 8 a 30 caracteres (no común ni numérica)</small>
+              {% if form.password1.errors %}
+                <div class="form-error" style="font-size: 0.85rem;">{% for error in form.password1.errors %}{{ error }}{% endfor %}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="id_password2" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.4rem; display: block;">Confirmar Contraseña</label>
+              {{ form.password2 }}
+              <small style="display: block; font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">Debe coincidir con la contraseña anterior</small>
+              {% if form.password2.errors %}
+                <div class="form-error" style="font-size: 0.85rem;">{% for error in form.password2.errors %}{{ error }}{% endfor %}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Nota Informativa de Rol Aficionado -->
+          <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 1.25rem; background: var(--bg-subtle); padding: 0.65rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1rem;">ℹ️</span>
+            <span>Las cuentas públicas se registran con rol de <strong>Aficionado</strong>. Las licencias de Entrenador y Mesa son designadas por el comité administrador.</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.95rem; font-size: 1.05rem; border-radius: var(--radius-md); font-weight: 600; background: linear-gradient(135deg, #090D16 0%, #1A2438 100%); border: 1px solid var(--gold-border); box-shadow: 0 4px 16px rgba(9, 13, 22, 0.2); cursor: pointer; transition: var(--transition);" id="btn-submit-register">
+            Completar Registro Oficial &rarr;
+          </button>
+        </form>
+      </div>
+
+      <!-- Separador y Botón Secundario de Iniciar Sesión -->
+      <div style="margin-top: 1.75rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div style="flex: 1; height: 1px; background: var(--platinum-border);"></div>
+          <span style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">¿ya tienes una cuenta activa?</span>
+          <div style="flex: 1; height: 1px; background: var(--platinum-border);"></div>
+        </div>
+
+        <a href="{% url 'accounts:login' %}" class="btn-register-secondary" style="width: 100%; text-align: center; justify-content: center; padding: 0.85rem; font-size: 0.98rem; font-weight: 600; border-radius: var(--radius-md); border: 1.5px solid var(--platinum-border-hover); background: var(--bg-subtle); color: var(--text-title); text-decoration: none; display: flex; align-items: center; gap: 0.45rem; transition: var(--transition);">
+          <span>Iniciar Sesión con mi Cuenta</span>
+          <span style="color: var(--gold-primary); font-weight: 700;">&rarr;</span>
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

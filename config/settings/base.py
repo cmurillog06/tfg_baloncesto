@@ -99,7 +99,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 # MODELO DE USUARIO PERSONALIZADO
 # ------------------------------------------------------------------------------
-# AUTH_USER_MODEL = "accounts.CustomUser" # Se activará en feature/data-models
+AUTH_USER_MODEL = "accounts.CustomUser"
 
 # ------------------------------------------------------------------------------
 # VALIDACIÓN DE CONTRASEÑAS
@@ -148,3 +148,6 @@ LOGOUT_REDIRECT_URL = "core:home"
 
 # Campo primario por defecto
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Límite máximo de campos en formularios POST (para partidos con muchos eventos)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000

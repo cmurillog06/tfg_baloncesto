@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+
+{% block title %}Comparador de Jugadores | {{ player_a.full_name }} vs {{ player_b.full_name }} | Quinto Cuarto{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+<style>
+  /* ==========================================================================
+     ESTILOS RESPONSIVOS DEL COMPARADOR DE JUGADORES (DESKTOP Y MÓVIL)
+     ========================================================================== */
+  
+  .compare-banner-card {
+    margin-bottom: 2rem;
+    padding: 1.5rem 1.75rem;
+    background: #FFFFFF;
+    border-top: 4px solid var(--gold-primary);
+    border-radius: var(--radius-xl);
+    border: 1.5px solid var(--platinum-border);
+    box-shadow: var(--shadow-card);
+  }
+
+  .compare-banner-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .player-col {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    min-width: 0;
+  }
+
+  .player-col-a {
+    justify-content: flex-start;
+  }
+
+  .player-col-b {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .player-avatar-wrap {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    flex-shrink: 0;
+  }
+
+  .player-avatar-img,
+  .player-avatar-placeholder {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2.5px solid var(--platinum-border);
+    background: #FFFFFF;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  }
+
+  .player-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    border-color: #FFFFFF;
+  }
+
+  .player-team-acronym-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -3px;
+    color: #FFFFFF;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.05rem 0.35rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid #FFFFFF;
+    font-family: var(--font-mono);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .player-info-box {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .player-col-b .player-info-box {
+    align-items: flex-end;
+  }
+
+  .player-name-h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-title);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .player-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .player-col-b .player-badges-row {
+    justify-content: flex-end;
+  }
+
+  .player-phys-row {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    margin-top: 0.05rem;
+  }
+
+  .player-col-b .player-phys-row {
+    justify-content: flex-end;
+  }
+
+  .compare-vs-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+  }
+
+  .compare-vs-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--obsidian-dark);
+    color: var(--gold-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--gold-border);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    font-weight: 800;
+    font-size: 0.85rem;
+    font-family: var(--font-display);
+  }
+
+  /* Stats Header Row & Metrics */
+  .stats-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.75rem;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--platinum-border);
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .stat-header-player-a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .stat-header-player-b {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .stats-header-center {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gold-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .stat-metric-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Responsive Móvil y Pantallas Pequeñas (<= 768px) */
+  @media (max-width: 768px) {
+    .compare-banner-card {
+      padding: 1.15rem 0.75rem;
+    }
+
+    .compare-banner-grid {
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.4rem;
+      align-items: start;
+    }
+
+    .player-col {
+      flex-direction: column;
+      align-items: center !important;
+      text-align: center !important;
+      gap: 0.45rem;
+    }
+
+    .player-avatar-wrap {
+      width: 54px;
+      height: 54px;
+    }
+
+    .player-avatar-img,
+    .player-avatar-placeholder {
+      width: 54px !important;
+      height: 54px !important;
+      font-size: 1rem !important;
+    }
+
+    .player-info-box {
+      align-items: center !important;
+      width: 100%;
+      gap: 0.3rem;
+    }
+
+    .player-name-h2 {
+      font-size: 0.92rem;
+      text-align: center;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .player-badges-row {
+      justify-content: center !important;
+      flex-direction: column;
+      gap: 0.2rem;
+      width: 100%;
+    }
+
+    .player-badges-row .badge,
+    .player-badges-row span {
+      font-size: 0.68rem !important;
+      padding: 0.1rem 0.35rem !important;
+      text-align: center;
+      justify-content: center;
+      width: fit-content;
+      margin: 0 auto;
+    }
+
+    .player-phys-row {
+      flex-direction: column;
+      gap: 0.15rem;
+      justify-content: center !important;
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 0.15rem;
+    }
+
+    .compare-vs-center {
+      padding: 0.5rem 0.1rem 0 0.1rem;
+    }
+
+    .compare-vs-circle {
+      width: 32px;
+      height: 32px;
+      font-size: 0.7rem;
+    }
+
+    .compare-vs-label {
+      font-size: 0.52rem;
+      letter-spacing: 0.02em;
+    }
+
+    .pronostico-card {
+      padding: 1.25rem 0.85rem !important;
+    }
+
+    .pronostico-val {
+      font-size: 2.1rem !important;
+    }
+
+    .stats-card {
+      padding: 1.25rem 0.85rem !important;
+    }
+
+    .stats-header-row {
+      display: flex !important;
+      justify-content: space-between !important;
+      padding: 0.65rem 0.65rem !important;
+      gap: 0.5rem !important;
+    }
+
+    .stats-header-center {
+      display: none !important;
+    }
+
+    .stat-header-player-a {
+      flex: 1;
+      justify-content: flex-start !important;
+      gap: 0.45rem !important;
+    }
+
+    .stat-header-player-b {
+      flex: 1;
+      justify-content: flex-end !important;
+      gap: 0.45rem !important;
+    }
+
+    .stat-metric-row {
+      gap: 0.25rem;
+    }
+
+    .stat-metric-val {
+      font-size: 1.1rem !important;
+    }
+
+    .stat-metric-name {
+      font-size: 0.72rem !important;
+      line-height: 1.2;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1140px; margin: 0 auto;">
+  
+  <!-- 1. Cabecera de Sección (Limpia y Alineada) -->
+  <div style="margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+      <a href="{% url 'analytics:dashboard' %}" class="btn btn-secondary btn-sm">&larr; Estadísticas</a>
+      <span style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em;">CARA A CARA JUGADORES</span>
+    </div>
+    <h1 style="font-size: 2.2rem; font-weight: 600; margin-bottom: 0.35rem;">Comparador de Jugadores</h1>
+    <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">Compara métricas y estadísticas por partido entre dos jugadores</p>
+  </div>
+
+  <!-- 2. Panel Selector de Jugadores (Debajo de la Frase) -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 1.75rem; background: #FFFFFF; border: 1px solid var(--platinum-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+    <form method="get" id="player-comparator-form" class="player-comparator-grid">
+      
+      <!-- Selector Jugador 1 -->
+      <div>
+        <label style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
+          Jugador 1
+        </label>
+        <select name="player_a" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; width: 100%; border-left: 3px solid var(--gold-primary);">
+          {% for p in all_players %}
+            <option value="{{ p.id }}" {% if player_a and player_a.id == p.id %}selected{% endif %} {% if player_b and player_b.id == p.id %}disabled style="color: #94A3B8;"{% endif %}>
+              {{ p.full_name }} ({{ p.get_position_display }}){% if player_b and player_b.id == p.id %} [Jugador 2]{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Separador VS -->
+      <div style="height: 44px; display: flex; align-items: center; justify-content: center;">
+        <div style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; font-size: 0.75rem; font-weight: 800; box-shadow: 0 2px 6px rgba(9, 13, 22, 0.2);">
+          VS
+        </div>
+      </div>
+
+      <!-- Selector Jugador 2 -->
+      <div>
+        <label style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
+          Jugador 2
+        </label>
+        <select name="player_b" onchange="this.form.submit()" class="form-control" style="font-size: 0.9rem; font-weight: 600; width: 100%; border-left: 3px solid var(--state-blue);">
+          {% for p in all_players %}
+            <option value="{{ p.id }}" {% if player_b and player_b.id == p.id %}selected{% endif %} {% if player_a and player_a.id == p.id %}disabled style="color: #94A3B8;"{% endif %}>
+              {{ p.full_name }} ({{ p.get_position_display }}){% if player_a and player_a.id == p.id %} [Jugador 1]{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Botón Comparar -->
+      <div>
+        <button type="submit" class="btn btn-primary" style="height: 44px; padding: 0 1.25rem; font-weight: 700; border-radius: var(--radius-md); font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(9, 13, 22, 0.12); width: 100%;">
+          <span>Comparar</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  {% if comparison %}
+    <!-- 3. Banner Cara a Cara Horizontal Adaptable -->
+    <div class="card compare-banner-card">
+      <div class="compare-banner-grid">
+        
+        <!-- JUGADOR A -->
+        <div class="player-col player-col-a">
+          <div class="player-avatar-wrap">
+            {% if player_a.photo %}
+              <img src="{{ player_a.photo.url }}" alt="{{ player_a.full_name }}" class="player-avatar-img">
+            {% else %}
+              <div class="player-avatar-placeholder" style="background: linear-gradient(135deg, {{ comparison.color_a }}, #0F172A);">
+                {{ player_a.first_name|slice:":1" }}{{ player_a.last_name|slice:":1" }}
+              </div>
+            {% endif %}
+            {% if player_a.current_team %}
+              <span class="player-team-acronym-badge" style="background: {{ comparison.color_a }};">
+                {{ player_a.current_team.acronym }}
+              </span>
+            {% endif %}
+          </div>
+          <div class="player-info-box">
+            <h2 class="player-name-h2">
+              <a href="{% url 'teams:player_detail' player_a.id %}" style="color: inherit; text-decoration: none;">{{ player_a.full_name }}</a>
+            </h2>
+            <div class="player-badges-row">
+              {% if player_a.current_team %}
+                <a href="{% url 'teams:team_detail' player_a.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ comparison.color_a }};"></span>
+                  {{ player_a.current_team.name }}
+                </a>
+              {% endif %}
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); background: rgba(197, 155, 39, 0.08); border: 1px solid var(--gold-border); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">
+                {{ player_a.get_position_display }}
+              </span>
+            </div>
+            <div class="player-phys-row">
+              <span>Altura: <strong style="color: var(--text-title);">{{ player_a.height_cm|default:"-" }} cm</strong></span>
+              <span>Peso: <strong style="color: var(--text-title);">{{ player_a.weight_kg|default:"-" }} kg</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- INSIGNIA CENTRAL -->
+        <div class="compare-vs-center">
+          <div class="compare-vs-circle">
+            VS
+          </div>
+          <span class="compare-vs-label">CARA A CARA</span>
+        </div>
+
+        <!-- JUGADOR B -->
+        <div class="player-col player-col-b">
+          <div class="player-info-box">
+            <h2 class="player-name-h2">
+              <a href="{% url 'teams:player_detail' player_b.id %}" style="color: inherit; text-decoration: none;">{{ player_b.full_name }}</a>
+            </h2>
+            <div class="player-badges-row">
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--state-blue); background: rgba(30, 58, 138, 0.08); border: 1px solid rgba(30, 58, 138, 0.25); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">
+                {{ player_b.get_position_display }}
+              </span>
+              {% if player_b.current_team %}
+                <a href="{% url 'teams:team_detail' player_b.current_team.slug %}" class="badge" style="background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-title); font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ comparison.color_b }};"></span>
+                  {{ player_b.current_team.name }}
+                </a>
+              {% endif %}
+            </div>
+            <div class="player-phys-row">
+              <span>Altura: <strong style="color: var(--text-title);">{{ player_b.height_cm|default:"-" }} cm</strong></span>
+              <span>Peso: <strong style="color: var(--text-title);">{{ player_b.weight_kg|default:"-" }} kg</strong></span>
+            </div>
+          </div>
+          <div class="player-avatar-wrap">
+            {% if player_b.photo %}
+              <img src="{{ player_b.photo.url }}" alt="{{ player_b.full_name }}" class="player-avatar-img">
+            {% else %}
+              <div class="player-avatar-placeholder" style="background: linear-gradient(135deg, {{ comparison.color_b }}, #0F172A);">
+                {{ player_b.first_name|slice:":1" }}{{ player_b.last_name|slice:":1" }}
+              </div>
+            {% endif %}
+            {% if player_b.current_team %}
+              <span class="player-team-acronym-badge" style="background: {{ comparison.color_b }};">
+                {{ player_b.current_team.acronym }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3.5. Modelado Matemático: Probabilidad de Rendimiento Superior -->
+    {% if comparison.superiority_prob %}
+      <div class="card pronostico-card" style="margin-bottom: 2.5rem; padding: 2.25rem 2rem; background: #FFFFFF; border-radius: var(--radius-xl); border: 1.5px solid var(--platinum-border); border-top: 4px solid var(--gold-primary); box-shadow: var(--shadow-card);">
+        
+        <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">
+            PRONÓSTICO INDIVIDUAL
+          </div>
+          <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-title); margin: 0;">
+            ¿Quién tiene más opciones de rendir mejor hoy?
+          </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; text-align: center;">
+          
+          <!-- Jugador A -->
+          <div>
+            <strong style="font-size: 1.15rem; color: var(--text-title); display: block;">{{ player_a.full_name }}</strong>
+            <div class="pronostico-val" style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--gold-primary); line-height: 1; margin: 0.35rem 0 0.25rem 0;">
+              {{ comparison.superiority_prob.prob_a_pct }}%
+            </div>
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+              {% if comparison.superiority_prob.games_a == 0 %}
+                <span style="color: var(--text-muted);">(Sin partidos disputados)</span>
+              {% else %}
+                Valoración media: <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.superiority_prob.mu_a }}</strong>
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Separador VS -->
+          <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--obsidian-dark); color: #FFFFFF; font-size: 0.75rem; font-weight: 800;">
+            VS
+          </div>
+
+          <!-- Jugador B -->
+          <div>
+            <strong style="font-size: 1.15rem; color: var(--text-title); display: block;">{{ player_b.full_name }}</strong>
+            <div class="pronostico-val" style="font-family: var(--font-mono); font-size: 2.75rem; font-weight: 800; color: var(--state-blue); line-height: 1; margin: 0.35rem 0 0.25rem 0;">
+              {{ comparison.superiority_prob.prob_b_pct }}%
+            </div>
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">
+              {% if comparison.superiority_prob.games_b == 0 %}
+                <span style="color: var(--text-muted);">(Sin partidos disputados)</span>
+              {% else %}
+                Valoración media: <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.superiority_prob.mu_b }}</strong>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Barra Proporcional de Probabilidad (Visible y Coloreada) -->
+        <div style="height: 14px; background: #E2E8F0; border-radius: 9999px; overflow: hidden; display: flex; margin-bottom: 1.35rem; border: 1.5px solid var(--platinum-border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="width: {{ comparison.superiority_prob.prob_a_css }}%; background: linear-gradient(90deg, #996515, var(--gold-primary)); transition: width 0.6s ease;" title="{{ player_a.full_name }}: {{ comparison.superiority_prob.prob_a_pct }}%"></div>
+          <div style="width: {{ comparison.superiority_prob.prob_b_css }}%; background: linear-gradient(90deg, var(--state-blue), #1E3A8A); transition: width 0.6s ease;" title="{{ player_b.full_name }}: {{ comparison.superiority_prob.prob_b_pct }}%"></div>
+        </div>
+
+        <!-- Caja de Resumen Explicativo -->
+        <div style="background: var(--bg-subtle); padding: 1rem 1.25rem; border-radius: var(--radius-md); font-size: 0.92rem; color: var(--text-title); border: 1px solid var(--platinum-border); border-left: 4px solid var(--gold-primary); margin-bottom: 1rem; line-height: 1.55;">
+          <strong>Resumen del análisis:</strong> {{ comparison.superiority_prob.simple_explanation }}
+        </div>
+
+        <!-- Desplegable explicativo del método y origen de los datos -->
+        <details style="margin-top: 0.75rem; padding-top: 0.5rem;" ontoggle="if(this.open && window.renderMathInElement) renderMathInElement(this, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});">
+          <summary style="font-size: 0.82rem; font-weight: 700; color: var(--text-title); cursor: pointer; user-select: none;">
+            Ver cómo se calculan las opciones y la valoración oficial (Detalles y fórmulas)
+          </summary>
+          <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.55; padding: 1.1rem 1.35rem; background: var(--bg-subtle); border-radius: var(--radius-lg); border: 1px solid var(--platinum-border);">
+            
+            <p style="font-size: 0.88rem; color: var(--text-title); margin: 0 0 0.75rem 0;">
+              Compara el promedio de <strong>Valoración Oficial</strong> acumulado por ambos jugadores en la temporada:
+            </p>
+
+            <!-- Fórmulas Matemáticas Oficiales con KaTeX -->
+            <div style="margin: 1rem 0; background: #FFFFFF; padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); box-shadow: 0 1px 4px rgba(0,0,0,0.02); overflow-x: auto;">
+              
+              <!-- 1. Fórmula de Valoración Oficial FIBA / ACB -->
+              <div style="margin-bottom: 1.15rem; text-align: center;">
+                <span style="font-size: 0.74rem; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+                  1. Fórmula Oficial de Valoración Individual (PIR - FIBA / ACB)
+                </span>
+                <div style="font-size: 0.95rem; color: var(--text-title); line-height: 1.8; padding: 0.4rem 0;">
+                  $$\text{Valoración (PIR)} = \text{Suma Positiva} - \text{Suma Negativa}$$
+                  <div style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                    $$\begin{aligned}
+                    \text{Suma Positiva} &= \text{PTS} + \text{REB} + \text{AST} + \text{REC} + \text{TAP} + \text{FR} \\
+                    \text{Suma Negativa} &= \text{TC}_{\text{fall}} + \text{TL}_{\text{fall}} + \text{PER} + \text{TR} + \text{FC}
+                    \end{aligned}$$
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Cálculo de la Probabilidad de Superioridad -->
+              <div style="border-top: 1px solid var(--platinum-border); padding-top: 1rem; text-align: center;">
+                <span style="font-size: 0.74rem; font-weight: 700; color: var(--state-blue); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">
+                  2. Distribución de Opciones de Superioridad
+                </span>
+                <div style="font-size: 0.95rem; color: var(--text-title); line-height: 1.8; padding: 0.4rem 0;">
+                  $$\text{Opciones de Victoria (Jugador 1)} = \frac{\text{Valoración}_1}{\text{Valoración}_1 + \text{Valoración}_2} \times 100\%$$
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Glosario de Variables de la Fórmula -->
+            <div style="margin-top: 1rem; border-top: 1px solid var(--platinum-border); padding-top: 0.85rem;">
+              <strong style="font-size: 0.78rem; color: var(--text-title); display: block; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                Significado de cada dato:
+              </strong>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.45rem 1rem; font-size: 0.78rem; color: var(--text-secondary);">
+                <div><strong>$\text{PTS}$:</strong> Puntos anotados en total</div>
+                <div><strong>$\text{REB}$:</strong> Rebotes totales (ofensivos + defensivos)</div>
+                <div><strong>$\text{AST}$:</strong> Asistencias completadas</div>
+                <div><strong>$\text{REC}$:</strong> Balones recuperados / robos</div>
+                <div><strong>$\text{TAP}$:</strong> Tapones realizados a favor</div>
+                <div><strong>$\text{FR}$:</strong> Faltas personales recibidas</div>
+                <div><strong>$\text{TC}_{\text{fall}}$:</strong> Tiros de campo fallados (T2 + T3)</div>
+                <div><strong>$\text{TL}_{\text{fall}}$:</strong> Tiros libres fallados</div>
+                <div><strong>$\text{PER}$:</strong> Pérdidas de balón</div>
+                <div><strong>$\text{TR}$:</strong> Tapones recibidos en contra</div>
+                <div><strong>$\text{FC}$:</strong> Faltas personales cometidas</div>
+                <div><strong>$\text{Valoración}$:</strong> Media acumulada en la temporada</div>
+              </div>
+            </div>
+
+            <!-- Origen oficial -->
+            <div style="margin-top: 1rem; border-top: 1px solid var(--platinum-border); padding-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary);">
+              <strong style="color: var(--text-title);">Normativa oficial:</strong> Reglamento Estadístico Oficial de la Liga Endesa (ACB) y Federación Internacional de Baloncesto (FIBA).
+            </div>
+
+          </div>
+        </details>
+      </div>
+    {% endif %}
+
+    <!-- 4. Panel de Estadísticas Cara a Cara (Promedios por Partido) -->
+    <div class="card stats-card" style="padding: 2.25rem 2rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-card); background: #FFFFFF; margin-bottom: 3rem;">
+      
+      <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 600; margin: 0 0 0.2rem 0; color: var(--text-title);">
+          Promedios Estadísticos por Partido
+        </h3>
+        <span style="font-size: 0.78rem; color: var(--text-secondary);">
+          Métricas oficiales por encuentro en partidos finalizados de la temporada
+        </span>
+      </div>
+
+      <!-- Encabezado de Columnas (Identificación de Jugadores) -->
+      <div class="stats-header-row">
+        
+        <!-- Columna Jugador A -->
+        <div class="stat-header-player-a">
+          {% if player_a.photo %}
+            <img src="{{ player_a.photo.url }}" alt="{{ player_a.full_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">
+          {% else %}
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: {{ comparison.color_a }}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+              {{ player_a.first_name|slice:":1" }}{{ player_a.last_name|slice:":1" }}
+            </div>
+          {% endif %}
+          <div style="min-width: 0;">
+            <strong style="font-size: 0.92rem; color: var(--text-title); display: block; line-height: 1.2; word-break: break-word;">{{ player_a.full_name }}</strong>
+            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.15rem;">
+              {{ player_a.current_team.acronym|default:"Sin equipo" }} &bull; <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.stats_a.games }} p</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Centro: Etiqueta Métrica -->
+        <span class="stats-header-center">
+          MÉTRICAS COMPARATIVAS
+        </span>
+
+        <!-- Columna Jugador B -->
+        <div class="stat-header-player-b">
+          <div style="min-width: 0;">
+            <strong style="font-size: 0.92rem; color: var(--text-title); display: block; line-height: 1.2; word-break: break-word;">{{ player_b.full_name }}</strong>
+            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.15rem;">
+              <strong style="color: var(--text-title); font-family: var(--font-mono);">{{ comparison.stats_b.games }} p</strong> &bull; {{ player_b.current_team.acronym|default:"Sin equipo" }}
+            </span>
+          </div>
+          {% if player_b.photo %}
+            <img src="{{ player_b.photo.url }}" alt="{{ player_b.full_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">
+          {% else %}
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: {{ comparison.color_b }}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+              {{ player_b.first_name|slice:":1" }}{{ player_b.last_name|slice:":1" }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Lista de Métricas con Barras Visuales Proporcionales -->
+      <div style="display: flex; flex-direction: column; gap: 1.4rem;">
+        {% for m in comparison.metrics %}
+          <div style="padding-bottom: 1.1rem; {% if not forloop.last %}border-bottom: 1px solid var(--platinum-border);{% endif %}">
+            
+            <div class="stat-metric-row">
+              <!-- Dato Jugador A -->
+              <div style="min-width: 0;">
+                <strong class="stat-metric-val" style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: {% if m.leader == 'a' %}var(--gold-primary){% else %}var(--text-title){% endif %};">
+                  {{ m.val_a|floatformat:1 }}
+                </strong>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ m.unit }}/p</span>
+              </div>
+
+              <!-- Nombre de la Métrica -->
+              <span class="stat-metric-name" style="font-size: 0.78rem; font-weight: 700; color: var(--text-title); text-transform: uppercase; letter-spacing: 0.04em; text-align: center; padding: 0 0.25rem;">
+                {{ m.name }}
+              </span>
+
+              <!-- Dato Jugador B -->
+              <div style="text-align: right; min-width: 0;">
+                <strong class="stat-metric-val" style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: {% if m.leader == 'b' %}var(--state-blue){% else %}var(--text-title){% endif %};">
+                  {{ m.val_b|floatformat:1 }}
+                </strong>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ m.unit }}/p</span>
+              </div>
+            </div>
+
+            <!-- Barra Visual Proporcional Dual -->
+            <div style="display: flex; height: 8px; background: var(--bg-subtle); border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--platinum-border);">
+              <div style="width: {{ m.bar_a }}%; background: {{ comparison.color_a }};" title="{{ player_a.full_name }}: {{ m.val_a }}"></div>
+              <div style="width: {{ m.bar_b }}%; background: {{ comparison.color_b }};" title="{{ player_b.full_name }}: {{ m.val_b }}"></div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

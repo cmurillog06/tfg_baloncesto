@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Quinto Cuarto | Baloncesto en Tiempo Real, Actas Digitales y Estadísticas{% endblock %}
+
+{% block content %}
+<!-- SECCIÓN HERO DE ALTO IMPACTO (QUINTO CUARTO) -->
+<section style="text-align: center; padding: 1.25rem 0 3.5rem; max-width: 900px; margin: 0 auto;">
+
+  <!-- Pill superior -->
+  <div
+    style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--gold-light); border: 1px solid var(--gold-border); color: #926004; padding: 0.4rem 1.25rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1.25rem; box-shadow: var(--shadow-subtle);">
+    <span>⚡ SEGUIMIENTO Y GESTIÓN EN TIEMPO REAL</span>
+  </div>
+
+  <!-- Titular Principal Esbelto -->
+  <h1
+    style="font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 600; letter-spacing: -0.02em; margin-bottom: 1.35rem; line-height: 1.15; color: var(--text-title);">
+    El control total del baloncesto <br>
+    <span class="gold-text">en vivo, profesional y digital</span>
+  </h1>
+
+  <!-- Subtítulo -->
+  <p
+    style="font-size: 1.15rem; color: var(--text-secondary); line-height: 1.7; max-width: 700px; margin: 0 auto 2.5rem; font-weight: 400;">
+    Marcadores actualizados segundo a segundo, actas digitales oficiales, salas de chat instantáneas por partido y
+    estadísticas avanzadas con valoración oficial (MVP).
+  </p>
+
+  <!-- Botones de Acción Hero -->
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="#partidos-en-vivo" class="btn btn-primary" style="font-size: 1rem; padding: 0.8rem 1.85rem;">
+      ⚡ Ver Partidos en Vivo
+    </a>
+    <a href="#modulos" class="btn btn-secondary" style="font-size: 1rem; padding: 0.8rem 1.85rem;">
+      🛡️ Explorar Módulos
+    </a>
+  </div>
+
+  <!-- Barra de Estadísticas Rápidas de la Plataforma -->
+  <div class="home-stats-bar"
+    style="margin-top: 3.5rem; padding: 1.5rem 1.75rem; background: #FFFFFF; border: 1px solid var(--platinum-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);">
+    <div>
+      <div class="stat-num" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--gold-primary);">
+        &lt; 200ms</div>
+      <div
+        style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">
+        Latencia WebSockets</div>
+    </div>
+    <div>
+      <div class="stat-num" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--obsidian-dark);">
+        100% Digital</div>
+      <div
+        style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">
+        Actas y Firmas Arbitrales</div>
+    </div>
+    <div>
+      <div class="stat-num" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--state-green);">
+        FIBA / ACB</div>
+      <div
+        style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">
+        Valoración Oficial</div>
+    </div>
+    <div>
+      <div class="stat-num" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 600; color: var(--state-blue);">4
+        Roles</div>
+      <div
+        style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem;">
+        Control de Acceso Granular</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- SECCIÓN: PARTIDOS EN JUEGO (SPOTLIGHT BROADCAST STYLE) -->
+<section id="partidos-en-vivo" style="scroll-margin-top: 120px; margin-bottom: 4.5rem; padding-top: 1rem;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div
+        style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem;">
+        RETRANSMISIÓN EN DIRECTO</div>
+      <h2 style="font-size: 1.85rem; font-weight: 600;">Partidos en Juego Ahora</h2>
+    </div>
+    <span class="badge badge-live" style="font-size: 0.8rem; padding: 0.35rem 0.85rem;">
+      <span class="live-dot"></span> EN DIRECTO
+    </span>
+  </div>
+
+  {% if live_matches %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr)); gap: 1.5rem;">
+    {% for match in live_matches %}
+    <div class="card card-interactive live-match-card">
+
+      <!-- Cabecera de Competición -->
+      <div class="live-card-header"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="font-size: 1.1rem;">🏆</span>
+          <strong style="color: var(--text-title); font-size: 0.95rem; font-weight: 600;">{{ match.season.league.name }}</strong>
+          <span style="color: var(--text-secondary); font-size: 0.85rem;">&bull; Jornada {{ match.round_number }}</span>
+        </div>
+
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">
+          Temporada {{ match.season.name }}
+        </span>
+      </div>
+
+      <!-- Marcador y Equipos con Escudos Oficiales -->
+      <div class="live-card-scoreboard">
+
+        <!-- Equipo Local -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div class="live-team-logo"
+            style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.6rem;">
+            {% if match.home_team.logo %}
+            <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}"
+              style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+            {% else %}
+            <div
+              style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, {{ match.home_team.primary_color|default:'#090D16' }}, #1E293B); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; color: #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.12);">
+              {{ match.home_team.acronym }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="live-team-name"
+            style="font-weight: 600; font-size: 1.05rem; color: var(--text-title); font-family: var(--font-display); line-height: 1.25;">
+            {{ match.home_team.name }}
+          </div>
+          <span
+            style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">LOCAL</span>
+        </div>
+
+        <!-- Tablón de Marcador Central y Cuarto/Tiempo Debajo -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
+
+          <!-- Dígitos del Marcador Limpios y Elegantes -->
+          <div style="display: flex; align-items: center; gap: 1rem; padding: 0.2rem 0.5rem;">
+            <span id="home-live-home-score-{{ match.id }}" class="live-score-digits"
+              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+              {{ match.home_score }}
+            </span>
+            <span class="live-score-colon"
+              style="color: var(--gold-primary); font-size: 1.85rem; font-weight: 600; line-height: 1; opacity: 0.85;">:</span>
+            <span id="home-live-away-score-{{ match.id }}" class="live-score-digits"
+              style="font-size: 2.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-title); line-height: 1; min-width: 50px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+              {{ match.away_score }}
+            </span>
+          </div>
+
+          <!-- Cuarto y Tiempo de Juego Debajo del Marcador -->
+          <div class="live-period-badge"
+            style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.35rem 0.95rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            <span>⏱️</span>
+            <strong id="home-live-period-{{ match.id }}" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
+            <span>&bull;</span>
+            <span id="home-live-clock-{{ match.id }}" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
+          </div>
+
+        </div>
+
+        <!-- Equipo Visitante -->
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div class="live-team-logo"
+            style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.6rem;">
+            {% if match.away_team.logo %}
+            <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}"
+              style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+            {% else %}
+            <div
+              style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, {{ match.away_team.primary_color|default:'#090D16' }}, #1E293B); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; color: #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.12);">
+              {{ match.away_team.acronym }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="live-team-name"
+            style="font-weight: 600; font-size: 1.05rem; color: var(--text-title); font-family: var(--font-display); line-height: 1.25;">
+            {{ match.away_team.name }}
+          </div>
+          <span
+            style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">VISITANTE</span>
+        </div>
+
+      </div>
+
+      <!-- Pie del Partido con Ubicación y Enlace a Directo -->
+      <div class="live-card-footer"
+        style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.75rem 1.1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+        <div style="display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--text-secondary);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if not match.location and match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
+        </div>
+        <a href="{% url 'matches:match_live' match.id %}"
+          style="color: var(--gold-primary); font-weight: 600; display: flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+          Ver en Directo ⚡ &rarr;
+        </a>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
+    <p style="font-size: 1.05rem; font-weight: 500; color: var(--text-title); margin-bottom: 0.35rem;">No hay partidos
+      en juego en este momento.</p>
+    <p style="color: var(--text-secondary); font-size: 0.9rem;">Los partidos en directo aparecerán automáticamente aquí
+      cuando comience el cronómetro.</p>
+  </div>
+  {% endif %}
+</section>
+
+<!-- SECCIÓN: MÓDULOS DE LA PLATAFORMA -->
+<section id="modulos" style="scroll-margin-top: 120px; margin-bottom: 3.5rem; padding-top: 1rem;">
+
+  <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div
+      style="font-size: 0.8rem; font-weight: 600; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;">
+      ARQUITECTURA DE SOFTWARE</div>
+    <h2 style="font-size: 1.95rem; font-weight: 600; margin-bottom: 0.5rem;">Módulos del Sistema</h2>
+    <p style="color: var(--text-secondary); font-size: 1rem; max-width: 600px; margin: 0 auto;">
+      Diseño desacoplado y reactivo para una experiencia fluida y profesional
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.5rem;">
+
+    <div class="card card-interactive">
+      <div
+        style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--gold-light); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        ⏱️
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Mesa Arbitral Digital</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Registro en vivo de puntos, faltas personales, tiempos muertos y firma digital del acta oficial.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div
+        style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--state-blue-light); border: 1px solid rgba(37, 99, 235, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        💬
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Salas de Chat en Vivo</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Canales WebSockets independientes por partido para debatir las jugadas en tiempo real entre aficionados.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div
+        style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--state-green-light); border: 1px solid rgba(5, 150, 105, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        📊
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Estadísticas Avanzadas</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Estadísticas individuales y de equipo actualizadas al segundo, con métricas oficiales de rendimiento y eficiencia en pista.
+      </p>
+    </div>
+
+    <div class="card card-interactive">
+      <div
+        style="width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--obsidian-dark); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.15rem;">
+        🛡️
+      </div>
+      <h3 style="font-size: 1.18rem; font-weight: 600; margin-bottom: 0.5rem;">Gestión de Plantillas</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65;">
+        Gestión ágil de jugadores, asignación de dorsales por temporada y seguimiento de la plantilla del equipo.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- SINCRONIZACIÓN WEBSOCKET EN TIEMPO REAL DE PARTIDOS EN JUEGO (HOME PAGE) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const liveMatchIds = [{% for m in live_matches %}{{ m.id }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  if (liveMatchIds && liveMatchIds.length > 0) {
+    liveMatchIds.forEach(id => initLiveMatchCardSync(id, 'home-live'));
+  }
+});
+
+function initLiveMatchCardSync(matchId, prefix) {
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const wsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
+  let socket = null;
+  let timerInterval = null;
+  let currentSec = 600;
+
+  function parseClock(str) {
+    if (!str) return;
+    const p = str.split(':');
+    if (p.length === 2) {
+      currentSec = parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    }
+  }
+
+  function renderClock() {
+    const m = Math.floor(currentSec / 60);
+    const s = currentSec % 60;
+    const str = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    const el = document.getElementById(`${prefix}-clock-${matchId}`);
+    if (el) el.innerText = str;
+  }
+
+  function handleClock(isRunning, clockStr) {
+    if (clockStr) {
+      parseClock(clockStr);
+      renderClock();
+    }
+    if (isRunning) {
+      if (!timerInterval) {
+        timerInterval = setInterval(() => {
+          if (currentSec > 0) {
+            currentSec--;
+            renderClock();
+          } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+        }, 1000);
+      }
+    } else {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+  }
+
+  function flashScore(el, val) {
+    if (!el) return;
+    if (el.innerText.trim() !== String(val)) {
+      el.innerText = val;
+      el.style.color = 'var(--gold-primary)';
+      el.style.transform = 'scale(1.18)';
+      setTimeout(() => {
+        el.style.color = 'var(--text-title)';
+        el.style.transform = 'scale(1)';
+      }, 450);
+    }
+  }
+
+  function updateMatchUI(data) {
+    if (!data) return;
+    const hScore = data.home_score !== undefined ? data.home_score : (data.home_team ? data.home_team.score : undefined);
+    const aScore = data.away_score !== undefined ? data.away_score : (data.away_team ? data.away_team.score : undefined);
+    const pDisplay = data.period_display;
+    const clock = data.clock;
+    const isRunning = data.is_running;
+
+    const homeEl = document.getElementById(`${prefix}-home-score-${matchId}`);
+    const awayEl = document.getElementById(`${prefix}-away-score-${matchId}`);
+    const periodEl = document.getElementById(`${prefix}-period-${matchId}`);
+
+    if (hScore !== undefined && homeEl) flashScore(homeEl, hScore);
+    if (aScore !== undefined && awayEl) flashScore(awayEl, aScore);
+    if (pDisplay && periodEl) periodEl.innerText = pDisplay;
+    if (clock !== undefined) handleClock(isRunning, clock);
+  }
+
+  function connect() {
+    socket = new WebSocket(wsUrl);
+    socket.onmessage = function(e) {
+      const payload = JSON.parse(e.data);
+      if (payload.type === 'initial_state' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'match_update' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'clock_update' && payload.data) {
+        updateMatchUI(payload.data);
+      } else if (payload.type === 'scoresheet_closed') {
+        location.reload();
+      }
+    };
+    socket.onclose = function() {
+      if (timerInterval) clearInterval(timerInterval);
+      setTimeout(connect, 3000);
+    };
+  }
+
+  connect();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1191 @@
+{% extends "base.html" %}
+
+{% block title %}{{ match.home_team.acronym }} vs {{ match.away_team.acronym }} | Retransmisión y Chat en Vivo | Quinto Cuarto{% endblock %}
+
+{% block content %}
+<div style="max-width: 1150px; margin: 0 auto;">
+  
+  <!-- Cabecera de Competición y Volver -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="{% url 'matches:match_list' %}" class="btn btn-secondary btn-sm">&larr; Partidos</a>
+      <span style="color: var(--text-secondary); font-size: 0.88rem;">
+        🏆 <strong>{{ match.season.league.name }}</strong> &bull; Temporada {{ match.season.name }} &bull; Jornada {{ match.round_number }}
+      </span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      {% if can_manage_table and match.status != 'FINISHED' %}
+        <a href="{% url 'matches:scorekeeper' match.id %}" class="btn btn-gold btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Consola de Mesa Arbitral
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- GRAN MARCADOR EN TIEMPO REAL (BROADCAST LUXURY SCOREBOARD) -->
+  <div class="card" style="margin-bottom: 2rem; padding: 2.25rem 2rem; background: #FFFFFF; border-top: 4px solid var(--gold-primary); box-shadow: 0 12px 35px rgba(9, 13, 22, 0.08); position: relative; overflow: hidden;">
+    
+    <div class="scoreboard-grid">
+      
+      <!-- EQUIPO LOCAL -->
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          {% if match.home_team.logo %}
+            <img src="{{ match.home_team.logo.url }}" alt="{{ match.home_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+          {% else %}
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.home_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+              {{ match.home_team.acronym }}
+            </div>
+          {% endif %}
+        </div>
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
+          <a href="{% url 'teams:team_detail' match.home_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.home_team.name }}</a>
+        </h2>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">LOCAL</span>
+
+        <!-- Tiempos Muertos FIBA (Local) -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 0.35rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Tiempos Muertos disponibles en esta mitad/periodo">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Tiempos Muertos</span>
+            <div id="live-home-timeouts" style="display: flex; gap: 0.3rem; align-items: center;">
+              <!-- Indicadores de tiempos muertos -->
+            </div>
+          </div>
+
+          <!-- Faltas de Equipo y Bonus (Local) -->
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Faltas de equipo en el cuarto actual (Límite 5)">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Faltas:</span>
+            <strong id="live-home-fouls-count" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-title);">{{ home_fouls_info.count|default:0 }}/5</strong>
+            <span id="live-home-bonus-badge" class="badge-bonus-live {% if home_fouls_info.in_bonus %}active{% endif %}" title="Equipo en Bonus: 2 tiros libres por cada falta personal posterior">
+              {% if home_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MARCADOR Y RELOJ CENTRAL -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
+        
+        <!-- Dígitos de Puntuación Limpios y Grandes -->
+        <div style="display: flex; align-items: center; gap: 1.25rem; padding: 0.2rem 0.5rem;">
+          <span id="score-home" style="font-family: var(--font-mono); font-size: 3.8rem; font-weight: 700; color: var(--text-title); line-height: 1; min-width: 65px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            {{ match.home_score }}
+          </span>
+          
+          <span style="font-size: 2.2rem; font-weight: 600; color: var(--gold-primary); line-height: 1; opacity: 0.85;">:</span>
+          
+          <span id="score-away" style="font-family: var(--font-mono); font-size: 3.8rem; font-weight: 700; color: var(--text-title); line-height: 1; min-width: 65px; text-align: center; letter-spacing: -0.02em; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            {{ match.away_score }}
+          </span>
+        </div>
+
+        <!-- Cuarto y Tiempo de Juego Debajo del Marcador -->
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-subtle); border: 1px solid var(--platinum-border); color: var(--text-secondary); padding: 0.4rem 1.15rem; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 600; font-family: var(--font-mono); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+          {% if match.status == 'LIVE' %}
+            <span class="live-dot" style="width: 8px; height: 8px; margin: 0;"></span>
+            <strong id="text-period" style="color: var(--text-title);">{{ match.get_current_period_display }}</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--gold-primary); font-weight: 700;">{{ match.game_clock }}</span>
+          {% elif match.status == 'SCHEDULED' %}
+            <span style="font-size: 0.9rem;">🕒</span>
+            <strong id="text-period" style="color: var(--text-title);">Por Comenzar</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--text-secondary); font-weight: 600;">10:00</span>
+          {% else %}
+            <span style="font-size: 0.9rem;">🏁</span>
+            <strong id="text-period" style="color: var(--text-title);">Finalizado</strong>
+            <span>&bull;</span>
+            <span id="clock-display" style="color: var(--text-secondary); font-weight: 600;">00:00</span>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- EQUIPO VISITANTE -->
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          {% if match.away_team.logo %}
+            <img src="{{ match.away_team.logo.url }}" alt="{{ match.away_team.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.12));">
+          {% else %}
+            <div style="width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, {{ match.away_team.primary_color|default:'#090D16' }}, #0F172A); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.65rem; font-weight: 700; border: 3px solid #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+              {{ match.away_team.acronym }}
+            </div>
+          {% endif %}
+        </div>
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.15rem;">
+          <a href="{% url 'teams:team_detail' match.away_team.slug %}" style="color: inherit; text-decoration: none;">{{ match.away_team.name }}</a>
+        </h2>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">VISITANTE</span>
+
+        <!-- Tiempos Muertos FIBA (Visitante) -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 0.35rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Tiempos Muertos disponibles en esta mitad/periodo">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Tiempos Muertos</span>
+            <div id="live-away-timeouts" style="display: flex; gap: 0.3rem; align-items: center;">
+              <!-- Indicadores de tiempos muertos -->
+            </div>
+          </div>
+
+          <!-- Faltas de Equipo y Bonus (Visitante) -->
+          <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.1rem 0;" title="Faltas de equipo en el cuarto actual (Límite 5)">
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Faltas:</span>
+            <strong id="live-away-fouls-count" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-title);">{{ away_fouls_info.count|default:0 }}/5</strong>
+            <span id="live-away-bonus-badge" class="badge-bonus-live {% if away_fouls_info.in_bonus %}active{% endif %}" title="Equipo en Bonus: 2 tiros libres por cada falta personal posterior">
+              {% if away_fouls_info.in_bonus %}Bonus{% else %}Sin Bonus{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Ubicación y Acceso al Acta Oficial -->
+    <div style="margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--platinum-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.4rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span style="font-weight: 600; color: var(--text-title);">{{ match.location|default:match.home_team.arena_name|default:"Pabellón Oficial" }}{% if not match.location and match.home_team.city %}, {{ match.home_team.city }}{% endif %}</span>
+      </div>
+      <div>
+        {% if match.status == 'FINISHED' %}
+          {% if match.scoresheet and match.scoresheet.is_closed %}
+            {% if can_view_scoresheet %}
+              <a href="{% url 'matches:scoresheet_detail' match.id %}" style="color: var(--state-green); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Ver Acta Oficial Firmada &rarr;
+              </a>
+            {% else %}
+              <span style="color: var(--state-green); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Partido Concluido &bull; Acta Oficial Homologada
+              </span>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+              Acta en proceso de cierre
+            </span>
+          {% endif %}
+        {% elif match.status == 'LIVE' %}
+          <span style="color: var(--gold-primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Partido en Directo
+          </span>
+        {% else %}
+          <span style="color: var(--text-secondary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-blue);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Encuentro Programado &bull; {{ match.scheduled_at|date:"d M - H:i"|default:"Horario Oficial" }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECCIÓN INTERACTIVA: PESTAÑAS (JUGADA A JUGADA vs CHAT EN VIVO) + PLANTILLAS -->
+  <div class="grid-responsive-2" style="gap: 1.75rem; align-items: start; margin-bottom: 2rem;">
+    
+    <!-- COLUMNA IZQUIERDA: PANEL DINÁMICO CON PESTAÑAS (ALTURA FIJA UNIFORME) -->
+    <div class="card live-card-height" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
+      
+      <!-- Barra de Pestañas Superiores -->
+      <div style="display: flex; height: 57px; flex-shrink: 0; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
+        
+        <button type="button" onclick="switchLiveTab('boxscore')" id="tab-btn-boxscore" class="tab-live-btn" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
+          Estadísticas
+        </button>
+
+        <button type="button" onclick="switchLiveTab('play-by-play')" id="tab-btn-pbp" class="tab-live-btn active" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; border: none; background: #FFFFFF; cursor: pointer; color: var(--text-title); border-bottom: 3px solid var(--gold-primary); transition: all 0.2s ease;">
+          Jugada a Jugada
+        </button>
+        
+        <button type="button" onclick="switchLiveTab('live-chat')" id="tab-btn-chat" class="tab-live-btn" style="flex: 1; padding: 0.85rem 1.25rem; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.45rem; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s ease;">
+          Chat en Vivo <span id="chat-count-badge" class="badge badge-fan" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">0</span>
+        </button>
+
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 0: ESTADÍSTICAS -->
+      <div id="tab-content-boxscore" style="display: none; height: calc(610px - 57px); max-height: calc(610px - 57px); overflow-y: auto; padding: 1.25rem; box-sizing: border-box;">
+        
+        <!-- Box Score Equipo Local -->
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.home_team.name }}</h4>
+            </div>
+            <strong id="boxscore-home-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.home_score }} PTS</strong>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody id="boxscore-home-tbody">
+                {% for stat in home_player_stats %}
+                  <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                    <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td class="stat-min">{{ stat.live_minutes_played|default:stat.minutes_played }}'</td>
+                    <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                    <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                    <td class="stat-ast">{{ stat.assists }}</td>
+                    <td class="stat-rob">{{ stat.steals }}</td>
+                    <td class="stat-per">{{ stat.turnovers }}</td>
+                    <td class="stat-tap">{{ stat.blocks_made }}</td>
+                    <td class="stat-fal">
+                      {% if stat.fouls_committed >= 5 %}
+                        <strong style="color: var(--state-red);">{{ stat.fouls_committed }}</strong>
+                      {% else %}
+                        {{ stat.fouls_committed }}
+                      {% endif %}
+                    </td>
+                    <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Box Score Equipo Visitante -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 2px solid var(--platinum-border); padding-bottom: 0.4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }};"></span>
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-title); margin: 0;">{{ match.away_team.name }}</h4>
+            </div>
+            <strong id="boxscore-away-total" style="font-family: var(--font-mono); font-size: 1.05rem; color: var(--text-title);">{{ match.away_score }} PTS</strong>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table" style="font-size: 0.78rem; text-align: center; width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-subtle); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                  <th style="text-align: left; padding: 0.4rem 0.6rem;">JUGADOR</th>
+                  <th>MIN</th>
+                  <th>PTS</th>
+                  <th>T2</th>
+                  <th>T3</th>
+                  <th>TL</th>
+                  <th>REB</th>
+                  <th>AST</th>
+                  <th>ROB</th>
+                  <th>PER</th>
+                  <th>TAP</th>
+                  <th>FAL</th>
+                  <th style="color: #926004; font-weight: 700;">PIR</th>
+                </tr>
+              </thead>
+              <tbody id="boxscore-away-tbody">
+                {% for stat in away_player_stats %}
+                  <tr id="player-stat-row-{{ stat.player.id }}" style="border-bottom: 1px solid var(--platinum-border); transition: background-color 0.4s ease;">
+                    <td style="text-align: left; padding: 0.45rem 0.6rem; font-weight: 600;">
+                      <a href="{% url 'teams:player_detail' stat.player.id %}" style="color: var(--text-title); text-decoration: none;">
+                        {{ stat.player.full_name }}
+                      </a>
+                    </td>
+                    <td class="stat-min">{{ stat.live_minutes_played|default:stat.minutes_played }}'</td>
+                    <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
+                    <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
+                    <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
+                    <td class="stat-tl" style="color: var(--text-secondary);">{{ stat.free_throws_made }}/{{ stat.free_throws_attempted }}</td>
+                    <td><strong class="stat-reb">{{ stat.total_rebounds }}</strong></td>
+                    <td class="stat-ast">{{ stat.assists }}</td>
+                    <td class="stat-rob">{{ stat.steals }}</td>
+                    <td class="stat-per">{{ stat.turnovers }}</td>
+                    <td class="stat-tap">{{ stat.blocks_made }}</td>
+                    <td class="stat-fal">
+                      {% if stat.fouls_committed >= 5 %}
+                        <strong style="color: var(--state-red);">{{ stat.fouls_committed }}</strong>
+                      {% else %}
+                        {{ stat.fouls_committed }}
+                      {% endif %}
+                    </td>
+                    <td class="stat-pir" style="font-weight: 700; color: #926004; background: var(--gold-light);">{{ stat.valuation_pir }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="13" style="padding: 1.25rem; color: var(--text-secondary); text-align: center;">Sin estadísticas registradas para este equipo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 1: JUGADA A JUGADA -->
+      <div id="tab-content-pbp" style="display: flex; flex-direction: column; height: calc(610px - 57px); max-height: calc(610px - 57px); padding: 1.25rem; box-sizing: border-box; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-shrink: 0;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-title); margin: 0;">Cronología del Partido</h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Sincronización en tiempo real</span>
+        </div>
+
+        <div id="events-timeline" style="display: flex; flex-direction: column; gap: 0.6rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; min-height: 0;">
+          {% for ev in recent_events %}
+            <div class="event-item" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.7rem 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); transition: all 0.3s ease;">
+              
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                  {{ ev.get_period_display }} &bull; {{ ev.game_clock }}
+                </span>
+                
+                <div>
+                  <strong style="color: var(--text-title); font-size: 0.9rem;">
+                    {{ ev.team.acronym }}{% if ev.player %}: {{ ev.player.full_name }}{% endif %}
+                  </strong>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary);">
+                    {% if ev.description %}{{ ev.description }}{% else %}{{ ev.get_event_type_display }}{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {% if ev.points != 0 %}
+                <div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: {% if ev.points > 0 %}var(--gold-primary){% else %}var(--state-red){% endif %}; background: #FFFFFF; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid {% if ev.points > 0 %}var(--gold-border){% else %}rgba(220,38,38,0.3){% endif %};">
+                  {% if ev.points > 0 %}+{% endif %}{{ ev.points }}
+                </div>
+              {% endif %}
+
+            </div>
+          {% empty %}
+            <div id="no-events-text" style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+              <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.15rem; border: 1px solid var(--platinum-border);">
+                ⏱️
+              </div>
+              <h4 style="font-size: 1.15rem; font-weight: 600; color: var(--text-title); margin-bottom: 0.4rem;">Sin Jugadas Registradas</h4>
+              <p style="font-size: 0.88rem; max-width: 440px; line-height: 1.55; margin: 0; color: var(--text-secondary);">
+                La cronología de jugadas y canastas se retransmitirá aquí en directo en cuanto la mesa arbitral registre acciones.
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 2: SALA DE CHAT EN VIVO -->
+      <div id="tab-content-chat" style="display: none; height: calc(610px - 57px); max-height: calc(610px - 57px); padding: 1.25rem; box-sizing: border-box; overflow: hidden; flex-direction: column;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-shrink: 0;">
+          <div>
+            <h3 style="font-size: 1.05rem; font-weight: 600; margin: 0;">Sala de Debate en Directo</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Comenta el partido con otros aficionados</span>
+          </div>
+        </div>
+
+        <!-- Flujo de Mensajes de Chat -->
+        <div id="chat-messages-container" style="display: flex; flex-direction: column; gap: 0.75rem; flex: 1; overflow-y: auto; padding-right: 0.4rem; margin-bottom: 0.75rem; min-height: 0;">
+          <!-- Los mensajes se cargan automáticamente por WebSocket -->
+        </div>
+
+        <!-- Barra de Reacciones Rápidas con Emojis -->
+        <div style="display: flex; gap: 0.35rem; margin-bottom: 0.6rem; flex-wrap: wrap; flex-shrink: 0;">
+          <button type="button" onclick="insertEmoji('🏀 ¡Canasta!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🏀 ¡Canasta!</button>
+          <button type="button" onclick="insertEmoji('🔥 ¡Increíble jugada!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🔥 ¡Increíble!</button>
+          <button type="button" onclick="insertEmoji('🎯 ¡Tripleee!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">🎯 ¡Tripleee!</button>
+          <button type="button" onclick="insertEmoji('👏 ¡Gran defensa!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">👏 ¡Defensa!</button>
+          <button type="button" onclick="insertEmoji('📣 ¡Vamos equipo!')" class="btn btn-secondary btn-sm" style="padding: 0.18rem 0.5rem; font-size: 0.75rem;">📣 ¡Vamos!</button>
+        </div>
+
+        <!-- Formulario de Envío de Mensaje -->
+        <form id="form-chat-send" onsubmit="event.preventDefault(); submitChatMessage();" style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
+          <input type="text" id="chat-input-text" class="form-control" placeholder="Escribe tu mensaje en directo..." maxlength="500" required autocomplete="off" style="font-size: 0.88rem; padding: 0.6rem 0.9rem;">
+          <button type="submit" class="btn btn-primary" id="btn-chat-send" style="padding: 0.6rem 1.25rem; font-weight: 700; white-space: nowrap;">
+            Enviar
+          </button>
+        </form>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; text-align: right;" id="chat-char-counter">
+          0 / 500
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA: PLANTILLAS OFICIALES (ALTURA FIJA UNIFORME DE 610px) -->
+    <div class="card live-card-height" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-card); display: flex; flex-direction: column; height: 610px; min-height: 610px; max-height: 610px;">
+      
+      <!-- Cabecera de Plantillas -->
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 57px; flex-shrink: 0; padding: 0 1.25rem; border-bottom: 1px solid var(--platinum-border); background: var(--bg-subtle);">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-title); margin: 0; display: flex; align-items: center; gap: 0.45rem;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold-primary); flex-shrink: 0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Plantilla de los Equipos
+        </h3>
+        <span class="badge" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; background: #FFFFFF; color: var(--text-secondary); border: 1px solid var(--platinum-border);">
+          Convocatoria
+        </span>
+      </div>
+
+      <!-- Cuerpo con las dos plantillas perfectamente cuadradas -->
+      <div style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; height: calc(610px - 57px); box-sizing: border-box;">
+        
+        <!-- Plantilla Local -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; gap: 0.45rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.home_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+              <strong style="font-size: 0.88rem; color: var(--text-title);">{{ match.home_team.name }}</strong>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">LOCAL</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.35rem; height: 200px; max-height: 200px; overflow-y: auto; padding-right: 0.25rem;">
+            {% for m in home_roster %}
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                <div>
+                  <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                  <span id="roster-court-badge-{{ m.player.id }}" class="roster-court-badge on-court" style="{% if m.player.id in home_on_court_ids %}display: inline-flex;{% else %}display: none;{% endif %}">
+                    🏀 En Pista
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Plantilla Visitante -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--platinum-border);">
+            <div style="display: flex; align-items: center; gap: 0.45rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ match.away_team.primary_color|default:'#090D16' }}; flex-shrink: 0;"></span>
+              <strong style="font-size: 0.88rem; color: var(--text-title);">{{ match.away_team.name }}</strong>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">VISITANTE</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.35rem; height: 200px; max-height: 200px; overflow-y: auto; padding-right: 0.25rem;">
+            {% for m in away_roster %}
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.4rem 0.6rem; background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+                <div>
+                  <strong style="color: var(--obsidian-dark); font-family: var(--font-mono);">#{{ m.jersey_number }}</strong>
+                  <a href="{% url 'teams:player_detail' m.player.id %}" style="color: var(--text-title); margin-left: 0.35rem; font-weight: 600; text-decoration: none;">{{ m.player.full_name }}</a>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="font-size: 0.72rem; color: var(--text-secondary);">{{ m.player.get_position_display }}</span>
+                  <span id="roster-court-badge-{{ m.player.id }}" class="roster-court-badge on-court" style="{% if m.player.id in away_on_court_ids %}display: inline-flex;{% else %}display: none;{% endif %}">
+                    🏀 En Pista
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN PARA ELIMINAR MENSAJE (QUINTO CUARTO DESIGN SYSTEM) -->
+<div id="modal-delete-chat-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div class="card" style="max-width: 440px; width: 100%; padding: 2rem; border-top: 4px solid var(--state-red); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem;">
+      <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0; border: 1px solid rgba(220, 38, 38, 0.2);">
+        🗑️
+      </div>
+      <div>
+        <h3 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--text-title);">Eliminar Comentario</h3>
+        <span style="font-size: 0.82rem; color: var(--text-secondary);">Moderación de la sala de chat</span>
+      </div>
+    </div>
+
+    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.5rem;">
+      ¿Estás seguro de que deseas eliminar este comentario? Se borrará instantáneamente de la retransmisión para todos los usuarios.
+    </p>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+      <button type="button" onclick="closeDeleteChatModal()" class="btn btn-secondary btn-sm" style="padding: 0.6rem 1.25rem;">
+        Cancelar
+      </button>
+      <button type="button" onclick="confirmDeleteChatMessage()" class="btn btn-sm" style="background: var(--state-red); color: #FFFFFF; border: none; font-weight: 700; padding: 0.6rem 1.35rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+        Sí, Eliminar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.badge-bonus-live {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--platinum-border);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.badge-bonus-live.active {
+  background: var(--state-red);
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+  animation: pulseBonus 2s infinite ease-in-out;
+}
+@keyframes pulseBonus {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.92; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5); }
+}
+
+.roster-court-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+.roster-court-badge.on-court {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--state-green);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.scoreboard-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .scoreboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .live-card-height {
+    height: auto !important;
+    min-height: 520px !important;
+    max-height: none !important;
+  }
+}
+</style>
+
+<!-- CLIENTES WEBSOCKET JS: MARCADOR + SALA DE CHAT EN VIVO -->
+<script>
+const matchId = "{{ match.id }}";
+const currentUserId = {{ request.user.id|default:"null" }};
+const isUserAdmin = {{ request.user.is_superuser|yesno:"true,false" }} || "{{ request.user.role }}" === "ADMIN";
+
+const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+const matchWsUrl = `${wsProtocol}${window.location.host}/ws/matches/${matchId}/live/`;
+const chatWsUrl = `${wsProtocol}${window.location.host}/ws/chat/${matchId}/`;
+
+let matchSocket = null;
+let chatSocket = null;
+let clientClockInterval = null;
+let clientSeconds = 600;
+let totalChatMessages = 0;
+let pendingDeleteMessageId = null;
+
+let liveHomeOnCourt = new Set(JSON.parse('{{ home_on_court_json|default:"[]"|escapejs }}').map(id => parseInt(id, 10)));
+let liveAwayOnCourt = new Set(JSON.parse('{{ away_on_court_json|default:"[]"|escapejs }}').map(id => parseInt(id, 10)));
+
+// -----------------------------------------------------------------------------
+// CONTROL DE PESTAÑAS (Box Score vs Jugada a Jugada vs Chat)
+// -----------------------------------------------------------------------------
+function switchLiveTab(tab) {
+  const boxscoreBtn = document.getElementById('tab-btn-boxscore');
+  const pbpBtn = document.getElementById('tab-btn-pbp');
+  const chatBtn = document.getElementById('tab-btn-chat');
+
+  const boxscoreContent = document.getElementById('tab-content-boxscore');
+  const pbpContent = document.getElementById('tab-content-pbp');
+  const chatContent = document.getElementById('tab-content-chat');
+
+  // Reset todos los botones
+  [boxscoreBtn, pbpBtn, chatBtn].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('active');
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--text-secondary)';
+      btn.style.borderBottom = '3px solid transparent';
+    }
+  });
+
+  // Ocultar todos los paneles
+  if (boxscoreContent) boxscoreContent.style.display = 'none';
+  if (pbpContent) pbpContent.style.display = 'none';
+  if (chatContent) chatContent.style.display = 'none';
+
+  if (tab === 'boxscore' && boxscoreBtn && boxscoreContent) {
+    boxscoreBtn.classList.add('active');
+    boxscoreBtn.style.background = '#FFFFFF';
+    boxscoreBtn.style.color = 'var(--text-title)';
+    boxscoreBtn.style.borderBottom = '3px solid var(--gold-primary)';
+    boxscoreContent.style.display = 'block';
+  } else if (tab === 'play-by-play' && pbpBtn && pbpContent) {
+    pbpBtn.classList.add('active');
+    pbpBtn.style.background = '#FFFFFF';
+    pbpBtn.style.color = 'var(--text-title)';
+    pbpBtn.style.borderBottom = '3px solid var(--gold-primary)';
+    pbpContent.style.display = 'flex';
+  } else if (tab === 'live-chat' && chatBtn && chatContent) {
+    chatBtn.classList.add('active');
+    chatBtn.style.background = '#FFFFFF';
+    chatBtn.style.color = 'var(--text-title)';
+    chatBtn.style.borderBottom = '3px solid var(--gold-primary)';
+    chatContent.style.display = 'flex';
+    scrollChatToBottom();
+  }
+}
+
+// Si el partido ya ha finalizado, mostrar por defecto la pestaña de Estadísticas (Box Score)
+{% if match.status == 'FINISHED' %}
+  document.addEventListener('DOMContentLoaded', function() {
+    switchLiveTab('boxscore');
+  });
+{% endif %}
+
+function updateLiveOnCourt(side, onCourtIds) {
+  const onCourtIdSet = new Set((onCourtIds || []).map(id => parseInt(id, 10)));
+  if (side === 'home') {
+    liveHomeOnCourt = onCourtIdSet;
+  } else if (side === 'away') {
+    liveAwayOnCourt = onCourtIdSet;
+  }
+
+  const combinedOnCourt = new Set([...liveHomeOnCourt, ...liveAwayOnCourt]);
+
+  // Actualizar badges en la plantilla lateral (solo mostrar 'En Pista', ocultar para banquillo)
+  document.querySelectorAll(`.roster-court-badge`).forEach(badge => {
+    const idParts = badge.id.split('-');
+    if (idParts.length === 4) {
+      const pId = parseInt(idParts[3], 10);
+      if (combinedOnCourt.has(pId)) {
+        badge.style.display = 'inline-flex';
+        badge.className = 'roster-court-badge on-court';
+        badge.innerHTML = '🏀 En Pista';
+      } else {
+        badge.style.display = 'none';
+        badge.className = 'roster-court-badge';
+        badge.innerHTML = '';
+      }
+    }
+  });
+}
+
+// -----------------------------------------------------------------------------
+// 1. WEBSOCKET DE MARCADOR Y RELOJ EN VIVO
+// -----------------------------------------------------------------------------
+function connectMatchWebSocket() {
+  matchSocket = new WebSocket(matchWsUrl);
+
+  matchSocket.onopen = function() {
+    const wsDot = document.getElementById('ws-dot');
+    const wsText = document.getElementById('ws-text');
+    if (wsDot) wsDot.style.background = 'var(--state-green)';
+    if (wsText) {
+      wsText.innerText = 'En Directo';
+      wsText.style.color = 'var(--state-green)';
+    }
+  };
+
+  matchSocket.onmessage = function(e) {
+    const payload = JSON.parse(e.data);
+    const data = payload.data;
+
+    if (payload.type === 'initial_state' && data) {
+      updateScoreboard(data.home_team.score, data.away_team.score, data.period_display, data.clock);
+      handleRunningClock(data.is_running, data.clock);
+      if (data.home_team && data.home_team.timeouts) renderLiveTimeouts('home', data.home_team.timeouts);
+      if (data.away_team && data.away_team.timeouts) renderLiveTimeouts('away', data.away_team.timeouts);
+      if (data.home_team && data.home_team.fouls) renderLiveTeamFouls('home', data.home_team.fouls);
+      if (data.away_team && data.away_team.fouls) renderLiveTeamFouls('away', data.away_team.fouls);
+      if (data.home_on_court) updateLiveOnCourt('home', data.home_on_court);
+      if (data.away_on_court) updateLiveOnCourt('away', data.away_on_court);
+    } else if (payload.type === 'match_update' && data) {
+      updateScoreboard(data.home_score, data.away_score, data.period_display, data.clock);
+      if (data.is_running !== undefined) handleRunningClock(data.is_running, data.clock);
+      if (data.home_timeouts) renderLiveTimeouts('home', data.home_timeouts);
+      if (data.away_timeouts) renderLiveTimeouts('away', data.away_timeouts);
+      if (data.home_fouls) renderLiveTeamFouls('home', data.home_fouls);
+      if (data.away_fouls) renderLiveTeamFouls('away', data.away_fouls);
+      if (data.new_event) addEventToTimeline(data.new_event);
+      if (data.player_stat) updatePlayerBoxScore(data.player_stat);
+    } else if (payload.type === 'substitution_update' && data) {
+      if (data.home_on_court) updateLiveOnCourt('home', data.home_on_court);
+      if (data.away_on_court) updateLiveOnCourt('away', data.away_on_court);
+      if (data.new_event) addEventToTimeline(data.new_event);
+      if (data.player_out_stat) updatePlayerBoxScore(data.player_out_stat);
+      if (data.player_in_stat) updatePlayerBoxScore(data.player_in_stat);
+    } else if (payload.type === 'timeout_update' && data) {
+      if (data.home_timeouts) renderLiveTimeouts('home', data.home_timeouts);
+      if (data.away_timeouts) renderLiveTimeouts('away', data.away_timeouts);
+      if (data.clock) {
+        handleRunningClock(false, data.clock);
+      }
+      if (data.new_event) addEventToTimeline(data.new_event);
+    } else if (payload.type === 'event_update' && data) {
+      if (data.home_fouls) renderLiveTeamFouls('home', data.home_fouls);
+      if (data.away_fouls) renderLiveTeamFouls('away', data.away_fouls);
+      if (data.new_event) addEventToTimeline(data.new_event);
+      if (data.player_stat) updatePlayerBoxScore(data.player_stat);
+    } else if (payload.type === 'clock_update' && data) {
+      handleRunningClock(data.is_running, data.clock);
+      if (data.period_display) document.getElementById('text-period').innerText = data.period_display;
+    } else if (payload.type === 'scoresheet_closed') {
+      document.getElementById('text-period').innerText = 'Partido Concluido';
+      if (clientClockInterval) clearInterval(clientClockInterval);
+      location.reload();
+    }
+  };
+
+  matchSocket.onclose = function() {
+    document.getElementById('ws-dot').style.background = 'var(--state-red)';
+    document.getElementById('ws-text').innerText = 'Reconectando...';
+    document.getElementById('ws-text').style.color = 'var(--state-red)';
+    if (clientClockInterval) clearInterval(clientClockInterval);
+    setTimeout(connectMatchWebSocket, 3000);
+  };
+}
+
+function renderLiveTimeouts(side, info) {
+  const container = document.getElementById(`live-${side}-timeouts`);
+  if (!container || !info) return;
+
+  const limit = info.limit || 0;
+  const used = info.used || 0;
+  let html = '';
+
+  for (let i = 0; i < limit; i++) {
+    const isUsed = i < used;
+    html += `<span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: ${isUsed ? 'var(--gold-primary)' : 'var(--platinum-border)'}; border: 1px solid ${isUsed ? 'var(--gold-primary)' : 'rgba(0,0,0,0.12)'}; transition: all 0.25s ease;" title="${isUsed ? 'Tiempo muerto consumido' : 'Tiempo muerto disponible'}"></span>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderLiveTeamFouls(side, foulsInfo) {
+  if (!foulsInfo) return;
+  const countEl = document.getElementById(`live-${side}-fouls-count`);
+  const badgeEl = document.getElementById(`live-${side}-bonus-badge`);
+
+  const count = foulsInfo.count !== undefined ? foulsInfo.count : 0;
+  const inBonus = foulsInfo.in_bonus !== undefined ? foulsInfo.in_bonus : (count >= 5);
+
+  if (countEl) {
+    countEl.innerText = `${count}/5`;
+    if (inBonus) {
+      countEl.style.color = 'var(--state-red)';
+    } else {
+      countEl.style.color = 'var(--text-title)';
+    }
+  }
+
+  if (badgeEl) {
+    if (inBonus) {
+      badgeEl.className = 'badge-bonus-live active';
+      badgeEl.innerHTML = 'Bonus';
+      badgeEl.setAttribute('title', 'Equipo en Bonus: todas las faltas defensivas otorgan 2 tiros libres al rival');
+    } else {
+      badgeEl.className = 'badge-bonus-live';
+      badgeEl.innerHTML = 'Sin Bonus';
+      badgeEl.setAttribute('title', `Faltan ${Math.max(0, 5 - count)} faltas para entrar en bonus`);
+    }
+  }
+}
+
+function parseClock(str) {
+  if (!str) return;
+  const p = str.split(':');
+  if (p.length === 2) {
+    clientSeconds = parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+  }
+}
+
+function renderClock() {
+  const m = Math.floor(clientSeconds / 60);
+  const s = clientSeconds % 60;
+  document.getElementById('clock-display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function handleRunningClock(isRunning, clockStr) {
+  if (clockStr) {
+    parseClock(clockStr);
+    renderClock();
+  }
+  if (isRunning) {
+    if (!clientClockInterval) {
+      clientClockInterval = setInterval(() => {
+        if (clientSeconds > 0) {
+          clientSeconds--;
+          renderClock();
+        } else {
+          clearInterval(clientClockInterval);
+          clientClockInterval = null;
+        }
+      }, 1000);
+    }
+  } else {
+    if (clientClockInterval) {
+      clearInterval(clientClockInterval);
+      clientClockInterval = null;
+    }
+  }
+}
+
+function updateScoreboard(homeScore, awayScore, periodDisplay, clock) {
+  const scoreHomeEl = document.getElementById('score-home');
+  const scoreAwayEl = document.getElementById('score-away');
+  const boxHomeTotal = document.getElementById('boxscore-home-total');
+  const boxAwayTotal = document.getElementById('boxscore-away-total');
+
+  if (homeScore !== undefined && scoreHomeEl) {
+    if (scoreHomeEl.innerText.trim() !== String(homeScore)) {
+      scoreHomeEl.innerText = homeScore;
+      flashEffect(scoreHomeEl);
+    }
+  }
+  if (homeScore !== undefined && boxHomeTotal) {
+    boxHomeTotal.innerText = `${homeScore} PTS`;
+  }
+  if (awayScore !== undefined && scoreAwayEl) {
+    if (scoreAwayEl.innerText.trim() !== String(awayScore)) {
+      scoreAwayEl.innerText = awayScore;
+      flashEffect(scoreAwayEl);
+    }
+  }
+  if (awayScore !== undefined && boxAwayTotal) {
+    boxAwayTotal.innerText = `${awayScore} PTS`;
+  }
+  if (periodDisplay) {
+    const pEl = document.getElementById('text-period');
+    if (pEl) pEl.innerText = periodDisplay;
+  }
+  if (clock) {
+    const clkEl = document.getElementById('clock-display');
+    if (clkEl) clkEl.innerText = clock;
+    parseClock(clock);
+  }
+}
+
+function updatePlayerBoxScore(st) {
+  if (!st || !st.player_id) return;
+  const row = document.getElementById(`player-stat-row-${st.player_id}`);
+  if (!row) return;
+
+  const minEl = row.querySelector('.stat-min');
+  const ptsEl = row.querySelector('.stat-pts');
+  const t2El = row.querySelector('.stat-t2');
+  const t3El = row.querySelector('.stat-t3');
+  const tlEl = row.querySelector('.stat-tl');
+  const rebEl = row.querySelector('.stat-reb');
+  const astEl = row.querySelector('.stat-ast');
+  const robEl = row.querySelector('.stat-rob');
+  const perEl = row.querySelector('.stat-per');
+  const tapEl = row.querySelector('.stat-tap');
+  const falEl = row.querySelector('.stat-fal');
+  const pirEl = row.querySelector('.stat-pir');
+
+  if (minEl && st.minutes_played !== undefined) minEl.innerText = `${st.minutes_played}'`;
+  if (ptsEl && st.points !== undefined) ptsEl.innerText = st.points;
+  if (t2El && st.two_points_made !== undefined && st.two_points_attempted !== undefined) {
+    t2El.innerText = `${st.two_points_made}/${st.two_points_attempted}`;
+  }
+  if (t3El && st.three_points_made !== undefined && st.three_points_attempted !== undefined) {
+    t3El.innerText = `${st.three_points_made}/${st.three_points_attempted}`;
+  }
+  if (tlEl && st.free_throws_made !== undefined && st.free_throws_attempted !== undefined) {
+    tlEl.innerText = `${st.free_throws_made}/${st.free_throws_attempted}`;
+  }
+  if (rebEl && st.total_rebounds !== undefined) rebEl.innerText = st.total_rebounds;
+  if (astEl && st.assists !== undefined) astEl.innerText = st.assists;
+  if (robEl && st.steals !== undefined) robEl.innerText = st.steals;
+  if (perEl && st.turnovers !== undefined) perEl.innerText = st.turnovers;
+  if (tapEl && st.blocks_made !== undefined) tapEl.innerText = st.blocks_made;
+  if (falEl && st.fouls_committed !== undefined) {
+    if (st.fouls_committed >= 5) {
+      falEl.innerHTML = `<strong style="color: var(--state-red);">${st.fouls_committed}</strong>`;
+    } else {
+      falEl.innerText = st.fouls_committed;
+    }
+  }
+  if (pirEl && st.valuation_pir !== undefined) {
+    pirEl.innerText = st.valuation_pir;
+  }
+
+  // Animación de pulso dorado sobre la fila actualizada
+  const origBg = row.style.backgroundColor || '';
+  row.style.backgroundColor = 'rgba(197, 155, 39, 0.22)';
+  setTimeout(() => {
+    row.style.backgroundColor = origBg;
+  }, 1200);
+}
+
+function flashEffect(element) {
+  element.style.color = 'var(--gold-primary)';
+  element.style.transform = 'scale(1.2)';
+  setTimeout(() => {
+    element.style.color = 'var(--text-title)';
+    element.style.transform = 'scale(1)';
+  }, 450);
+}
+
+function addEventToTimeline(ev) {
+  const noEventsText = document.getElementById('no-events-text');
+  if (noEventsText) noEventsText.style.display = 'none';
+
+  const timelineEl = document.getElementById('events-timeline');
+  if (!timelineEl) return;
+
+  const div = document.createElement('div');
+  div.className = 'event-item';
+  div.style = 'display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1.5px solid var(--gold-border); box-shadow: 0 4px 12px rgba(0,0,0,0.06); animation: slideDown 0.35s ease; margin-bottom: 0.5rem;';
+
+  const ptsHtml = ev.points !== 0 ? `<div style="font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem; color: ${ev.points > 0 ? 'var(--gold-primary)' : 'var(--state-red)'}; background: var(--bg-subtle); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid ${ev.points > 0 ? 'var(--gold-border)' : 'rgba(220,38,38,0.3)'};">${ev.points > 0 ? '+' : ''}${ev.points}</div>` : '';
+  const playerText = ev.player_name ? `: ${ev.player_name}` : '';
+  const detailText = ev.description || ev.event_type || '';
+
+  div.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); background: var(--bg-subtle); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border);">
+        ${ev.period || ''} &bull; ${ev.clock || ''}
+      </span>
+      <div>
+        <strong style="color: var(--text-title); font-size: 0.9rem;">
+          ${ev.team_acronym || ''}${playerText}
+        </strong>
+        <div style="font-size: 0.78rem; color: var(--text-secondary);">
+          ${detailText}
+        </div>
+      </div>
+    </div>
+    ${ptsHtml}
+  `;
+
+  timelineEl.insertBefore(div, timelineEl.firstChild);
+}
+
+// -----------------------------------------------------------------------------
+// 2. WEBSOCKET DE SALA DE CHAT EN VIVO
+// -----------------------------------------------------------------------------
+function connectChatWebSocket() {
+  chatSocket = new WebSocket(chatWsUrl);
+
+  chatSocket.onmessage = function(e) {
+    const payload = JSON.parse(e.data);
+
+    if (payload.type === 'chat_history') {
+      const container = document.getElementById('chat-messages-container');
+      container.innerHTML = '';
+      totalChatMessages = payload.messages.length;
+      updateChatCountBadge();
+      
+      if (payload.messages.length === 0) {
+        container.innerHTML = '<p id="empty-chat-msg" style="text-align: center; color: var(--text-secondary); font-size: 0.88rem; margin: auto;">¡Sé el primero en comentar este partido! 🏀</p>';
+      } else {
+        payload.messages.forEach(msg => appendChatMessage(msg, false));
+        scrollChatToBottom();
+      }
+    } else if (payload.type === 'new_message') {
+      const emptyMsg = document.getElementById('empty-chat-msg');
+      if (emptyMsg) emptyMsg.remove();
+
+      totalChatMessages++;
+      updateChatCountBadge();
+      appendChatMessage(payload.data, true);
+      scrollChatToBottom();
+    } else if (payload.type === 'message_deleted') {
+      const el = document.getElementById(`chat-msg-${payload.message_id}`);
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          el.remove();
+          totalChatMessages = Math.max(0, totalChatMessages - 1);
+          updateChatCountBadge();
+        }, 250);
+      }
+    }
+  };
+
+  chatSocket.onclose = function() {
+    setTimeout(connectChatWebSocket, 3000);
+  };
+}
+
+function appendChatMessage(msg, animate) {
+  const container = document.getElementById('chat-messages-container');
+  const isMe = currentUserId && (msg.user_id === currentUserId);
+  const canDelete = isUserAdmin || isMe;
+
+  const div = document.createElement('div');
+  div.id = `chat-msg-${msg.id}`;
+  div.style = `display: flex; gap: 0.75rem; align-items: flex-start; ${animate ? 'animation: slideDown 0.25s ease;' : ''} ${isMe ? 'flex-direction: row-reverse;' : ''}`;
+
+  const displayName = msg.username || msg.full_name;
+
+  const avatarHtml = msg.avatar_url 
+    ? `<img src="${msg.avatar_url}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--platinum-border); flex-shrink: 0;">`
+    : `<div style="width: 34px; height: 34px; border-radius: 50%; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; border: 1px solid var(--platinum-border); flex-shrink: 0;">👤</div>`;
+
+  const deleteBtn = canDelete 
+    ? `<button type="button" onclick="openDeleteChatModal(${msg.id})" title="Eliminar mensaje" style="background: none; border: none; cursor: pointer; opacity: 0.45; font-size: 0.85rem; padding: 0; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.45">🗑️</button>`
+    : '';
+
+  div.innerHTML = `
+    ${avatarHtml}
+    <div style="max-width: 80%; display: flex; flex-direction: column; ${isMe ? 'align-items: flex-end;' : 'align-items: flex-start;'}">
+      <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem; font-size: 0.78rem;">
+        <strong style="color: var(--text-title);">${displayName}</strong>
+        <span style="color: var(--text-muted); font-size: 0.72rem;">${msg.created_at}</span>
+        ${deleteBtn}
+      </div>
+      <div style="background: ${isMe ? 'var(--obsidian-dark)' : '#FFFFFF'}; color: ${isMe ? '#FFFFFF' : 'var(--text-body)'}; padding: 0.6rem 0.95rem; border-radius: var(--radius-md); font-size: 0.88rem; line-height: 1.4; border: 1px solid ${isMe ? 'var(--gold-border)' : 'var(--platinum-border)'}; box-shadow: 0 2px 6px rgba(0,0,0,0.03); word-break: break-word;">
+        ${escapeHtml(msg.message)}
+      </div>
+    </div>
+  `;
+
+  container.appendChild(div);
+}
+
+function submitChatMessage() {
+  const input = document.getElementById('chat-input-text');
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+    chatSocket.send(JSON.stringify({
+      action: 'send_message',
+      message: text
+    }));
+    input.value = '';
+    document.getElementById('chat-char-counter').innerText = '0 / 500';
+  }
+}
+
+// -----------------------------------------------------------------------------
+// MODAL DE CONFIRMACIÓN ELEGANTE DE BORRADO DE MENSAJE
+// -----------------------------------------------------------------------------
+function openDeleteChatModal(messageId) {
+  pendingDeleteMessageId = messageId;
+  const modal = document.getElementById('modal-delete-chat-container');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeDeleteChatModal() {
+  const modal = document.getElementById('modal-delete-chat-container');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  pendingDeleteMessageId = null;
+}
+
+function confirmDeleteChatMessage() {
+  if (pendingDeleteMessageId && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+    chatSocket.send(JSON.stringify({
+      action: 'delete_message',
+      message_id: pendingDeleteMessageId
+    }));
+    closeDeleteChatModal();
+  }
+}
+
+function insertEmoji(emojiText) {
+  const input = document.getElementById('chat-input-text');
+  input.value = (input.value ? input.value + ' ' : '') + emojiText;
+  input.focus();
+  document.getElementById('chat-char-counter').innerText = `${input.value.length} / 500`;
+}
+
+function updateChatCountBadge() {
+  const badge = document.getElementById('chat-count-badge');
+  if (badge) badge.innerText = totalChatMessages;
+}
+
+function scrollChatToBottom() {
+  const container = document.getElementById('chat-messages-container');
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.innerText = text;
+  return div.innerHTML;
+}
+
+// Contador de caracteres y cierre con Escape
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('chat-input-text');
+  const counter = document.getElementById('chat-char-counter');
+  if (input && counter) {
+    input.addEventListener('input', () => {
+      counter.innerText = `${input.value.length} / 500`;
+    });
+  }
+
+  // Renderizar estado inicial de tiempos muertos y faltas de equipo de forma segura
+  const initialHomeTimeouts = { limit: {{ home_timeouts.limit|default:2 }}, used: {{ home_timeouts.used|default:0 }}, remaining: {{ home_timeouts.remaining|default:2 }} };
+  const initialAwayTimeouts = { limit: {{ away_timeouts.limit|default:2 }}, used: {{ away_timeouts.used|default:0 }}, remaining: {{ away_timeouts.remaining|default:2 }} };
+  renderLiveTimeouts('home', initialHomeTimeouts);
+  renderLiveTimeouts('away', initialAwayTimeouts);
+
+  const initialHomeFouls = { count: {{ home_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ home_fouls_info.in_bonus|yesno:"true,false" }} };
+  const initialAwayFouls = { count: {{ away_fouls_info.count|default:0 }}, limit: 5, in_bonus: {{ away_fouls_info.in_bonus|yesno:"true,false" }} };
+  renderLiveTeamFouls('home', initialHomeFouls);
+  renderLiveTeamFouls('away', initialAwayFouls);
+
+  const matchStatus = "{{ match.status }}";
+  if (matchStatus !== 'FINISHED') {
+    connectMatchWebSocket();
+  }
+  connectChatWebSocket();
+});
+</script>
+{% endblock %}

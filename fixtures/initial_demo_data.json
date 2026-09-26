@@ -1,0 +1,702 @@
+[
+  {
+    "model": "accounts.customuser",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$870000$test$K2Xf0P9bQ7L9v8Z3w4X1y2Z3a4b5c6d7e8f9g0h1i2j=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "Administrador",
+      "last_name": "Principal",
+      "email": "admin@baloncesto.local",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T10:00:00Z",
+      "role": "ADMIN",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.customuser",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$870000$test$K2Xf0P9bQ7L9v8Z3w4X1y2Z3a4b5c6d7e8f9g0h1i2j=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "oficial_mesa",
+      "first_name": "Carlos",
+      "last_name": "Árbitro Mesa",
+      "email": "mesa@baloncesto.local",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T10:00:00Z",
+      "role": "TABLE_OFFICIAL",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.customuser",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$870000$test$K2Xf0P9bQ7L9v8Z3w4X1y2Z3a4b5c6d7e8f9g0h1i2j=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "coach_madrid",
+      "first_name": "Chus",
+      "last_name": "Mateo",
+      "email": "coach.madrid@baloncesto.local",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T10:00:00Z",
+      "role": "COACH",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.customuser",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$870000$test$K2Xf0P9bQ7L9v8Z3w4X1y2Z3a4b5c6d7e8f9g0h1i2j=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "coach_barca",
+      "first_name": "Joan",
+      "last_name": "Peñarroya",
+      "email": "coach.barca@baloncesto.local",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T10:00:00Z",
+      "role": "COACH",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.customuser",
+    "pk": 5,
+    "fields": {
+      "password": "pbkdf2_sha256$870000$test$K2Xf0P9bQ7L9v8Z3w4X1y2Z3a4b5c6d7e8f9g0h1i2j=",
+      "last_login": null,
+      "is_superuser": false,
+      "username": "aficionado_basket",
+      "first_name": "Marcos",
+      "last_name": "García",
+      "email": "marcos@gmail.com",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T10:00:00Z",
+      "role": "FAN",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "phone": "+34 600 000 001",
+      "avatar": "",
+      "bio": "Administrador del sistema de ligas"
+    }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 2,
+    "fields": {
+      "user": 2,
+      "phone": "+34 600 000 002",
+      "avatar": "",
+      "bio": "Oficial de mesa arbitral con licencia federativa"
+    }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "phone": "+34 600 000 003",
+      "avatar": "",
+      "bio": "Entrenador jefe Real Madrid"
+    }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 4,
+    "fields": {
+      "user": 4,
+      "phone": "+34 600 000 004",
+      "avatar": "",
+      "bio": "Entrenador jefe FC Barcelona"
+    }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 5,
+    "fields": {
+      "user": 5,
+      "phone": "+34 600 000 005",
+      "avatar": "",
+      "bio": "Aficionado al baloncesto nacional e internacional"
+    }
+  },
+  {
+    "model": "teams.league",
+    "pk": 1,
+    "fields": {
+      "name": "Liga Endesa ACB",
+      "slug": "liga-endesa-acb",
+      "description": "Máxima competición profesional de baloncesto de España.",
+      "logo": "",
+      "is_active": true,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.league",
+    "pk": 2,
+    "fields": {
+      "name": "EuroLeague Basketball",
+      "slug": "euroleague-basketball",
+      "description": "Competición de clubes más prestigiosa de Europa.",
+      "logo": "",
+      "is_active": true,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.season",
+    "pk": 1,
+    "fields": {
+      "league": 1,
+      "name": "2025/2026",
+      "start_date": "2025-09-25",
+      "end_date": "2026-06-20",
+      "is_current": true
+    }
+  },
+  {
+    "model": "teams.season",
+    "pk": 2,
+    "fields": {
+      "league": 2,
+      "name": "2025/2026",
+      "start_date": "2025-10-01",
+      "end_date": "2026-05-30",
+      "is_current": true
+    }
+  },
+  {
+    "model": "teams.team",
+    "pk": 1,
+    "fields": {
+      "name": "Real Madrid Baloncesto",
+      "slug": "real-madrid-baloncesto",
+      "acronym": "RMB",
+      "logo": "",
+      "primary_color": "#582C83",
+      "secondary_color": "#FFFFFF",
+      "city": "Madrid",
+      "arena_name": "WiZink Center",
+      "coach": 3,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.team",
+    "pk": 2,
+    "fields": {
+      "name": "FC Barcelona Basket",
+      "slug": "fc-barcelona-basket",
+      "acronym": "BAR",
+      "logo": "",
+      "primary_color": "#004D98",
+      "secondary_color": "#A50044",
+      "city": "Barcelona",
+      "arena_name": "Palau Blaugrana",
+      "coach": 4,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.team",
+    "pk": 3,
+    "fields": {
+      "name": "Unicaja Málaga",
+      "slug": "unicaja-malaga",
+      "acronym": "UNI",
+      "logo": "",
+      "primary_color": "#00843D",
+      "secondary_color": "#6A2A5B",
+      "city": "Málaga",
+      "arena_name": "Palacio de Deportes José María Martín Carpena",
+      "coach": null,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.team",
+    "pk": 4,
+    "fields": {
+      "name": "Valencia Basket",
+      "slug": "valencia-basket",
+      "acronym": "VAL",
+      "logo": "",
+      "primary_color": "#FF671B",
+      "secondary_color": "#1D252C",
+      "city": "Valencia",
+      "arena_name": "Roig Arena",
+      "coach": null,
+      "created_at": "2026-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 1,
+    "fields": {
+      "first_name": "Sergio",
+      "last_name": "Llull",
+      "birth_date": "1987-11-15",
+      "height_cm": 190,
+      "weight_kg": "94.00",
+      "position": "SG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 2,
+    "fields": {
+      "first_name": "Facundo",
+      "last_name": "Campazzo",
+      "birth_date": "1991-03-23",
+      "height_cm": 178,
+      "weight_kg": "88.00",
+      "position": "PG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 3,
+    "fields": {
+      "first_name": "Walter",
+      "last_name": "Tavares",
+      "birth_date": "1992-03-22",
+      "height_cm": 220,
+      "weight_kg": "125.00",
+      "position": "C",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 4,
+    "fields": {
+      "first_name": "Mario",
+      "last_name": "Hezonja",
+      "birth_date": "1995-02-25",
+      "height_cm": 203,
+      "weight_kg": "100.00",
+      "position": "SF",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 5,
+    "fields": {
+      "first_name": "Nicolas",
+      "last_name": "Laprovittola",
+      "birth_date": "1990-01-31",
+      "height_cm": 190,
+      "weight_kg": "84.00",
+      "position": "PG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 6,
+    "fields": {
+      "first_name": "Willy",
+      "last_name": "Hernangómez",
+      "birth_date": "1994-05-27",
+      "height_cm": 211,
+      "weight_kg": "113.00",
+      "position": "C",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 7,
+    "fields": {
+      "first_name": "Alex",
+      "last_name": "Abrines",
+      "birth_date": "1993-08-01",
+      "height_cm": 198,
+      "weight_kg": "91.00",
+      "position": "SF",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 8,
+    "fields": {
+      "first_name": "Kendrick",
+      "last_name": "Perry",
+      "birth_date": "1992-12-23",
+      "height_cm": 183,
+      "weight_kg": "82.00",
+      "position": "PG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 9,
+    "fields": {
+      "first_name": "Alberto",
+      "last_name": "Díaz",
+      "birth_date": "1994-04-23",
+      "height_cm": 188,
+      "weight_kg": "86.00",
+      "position": "PG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.player",
+    "pk": 10,
+    "fields": {
+      "first_name": "Chris",
+      "last_name": "Jones",
+      "birth_date": "1993-04-10",
+      "height_cm": 188,
+      "weight_kg": "91.00",
+      "position": "PG",
+      "photo": "",
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 1,
+    "fields": {
+      "team": 1,
+      "player": 1,
+      "season": 1,
+      "jersey_number": 23,
+      "is_captain": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 2,
+    "fields": {
+      "team": 1,
+      "player": 2,
+      "season": 1,
+      "jersey_number": 7,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 3,
+    "fields": {
+      "team": 1,
+      "player": 3,
+      "season": 1,
+      "jersey_number": 22,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 4,
+    "fields": {
+      "team": 1,
+      "player": 4,
+      "season": 1,
+      "jersey_number": 11,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 5,
+    "fields": {
+      "team": 2,
+      "player": 5,
+      "season": 1,
+      "jersey_number": 20,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 6,
+    "fields": {
+      "team": 2,
+      "player": 6,
+      "season": 1,
+      "jersey_number": 14,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 7,
+    "fields": {
+      "team": 2,
+      "player": 7,
+      "season": 1,
+      "jersey_number": 21,
+      "is_captain": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 8,
+    "fields": {
+      "team": 3,
+      "player": 8,
+      "season": 1,
+      "jersey_number": 55,
+      "is_captain": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 9,
+    "fields": {
+      "team": 3,
+      "player": 9,
+      "season": 1,
+      "jersey_number": 9,
+      "is_captain": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "teams.teammembership",
+    "pk": 10,
+    "fields": {
+      "team": 4,
+      "player": 10,
+      "season": 1,
+      "jersey_number": 7,
+      "is_captain": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "matches.match",
+    "pk": 1,
+    "fields": {
+      "season": 1,
+      "round_number": 1,
+      "home_team": 1,
+      "away_team": 2,
+      "scheduled_at": "2026-03-01T18:30:00Z",
+      "location": "WiZink Center, Madrid",
+      "status": "FINISHED",
+      "current_period": "END",
+      "game_clock": "00:00",
+      "home_score": 86,
+      "away_score": 81,
+      "table_official": 2,
+      "created_at": "2026-03-01T17:00:00Z",
+      "updated_at": "2026-03-01T20:30:00Z"
+    }
+  },
+  {
+    "model": "matches.match",
+    "pk": 2,
+    "fields": {
+      "season": 1,
+      "round_number": 1,
+      "home_team": 3,
+      "away_team": 4,
+      "scheduled_at": "2026-03-01T20:45:00Z",
+      "location": "Martín Carpena, Málaga",
+      "status": "FINISHED",
+      "current_period": "END",
+      "game_clock": "00:00",
+      "home_score": 79,
+      "away_score": 74,
+      "table_official": 2,
+      "created_at": "2026-03-01T19:00:00Z",
+      "updated_at": "2026-03-01T22:45:00Z"
+    }
+  },
+  {
+    "model": "matches.match",
+    "pk": 3,
+    "fields": {
+      "season": 1,
+      "round_number": 2,
+      "home_team": 1,
+      "away_team": 3,
+      "scheduled_at": "2026-03-08T19:00:00Z",
+      "location": "WiZink Center, Madrid",
+      "status": "LIVE",
+      "current_period": "Q3",
+      "game_clock": "05:32",
+      "home_score": 58,
+      "away_score": 54,
+      "table_official": 2,
+      "created_at": "2026-03-08T18:00:00Z",
+      "updated_at": "2026-03-08T20:10:00Z"
+    }
+  },
+  {
+    "model": "matches.match",
+    "pk": 4,
+    "fields": {
+      "season": 1,
+      "round_number": 2,
+      "home_team": 2,
+      "away_team": 4,
+      "scheduled_at": "2026-03-08T21:00:00Z",
+      "location": "Palau Blaugrana, Barcelona",
+      "status": "SCHEDULED",
+      "current_period": "NS",
+      "game_clock": "10:00",
+      "home_score": 0,
+      "away_score": 0,
+      "table_official": 2,
+      "created_at": "2026-03-08T18:00:00Z",
+      "updated_at": "2026-03-08T18:00:00Z"
+    }
+  },
+  {
+    "model": "matches.matchevent",
+    "pk": 1,
+    "fields": {
+      "match": 3,
+      "period": "Q3",
+      "game_clock": "05:32",
+      "team": 1,
+      "player": 1,
+      "event_type": "3PT_MADE",
+      "points": 3,
+      "description": "Triple anotado por Sergio Llull desde la frontal",
+      "created_at": "2026-03-08T20:05:00Z"
+    }
+  },
+  {
+    "model": "matches.matchevent",
+    "pk": 2,
+    "fields": {
+      "match": 3,
+      "period": "Q3",
+      "game_clock": "05:15",
+      "team": 3,
+      "player": 8,
+      "event_type": "2PT_MADE",
+      "points": 2,
+      "description": "Bandeja en contraataque de Kendrick Perry",
+      "created_at": "2026-03-08T20:06:00Z"
+    }
+  },
+  {
+    "model": "matches.matchevent",
+    "pk": 3,
+    "fields": {
+      "match": 3,
+      "period": "Q3",
+      "game_clock": "04:50",
+      "team": 1,
+      "player": 3,
+      "event_type": "BLK",
+      "points": 0,
+      "description": "Tapón espectacular de Walter Tavares",
+      "created_at": "2026-03-08T20:07:00Z"
+    }
+  },
+  {
+    "model": "analytics.standing",
+    "pk": 1,
+    "fields": {
+      "season": 1,
+      "team": 1,
+      "games_played": 1,
+      "wins": 1,
+      "losses": 0,
+      "points_for": 86,
+      "points_against": 81,
+      "points_diff": 5,
+      "league_points": 2
+    }
+  },
+  {
+    "model": "analytics.standing",
+    "pk": 2,
+    "fields": {
+      "season": 1,
+      "team": 3,
+      "games_played": 1,
+      "wins": 1,
+      "losses": 0,
+      "points_for": 79,
+      "points_against": 74,
+      "points_diff": 5,
+      "league_points": 2
+    }
+  },
+  {
+    "model": "analytics.standing",
+    "pk": 3,
+    "fields": {
+      "season": 1,
+      "team": 2,
+      "games_played": 1,
+      "wins": 0,
+      "losses": 1,
+      "points_for": 81,
+      "points_against": 86,
+      "points_diff": -5,
+      "league_points": 1
+    }
+  },
+  {
+    "model": "analytics.standing",
+    "pk": 4,
+    "fields": {
+      "season": 1,
+      "team": 4,
+      "games_played": 1,
+      "wins": 0,
+      "losses": 1,
+      "points_for": 74,
+      "points_against": 79,
+      "points_diff": -5,
+      "league_points": 1
+    }
+  }
+]
