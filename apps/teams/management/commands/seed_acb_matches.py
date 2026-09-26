@@ -10,15 +10,23 @@ class Command(BaseCommand):
     help = "Armoniza los partidos y recalcula la clasificación de la Liga Endesa ACB"
 
     def handle(self, *args, **kwargs):
-        season_acb = Season.objects.filter(league__slug="liga-endesa-acb").first()
-        if not season_acb:
-            self.stdout.write(self.style.ERROR("No se encontró la temporada de Liga Endesa."))
-            return
+        acb_league, _ = League.objects.get_or_create(
+            slug="liga-endesa-acb",
+            defaults={"name": "Liga Endesa ACB", "description": "Primera división de baloncesto profesional de España.", "is_active": True}
+        )
+        season_acb, _ = Season.objects.get_or_create(
+            league=acb_league,
+            name="Temporada 2026/2027",
+            defaults={"start_date": "2026-09-26", "end_date": "2027-05-30", "is_current": True}
+        )
+        if not season_acb.is_current:
+            season_acb.is_current = True
+            season_acb.save()
 
-        rmb = Team.objects.filter(acronym="RMB").first()
-        fcb = Team.objects.filter(acronym__in=["BAR", "FCB"]).first()
-        uni = Team.objects.filter(acronym="UNI").first()
-        val = Team.objects.filter(acronym__in=["VAL", "VBC"]).first()
+        rmb, _ = Team.objects.get_or_create(slug="real-madrid-baloncesto", defaults={"name": "Real Madrid Baloncesto", "acronym": "RMB", "arena_name": "WiZink Center", "city": "Madrid"})
+        fcb, _ = Team.objects.get_or_create(slug="fc-barcelona-basket", defaults={"name": "FC Barcelona", "acronym": "BAR", "arena_name": "Palau Blaugrana", "city": "Barcelona"})
+        uni, _ = Team.objects.get_or_create(slug="unicaja-malaga", defaults={"name": "Unicaja Málaga", "acronym": "UNI", "arena_name": "Palacio de Deportes Martín Carpena", "city": "Málaga"})
+        val, _ = Team.objects.get_or_create(slug="valencia-basket", defaults={"name": "Valencia Basket", "acronym": "VAL", "arena_name": "Pabellón Fuente de San Luis", "city": "Valencia"})
 
         from django.contrib.auth import get_user_model
         User = get_user_model()

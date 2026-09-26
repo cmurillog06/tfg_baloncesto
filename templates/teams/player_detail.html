@@ -134,10 +134,10 @@
             {% if available_seasons|length > 1 %}
               <form method="get" style="display: flex; align-items: center; gap: 0.35rem;">
                 <select name="season" onchange="this.form.submit()" class="form-control" style="font-size: 0.82rem; width: auto; height: 36px; min-height: 36px; padding: 0.25rem 2rem 0.25rem 0.65rem !important;">
-                  <option value="" {% if not selected_season %}selected{% endif %}>Todas las competiciones</option>
+                  <option value="" {% if not selected_season %}selected{% endif %}>Todas las competiciones (Global)</option>
                   {% for s in available_seasons %}
                     <option value="{{ s.id }}" {% if selected_season and selected_season.id == s.id %}selected{% endif %}>
-                      {{ s.league.name }}
+                      {{ s.league.name }} - {{ s.name }} {% if s.is_current %}(Actual){% else %}(Histórico){% endif %}
                     </option>
                   {% endfor %}
                 </select>

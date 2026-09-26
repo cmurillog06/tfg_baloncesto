@@ -23,12 +23,16 @@ class AnalyticsDashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        season = Season.objects.filter(is_current=True).first()
+        season_id = self.request.GET.get("season")
+        if season_id:
+            season = Season.objects.filter(id=season_id).first()
+        else:
+            season = Season.objects.filter(is_current=True).first()
         if not season:
             season = Season.objects.first()
 
         context["season"] = season
-        context["seasons"] = Season.objects.all().order_by("-start_date")
+        context["seasons"] = Season.objects.all().select_related("league").order_by("-start_date", "league__name")
         context["selected_season"] = season
         context["leaders"] = get_league_leaders(season=season, limit=4)
         context["standings"] = (
@@ -66,7 +70,7 @@ class LeadersListView(LoginRequiredMixin, TemplateView):
             season = Season.objects.filter(is_current=True).first() or Season.objects.first()
 
         context["current_season"] = season
-        context["all_seasons"] = Season.objects.filter(is_current=True).select_related("league").order_by("league__name")
+        context["all_seasons"] = Season.objects.all().select_related("league").order_by("-start_date", "league__name")
         context["leaders"] = get_league_leaders(season=season, limit=5)
 
         return context
@@ -83,7 +87,7 @@ class TeamComparatorView(LoginRequiredMixin, View):
         return self.get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        all_seasons = Season.objects.filter(is_current=True).select_related("league").order_by("league__name")
+        all_seasons = Season.objects.all().select_related("league").order_by("-start_date", "league__name")
         season_val = request.POST.get("season") or request.GET.get("season")
 
         if season_val:
@@ -92,7 +96,7 @@ class TeamComparatorView(LoginRequiredMixin, View):
             else:
                 current_season = Season.objects.filter(name=season_val).first()
         else:
-            current_season = all_seasons.first() or Season.objects.first()
+            current_season = Season.objects.filter(is_current=True).first() or all_seasons.first()
 
         if current_season:
             season_teams = Team.objects.filter(
@@ -214,7 +218,7 @@ class PredictiveModelView(LoginRequiredMixin, View):
         return self.get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        all_seasons = Season.objects.filter(is_current=True).select_related("league").order_by("league__name")
+        all_seasons = Season.objects.all().select_related("league").order_by("-start_date", "league__name")
         season_val = request.POST.get("season") or request.GET.get("season")
 
         if season_val:
@@ -223,7 +227,7 @@ class PredictiveModelView(LoginRequiredMixin, View):
             else:
                 current_season = Season.objects.filter(name=season_val).first()
         else:
-            current_season = all_seasons.first() or Season.objects.first()
+            current_season = Season.objects.filter(is_current=True).first() or all_seasons.first()
 
         if current_season:
             season_teams = Team.objects.filter(

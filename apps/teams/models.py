@@ -242,22 +242,31 @@ class TeamMembership(models.Model):
                     "jersey_number": f"El dorsal #{self.jersey_number} ya está asignado al jugador {player_name} con ficha activa en este equipo durante la temporada {season_name}."
                 })
 
-        if self.is_active and self.player_id and self.season_id:
-            # Un jugador no puede tener más de una ficha activa en la misma temporada (en ningún equipo)
-            existing_active = TeamMembership.objects.filter(
+        if self.is_active and self.player_id:
+            # 1. Un jugador no puede tener ficha activa en otro club distinto
+            other_team_active = TeamMembership.objects.filter(
                 player_id=self.player_id,
-                season_id=self.season_id,
                 is_active=True
-            ).exclude(pk=self.pk).select_related("team").first()
+            ).exclude(team_id=self.team_id).exclude(pk=self.pk).select_related("team").first()
 
-            if existing_active:
-                if existing_active.team_id == self.team_id:
+            if other_team_active:
+                raise ValidationError(
+                    f"El jugador {self.player.full_name} ya está dado de alta en {other_team_active.team.name}. "
+                    "Un jugador no puede pertenecer simultáneamente a dos clubes distintos."
+                )
+
+            # 2. Un jugador no puede tener más de una ficha activa en el mismo equipo durante la misma temporada
+            if self.season_id:
+                same_team_active = TeamMembership.objects.filter(
+                    player_id=self.player_id,
+                    team_id=self.team_id,
+                    season_id=self.season_id,
+                    is_active=True
+                ).exclude(pk=self.pk).first()
+
+                if same_team_active:
                     raise ValidationError(
                         f"El jugador {self.player.full_name} ya tiene una ficha activa en este equipo para esta temporada."
-                    )
-                else:
-                    raise ValidationError(
-                        f"El jugador {self.player.full_name} ya está dado de alta en {existing_active.team.name} para esta temporada. Un jugador no puede estar activo simultáneamente en dos equipos."
                     )
 
     def __str__(self):

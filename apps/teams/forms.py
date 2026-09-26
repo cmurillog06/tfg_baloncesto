@@ -35,39 +35,64 @@ class TeamMembershipForm(forms.ModelForm):
         self.team = team
         self.season = season
 
-        if season:
-            # Excluir a los jugadores que ya tienen una ficha activa en CUALQUIER equipo para esta temporada
-            active_player_ids = TeamMembership.objects.filter(
-                season=season, is_active=True
-            ).values_list("player_id", flat=True)
+        # 1. Jugadores con ficha activa en CUALQUIER OTRO equipo
+        other_teams_active_qs = TeamMembership.objects.filter(is_active=True)
+        if self.team:
+            other_teams_active_qs = other_teams_active_qs.exclude(team=self.team)
+        other_active_ids = set(other_teams_active_qs.values_list("player_id", flat=True))
 
-            self.fields["player"].queryset = Player.objects.filter(
-                is_active=True
-            ).exclude(
-                id__in=active_player_ids
-            ).order_by("last_name", "first_name")
+        # 2. Jugadores con ficha activa en este mismo equipo para esta temporada
+        same_team_active_ids = set()
+        if self.team and self.season:
+            same_team_active_ids = set(
+                TeamMembership.objects.filter(
+                    team=self.team,
+                    season=self.season,
+                    is_active=True
+                ).values_list("player_id", flat=True)
+            )
+
+        unavailable_ids = other_active_ids.union(same_team_active_ids)
+
+        self.fields["player"].queryset = Player.objects.filter(
+            is_active=True
+        ).exclude(
+            id__in=unavailable_ids
+        ).order_by("last_name", "first_name")
 
     def clean(self):
         cleaned_data = super().clean()
         player = cleaned_data.get("player")
         jersey_number = cleaned_data.get("jersey_number")
 
-        if player and self.season:
-            # Comprobar si el jugador ya está dado de alta en otro club para esta temporada
-            existing_active = TeamMembership.objects.filter(
+        if player:
+            # Comprobar si el jugador ya está dado de alta en otro club
+            other_team_active = TeamMembership.objects.filter(
                 player=player,
-                season=self.season,
                 is_active=True
-            ).exclude(pk=self.instance.pk if self.instance else None).select_related("team").first()
+            )
+            if self.team:
+                other_team_active = other_team_active.exclude(team=self.team)
 
-            if existing_active:
-                if existing_active.team == self.team:
+            other_membership = other_team_active.select_related("team").first()
+            if other_membership:
+                raise forms.ValidationError(
+                    f"El jugador {player.full_name} no puede ser inscrito porque ya tiene ficha activa en {other_membership.team.name}. "
+                    "Un jugador no puede pertenecer simultáneamente a dos clubes distintos."
+                )
+
+            # Comprobar si ya está activo en este equipo para esta temporada
+            if self.team and self.season:
+                same_team_active = TeamMembership.objects.filter(
+                    player=player,
+                    team=self.team,
+                    season=self.season,
+                    is_active=True
+                ).exclude(pk=self.instance.pk if self.instance else None).exists()
+
+                if same_team_active:
                     raise forms.ValidationError(
                         f"El jugador {player.full_name} ya está dado de alta en la plantilla de este equipo para esta temporada."
-                    )
-                else:
-                    raise forms.ValidationError(
-                        f"El jugador {player.full_name} no puede ser inscrito porque ya tiene ficha activa en {existing_active.team.name} para esta temporada."
                     )
 
         if jersey_number is not None and self.team and self.season:

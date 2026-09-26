@@ -316,6 +316,33 @@ class TestTeamForms:
         assert not form.is_valid()
         assert "__all__" in form.errors or "player" in form.errors
 
+    def test_team_membership_form_excludes_players_active_in_other_teams(self, db, home_team, away_team, season, home_players):
+        # Crear un jugador activo en away_team y un jugador libre (sin equipo)
+        away_player = Player.objects.create(first_name="Alberto", last_name="Diaz", height_cm=190, weight_kg=86)
+        TeamMembership.objects.create(player=away_player, team=away_team, season=season, jersey_number=9, is_active=True)
+
+        free_player = Player.objects.create(first_name="Jugador", last_name="Libre", height_cm=195, weight_kg=90)
+
+        form = TeamMembershipForm(team=home_team, season=season)
+        available_players = list(form.fields["player"].queryset)
+
+        # El jugador libre DEBE estar disponible
+        assert free_player in available_players
+        # El jugador de away_team NO debe estar disponible en el desplegable
+        assert away_player not in available_players
+        # Los jugadores de home_team ya activos tampoco deben estar
+        for hp in home_players:
+            assert hp not in available_players
+
+        # Intentar forzar la inscripción del jugador de away_team debe dar error de validación
+        post_form = TeamMembershipForm(
+            data={"player": away_player.id, "jersey_number": 33, "is_captain": False},
+            team=home_team,
+            season=season
+        )
+        assert not post_form.is_valid()
+        assert "__all__" in post_form.errors or "player" in post_form.errors
+
     def test_coach_player_create_form_valid(self, home_team, season):
         data = {
             "first_name": "Alberto",

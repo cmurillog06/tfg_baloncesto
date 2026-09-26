@@ -6,33 +6,40 @@ class Command(BaseCommand):
     help = "Crea membresías históricas inactivas para enriquecer las fichas de jugadores"
 
     def handle(self, *args, **kwargs):
-        season_acb = (
-            Season.objects.filter(league__name__icontains="Endesa").first()
-            or Season.objects.first()
+        from apps.teams.models import League
+        acb_league, _ = League.objects.get_or_create(
+            slug="liga-endesa-acb",
+            defaults={"name": "Liga Endesa ACB", "description": "Primera división de baloncesto profesional de España.", "is_active": True}
         )
-        rmb = Team.objects.filter(acronym="RMB").first()
-        fcb = Team.objects.filter(acronym__in=["BAR", "FCB"]).first()
+        past_season, _ = Season.objects.get_or_create(
+            league=acb_league,
+            name="Temporada 2024/2025",
+            defaults={"start_date": "2024-09-28", "end_date": "2025-06-20", "is_current": False}
+        )
+
+        rmb, _ = Team.objects.get_or_create(slug="real-madrid-baloncesto", defaults={"name": "Real Madrid Baloncesto", "acronym": "RMB"})
+        fcb, _ = Team.objects.get_or_create(slug="fc-barcelona-basket", defaults={"name": "FC Barcelona", "acronym": "BAR"})
 
         count = 0
 
         # Willy Hernangómez: Historial pasado en Real Madrid
         willy = Player.objects.filter(first_name="Willy", last_name="Hernangómez").first()
-        if willy and rmb and season_acb:
+        if willy and rmb and past_season:
             m, created = TeamMembership.objects.update_or_create(
                 team=rmb,
                 player=willy,
-                season=season_acb,
+                season=past_season,
                 defaults={"jersey_number": 41, "is_captain": False, "is_active": False},
             )
             count += 1
 
         # Mario Hezonja: Historial pasado en FC Barcelona
         hezonja = Player.objects.filter(last_name="Hezonja").first()
-        if hezonja and fcb and season_acb:
+        if hezonja and fcb and past_season:
             m, created = TeamMembership.objects.update_or_create(
                 team=fcb,
                 player=hezonja,
-                season=season_acb,
+                season=past_season,
                 defaults={"jersey_number": 8, "is_captain": False, "is_active": False},
             )
             count += 1

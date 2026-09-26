@@ -24,7 +24,9 @@ class LeagueListView(LoginRequiredMixin, ListView):
     context_object_name = "leagues"
 
     def get_queryset(self):
-        return League.objects.filter(is_active=True).prefetch_related("seasons")
+        return League.objects.filter(is_active=True).prefetch_related(
+            Prefetch("seasons", queryset=Season.objects.order_by("-start_date"))
+        )
 
 
 class LeagueDetailView(LoginRequiredMixin, DetailView):
@@ -41,11 +43,18 @@ class LeagueDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         league = self.get_object()
 
-        # Obtener temporada activa
-        season = league.seasons.filter(is_current=True).first()
-        if not season:
-            season = league.seasons.first() or Season.objects.filter(league=league).first()
+        # Obtener todas las temporadas de la liga (históricas y actual)
+        all_seasons = league.seasons.all().order_by("-start_date")
+        season_id = self.request.GET.get("season")
 
+        if season_id:
+            season = all_seasons.filter(id=season_id).first()
+        else:
+            season = all_seasons.filter(is_current=True).first()
+        if not season:
+            season = all_seasons.first() or Season.objects.filter(league=league).first()
+
+        context["all_seasons"] = all_seasons
         context["active_season"] = season
         context["season"] = season
         context["standings"] = []
@@ -93,21 +102,35 @@ class TeamDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         team = self.get_object()
 
-        # Obtener temporada oficial activa
+        # Obtener la temporada activa específica en la que compite este equipo
         from apps.teams.models import Season
-        current_season = Season.objects.filter(is_current=True).first()
-        if not current_season:
-            current_season = Season.objects.order_by("-start_date").first()
+        current_season = (
+            Season.objects.filter(roster_memberships__team=team, is_current=True).first()
+            or Season.objects.filter(is_current=True).first()
+            or Season.objects.order_by("-start_date").first()
+        )
 
-        # Plantilla activa de la temporada actual ordenada por dorsal
+        # Plantilla del equipo para la temporada en curso
         memberships_qs = TeamMembership.objects.filter(
             team=team,
             is_active=True
         )
-        if current_season:
+        if current_season and memberships_qs.filter(season=current_season).exists():
             memberships_qs = memberships_qs.filter(season=current_season)
 
-        context["memberships"] = memberships_qs.select_related("player", "season").order_by("jersey_number")
+        # Fallback a todas las membresías del club si no hubiera activas
+        if not memberships_qs.exists():
+            memberships_qs = TeamMembership.objects.filter(team=team)
+
+        # Deduplicar por jugador preservando dorsal
+        seen_p = set()
+        unique_memberships = []
+        for m in memberships_qs.select_related("player", "season").order_by("jersey_number"):
+            if m.player_id not in seen_p:
+                seen_p.add(m.player_id)
+                unique_memberships.append(m)
+
+        context["memberships"] = unique_memberships
         context["current_season"] = current_season
 
         # Comprobar si el usuario actual es estrictamente el entrenador asignado a este equipo
@@ -155,7 +178,7 @@ class PlayerDetailView(LoginRequiredMixin, DetailView):
         
         # Obtener competiciones/temporadas donde el jugador tiene partidos disputados
         player_season_ids = base_stats.values_list("match__season_id", flat=True).distinct()
-        available_seasons = Season.objects.filter(id__in=player_season_ids).select_related("league").order_by("league__name")
+        available_seasons = Season.objects.filter(id__in=player_season_ids).select_related("league").order_by("-start_date", "league__name")
         context["available_seasons"] = available_seasons
 
         season_id = self.request.GET.get("season")
@@ -241,9 +264,10 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.error(request, "Solo el entrenador oficial asignado a este club puede gestionar su plantilla.")
             raise PermissionDenied
 
-        # Obtener temporada activa
+        # Obtener temporada activa del equipo
         self.season = (
-            Season.objects.filter(is_current=True).first()
+            Season.objects.filter(roster_memberships__team=self.team, is_current=True).first()
+            or Season.objects.filter(is_current=True).first()
             or Season.objects.order_by("-start_date").first()
             or Season.objects.first()
         )
@@ -461,7 +485,6 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                 ).first()
 
                 active_in_other = TeamMembership.objects.filter(
-                    season=self.season,
                     player=player,
                     is_active=True
                 ).exclude(team=self.team).select_related("team").first()
@@ -469,7 +492,7 @@ class CoachRosterManageView(LoginRequiredMixin, RoleRequiredMixin, View):
                 if active_in_other:
                     messages.error(
                         request,
-                        f"{player.full_name} no puede ser inscrito porque ya tiene ficha activa en {active_in_other.team.name} para esta temporada."
+                        f"{player.full_name} no puede ser inscrito porque ya tiene ficha activa en {active_in_other.team.name}."
                     )
                     return redirect("teams:roster_manage", slug=self.team.slug)
 

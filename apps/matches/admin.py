@@ -64,7 +64,7 @@ class MatchAdmin(admin.ModelAdmin):
         Vista administrativa para generar de forma automática y aleatoria el calendario oficial,
         las sedes y las designaciones arbitrales y de mesa.
         """
-        all_seasons = Season.objects.select_related("league").all().order_by("-is_current", "-start_date")
+        all_seasons = Season.objects.filter(is_current=True).select_related("league").order_by("-start_date", "league__name")
         preview_data = None
         error_message = None
 
@@ -77,7 +77,10 @@ class MatchAdmin(admin.ModelAdmin):
         selected_assign_officials = True
         selected_clear_existing = True
 
+        preview_seed = None
+
         if request.method == "POST":
+            import random
             season_id = request.POST.get("season_id")
             action = request.POST.get("action", "preview")
             double_round = request.POST.get("format_type", "double") == "double"
@@ -87,6 +90,7 @@ class MatchAdmin(admin.ModelAdmin):
             weekend_spread = request.POST.get("weekend_spread") == "on"
             assign_officials = request.POST.get("assign_officials") == "on"
             clear_existing = request.POST.get("clear_existing") == "on"
+            preview_seed_str = request.POST.get("preview_seed", "").strip()
 
             try:
                 selected_season_id = int(season_id) if season_id else None
@@ -104,6 +108,8 @@ class MatchAdmin(admin.ModelAdmin):
             season = Season.objects.filter(id=season_id).first() if season_id else None
             if not season:
                 error_message = "Debe seleccionar una temporada válida para confeccionar el calendario."
+            elif not season.is_current:
+                error_message = f"No es posible generar ni modificar el calendario de '{season.name}' porque es una temporada histórica finalizada. Esta acción solo está permitida para temporadas oficiales activas."
             else:
                 start_date = None
                 if start_date_str:
@@ -123,7 +129,22 @@ class MatchAdmin(admin.ModelAdmin):
 
                 if not error_message:
                     try:
-                        is_dry_run = (action == "preview")
+                        is_dry_run = (action in ["preview", "re_preview"])
+
+                        # Si se solicita una nueva previsualización o probar otra combinación, generar una nueva semilla aleatoria.
+                        # Si se solicita guardar, utilizar la semilla preview_seed para persistir exactamente lo previsualizado.
+                        if action in ["preview", "re_preview"]:
+                            seed_to_use = random.randint(100000, 99999999)
+                        elif preview_seed_str:
+                            try:
+                                seed_to_use = int(preview_seed_str)
+                            except ValueError:
+                                seed_to_use = random.randint(100000, 99999999)
+                        else:
+                            seed_to_use = random.randint(100000, 99999999)
+
+                        preview_seed = seed_to_use
+
                         result = generate_season_schedule(
                             season=season,
                             double_round=double_round,
@@ -134,15 +155,23 @@ class MatchAdmin(admin.ModelAdmin):
                             assign_officials=assign_officials,
                             clear_existing=clear_existing,
                             dry_run=is_dry_run,
+                            random_seed=seed_to_use,
                         )
 
                         if action == "generate":
-                            messages.success(
-                                request,
-                                f"¡Calendario generado con éxito! Se han programado {result['total_matches']} partidos "
-                                f"a lo largo de {result['total_rounds']} jornadas para la competición '{season.league.name}' ({season.name}). "
-                                f"Todas las sedes y designaciones de árbitros y mesas han quedado asignadas."
-                            )
+                            if result.get("already_played_rounds", 0) > 0:
+                                messages.success(
+                                    request,
+                                    f"¡Calendario actualizado con éxito! Se han programado {result['total_matches']} partidos para las jornadas restantes "
+                                    f"(Jornadas {result['start_round_idx']} a {result['total_rounds']}) de la competición '{season.league.name}' ({season.name}). "
+                                    f"Las {result['already_played_rounds']} jornadas previas ya disputadas o en curso ({result['already_played_matches_count']} partidos) se han mantenido intactas."
+                                )
+                            else:
+                                messages.success(
+                                    request,
+                                    f"¡Calendario generado con éxito! Se han programado {result['total_matches']} partidos a lo largo de {result['total_rounds']} jornadas "
+                                    f"para la competición '{season.league.name}' ({season.name}). Todas las sedes y designaciones de árbitros y mesas han quedado asignadas."
+                                )
                             return redirect(reverse("admin:matches_match_changelist") + f"?season__id__exact={season.id}")
                         else:
                             preview_data = result
@@ -160,12 +189,16 @@ class MatchAdmin(admin.ModelAdmin):
                 "teams": teams,
             })
 
+        is_re_preview = (request.method == "POST" and request.POST.get("action") == "re_preview")
+
         context = {
             **self.admin_site.each_context(request),
             "title": "Generador Automático de Calendario, Sedes y Designaciones",
             "opts": self.model._meta,
             "seasons_info": seasons_info,
             "preview_data": preview_data,
+            "preview_seed": preview_seed,
+            "is_re_preview": is_re_preview,
             "error_message": error_message,
             "selected_season_id": selected_season_id,
             "selected_format_type": selected_format_type,

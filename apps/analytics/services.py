@@ -16,7 +16,10 @@ def recalculate_season_standings(season):
     ).select_related("home_team", "away_team")
 
     teams = Team.objects.filter(
-        Q(home_matches__season=season) | Q(away_matches__season=season)
+        Q(home_matches__season=season)
+        | Q(away_matches__season=season)
+        | Q(standings__season=season)
+        | Q(roster_memberships__season=season)
     ).distinct()
 
     stats_by_team = {
@@ -589,12 +592,16 @@ def compute_positional_group_metrics(team, season=None):
         },
     }
 
-    roster_players = Player.objects.filter(
-        team_memberships__team=team,
-        team_memberships__is_active=True
-    ).distinct()
     if season:
-        roster_players = roster_players.filter(team_memberships__season=season)
+        roster_players = Player.objects.filter(
+            team_memberships__team=team,
+            team_memberships__season=season
+        ).distinct()
+    else:
+        roster_players = Player.objects.filter(
+            team_memberships__team=team,
+            team_memberships__is_active=True
+        ).distinct()
 
     results = {}
 

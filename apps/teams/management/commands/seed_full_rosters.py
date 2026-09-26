@@ -448,13 +448,38 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Deduplicación finalizada: {merged_count} registros duplicados eliminados."))
 
-        # 2. Temporada actual
-        current_season = Season.objects.filter(is_current=True).first()
-        if not current_season:
-            current_season = Season.objects.first()
+        # 2. Temporadas activas oficiales (obtener o crear si la BD está vacía)
+        acb_league, _ = League.objects.get_or_create(
+            slug="liga-endesa-acb",
+            defaults={"name": "Liga Endesa ACB", "description": "Primera división de baloncesto profesional de España.", "is_active": True}
+        )
+        acb_season, _ = Season.objects.get_or_create(
+            league=acb_league,
+            name="Temporada 2026/2027",
+            defaults={"start_date": "2026-09-26", "end_date": "2027-05-30", "is_current": True}
+        )
+        if not acb_season.is_current:
+            acb_season.is_current = True
+            acb_season.save()
 
-        # Limpiar temporadas históricas ficticias sin partidos para no ensuciar los selectores
-        Season.objects.filter(name__startswith="Temporada 202").delete()
+        euro_league, _ = League.objects.get_or_create(
+            slug="euroleague-basketball",
+            defaults={"name": "EuroLeague Basketball", "description": "La máxima competición de clubes de baloncesto de Europa.", "is_active": True}
+        )
+        euro_season, _ = Season.objects.get_or_create(
+            league=euro_league,
+            name="Temporada 2026/2027",
+            defaults={"start_date": "2026-10-01", "end_date": "2027-05-28", "is_current": True}
+        )
+        if not euro_season.is_current:
+            euro_season.is_current = True
+            euro_season.save()
+
+        acb_slugs = {"unicaja-malaga", "valencia-basket", "real-madrid-baloncesto", "fc-barcelona-basket"}
+        euro_slugs = {
+            "panathinaikos-aktor", "olympiacos-piraeus", "fenerbahce-beko", "as-monaco-basket",
+            "real-madrid-baloncesto", "fc-barcelona-basket"
+        }
 
         total_players = 0
         total_memberships = 0
@@ -463,9 +488,22 @@ class Command(BaseCommand):
         for team_slug, players_data in ALL_TEAMS_ROSTERS.items():
             team = Team.objects.filter(slug=team_slug).first()
             if not team:
-                continue
+                team_name = team_slug.replace("-", " ").title()
+                acronym = "".join([w[0].upper() for w in team_name.split()[:3]])
+                team = Team.objects.create(
+                    slug=team_slug,
+                    name=team_name,
+                    acronym=acronym,
+                )
 
-            TeamMembership.objects.filter(team=team, season=current_season).delete()
+            target_seasons = []
+            if team_slug in acb_slugs and acb_season:
+                target_seasons.append(acb_season)
+            if team_slug in euro_slugs and euro_season:
+                target_seasons.append(euro_season)
+
+            for target_s in target_seasons:
+                TeamMembership.objects.filter(team=team, season=target_s).delete()
 
             for p_info in players_data:
                 norm_fn = normalize_str(p_info["first"])
@@ -493,20 +531,32 @@ class Command(BaseCommand):
                 player.save()
                 total_players += 1
 
-                TeamMembership.objects.create(
-                    team=team,
-                    player=player,
-                    season=current_season,
-                    jersey_number=p_info["num"],
-                    is_captain=p_info.get("captain", False),
-                    is_active=True,
-                )
-                total_memberships += 1
+                for target_s in target_seasons:
+                    TeamMembership.objects.create(
+                        team=team,
+                        player=player,
+                        season=target_s,
+                        jersey_number=p_info["num"],
+                        is_captain=p_info.get("captain", False),
+                        is_active=True,
+                    )
+                    total_memberships += 1
 
             self.stdout.write(self.style.SUCCESS(f"Plantilla de {team.name} completada con {len(players_data)} jugadores."))
 
+        # Limpiar membresías erróneas donde equipos nacionales/europeos exclusivos estuvieran en ligas erróneas
+        TeamMembership.objects.filter(
+            team__slug__in=["unicaja-malaga", "valencia-basket"],
+            season__league__slug="euroleague-basketball"
+        ).delete()
+        TeamMembership.objects.filter(
+            team__slug__in=["panathinaikos-aktor", "olympiacos-piraeus", "fenerbahce-beko", "as-monaco-basket"],
+            season__league__slug="liga-endesa-acb"
+        ).delete()
+
         # Asegurar que todas las membresías de temporadas pasadas queden formalmente inactivas
-        TeamMembership.objects.exclude(season=current_season).update(is_active=False)
+        active_season_ids = [s.id for s in [acb_season, euro_season] if s]
+        TeamMembership.objects.exclude(season_id__in=active_season_ids).update(is_active=False)
 
         # 6. Limpieza formal de partidos programados (no deben tener eventos, estadísticas ni actas firmadas)
         from apps.matches.models import DigitalScoreSheet

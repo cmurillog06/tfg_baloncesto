@@ -22,12 +22,35 @@ class MatchListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from apps.teams.models import Season
+        all_seasons = Season.objects.all().select_related("league").order_by("-start_date", "league__name")
+        season_id = self.request.GET.get("season")
+
         base_qs = Match.objects.select_related(
             "home_team", "away_team", "season__league"
         )
+
+        selected_season = None
+        if season_id == "all":
+            selected_season = None
+        elif season_id:
+            selected_season = all_seasons.filter(id=season_id).first()
+        else:
+            selected_season = (
+                all_seasons.filter(is_current=True, league__slug="liga-endesa-acb").first()
+                or all_seasons.filter(is_current=True).first()
+                or all_seasons.first()
+            )
+
+        if selected_season:
+            base_qs = base_qs.filter(season=selected_season)
+
+        context["all_seasons"] = all_seasons
+        context["selected_season"] = selected_season
+        context["season_id"] = season_id
         context["live_matches"] = base_qs.filter(status=Match.Status.LIVE).order_by("scheduled_at")
         context["upcoming_matches"] = base_qs.filter(status=Match.Status.SCHEDULED).order_by("scheduled_at")
-        context["finished_matches"] = base_qs.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")[:10]
+        context["finished_matches"] = base_qs.filter(status=Match.Status.FINISHED).order_by("-scheduled_at")
         return context
 
 
@@ -45,14 +68,9 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         match = self.get_object()
 
-        # Plantillas de ambos equipos para el acta / box score
-        context["home_roster"] = TeamMembership.objects.filter(
-            team=match.home_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
-
-        context["away_roster"] = TeamMembership.objects.filter(
-            team=match.away_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
+        # Plantillas de ambos equipos para el acta / box score (únicas y ligadas a la temporada)
+        context["home_roster"] = match.get_team_roster(match.home_team)
+        context["away_roster"] = match.get_team_roster(match.away_team)
 
         # Estadísticas individuales oficiales de este partido (Box Score)
         from apps.analytics.models import PlayerMatchStat
@@ -69,13 +87,25 @@ class MatchLiveView(LoginRequiredMixin, DetailView):
                 defaults={"team": match.away_team}
             )
 
-        context["home_player_stats"] = PlayerMatchStat.objects.filter(
+        home_stats = list(PlayerMatchStat.objects.filter(
             match=match, team=match.home_team
-        ).select_related("player").order_by("-points", "-valuation_pir")
+        ).select_related("player").order_by("-points", "-valuation_pir"))
 
-        context["away_player_stats"] = PlayerMatchStat.objects.filter(
+        away_stats = list(PlayerMatchStat.objects.filter(
             match=match, team=match.away_team
-        ).select_related("player").order_by("-points", "-valuation_pir")
+        ).select_related("player").order_by("-points", "-valuation_pir"))
+
+        # Calcular los minutos disputados de forma exacta para todos los jugadores (tanto en pista como en banquillo)
+        for st in home_stats + away_stats:
+            calc_mins = match.calculate_player_minutes(st.player_id)
+            st.live_minutes_played = calc_mins
+            if st.minutes_played != calc_mins:
+                st.minutes_played = calc_mins
+                st.compute_pir()
+                st.save(update_fields=["minutes_played", "valuation_pir"])
+
+        context["home_player_stats"] = home_stats
+        context["away_player_stats"] = away_stats
 
         # Tiempos muertos y faltas de equipo según normativa FIBA
         context["home_timeouts"] = match.get_team_timeouts_info(match.home_team)
@@ -187,13 +217,9 @@ class OfficialTableScorekeeperView(LoginRequiredMixin, RoleRequiredMixin, Detail
         context = super().get_context_data(**kwargs)
         match = self.get_object()
 
-        context["home_roster"] = TeamMembership.objects.filter(
-            team=match.home_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
-
-        context["away_roster"] = TeamMembership.objects.filter(
-            team=match.away_team, is_active=True
-        ).select_related("player").order_by("jersey_number")
+        # Plantillas de ambos equipos para la consola de mesa (únicas y ligadas a la temporada)
+        context["home_roster"] = match.get_team_roster(match.home_team)
+        context["away_roster"] = match.get_team_roster(match.away_team)
 
         # Asegurar estadísticas individuales para los jugadores de las plantillas
         from apps.analytics.models import PlayerMatchStat
@@ -268,9 +294,7 @@ class ScoreSheetDetailView(LoginRequiredMixin, RoleRequiredMixin, DetailView):
         from apps.analytics.models import PlayerMatchStat
 
         def build_roster_stats(team):
-            memberships = TeamMembership.objects.filter(
-                team=team, is_active=True
-            ).select_related("player").order_by("jersey_number")
+            memberships = match.get_team_roster(team)
 
             stats_map = {
                 stat.player_id: stat

@@ -121,7 +121,7 @@
     margin-top: 10px;
   }
   .btn-submit {
-    background: #e67e22;
+    background: #27ae60;
     color: #ffffff;
     font-weight: 700;
     font-size: 1rem;
@@ -132,9 +132,9 @@
     transition: all 0.2s;
   }
   .btn-submit:hover {
-    background: #d35400;
+    background: #219653;
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(211, 84, 0, 0.25);
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.25);
   }
   .btn-preview {
     background: #2b6cb0;
@@ -244,25 +244,26 @@
   </div>
   {% endif %}
 
-  <!-- Tarjeta Principal de Configuración -->
-  <div class="generator-card">
-    <div class="generator-header">
-      <div>
-        <h1 class="generator-title">Generador Automático de Calendario y Designaciones</h1>
-        <div style="font-size: 0.85rem; color: #718096; margin-top: 4px;">
-          Motor de emparejamientos Round-Robin (Tablas de Berger) con asignación aleatoria de sedes, árbitros y oficiales de mesa.
+  <form method="post" action="" id="schedule-form">
+    {% csrf_token %}
+    <input type="hidden" name="preview_seed" value="{{ preview_seed|default:'' }}">
+
+    <!-- Tarjeta Principal de Configuración -->
+    <div class="generator-card">
+      <div class="generator-header">
+        <div>
+          <h1 class="generator-title">Generador Automático de Calendario y Designaciones</h1>
+          <div style="font-size: 0.85rem; color: #718096; margin-top: 4px;">
+            Motor de emparejamientos Round-Robin (Tablas de Berger) con asignación aleatoria de sedes, árbitros y oficiales de mesa.
+          </div>
         </div>
+        <a href="{% url 'admin:matches_match_changelist' %}" class="btn-back">Volver al listado de partidos</a>
       </div>
-      <a href="{% url 'admin:matches_match_changelist' %}" class="btn-back">Volver al listado de partidos</a>
-    </div>
 
-    <div class="generator-desc">
-      Este asistente creará de forma matemática e imparcial todas las jornadas de la competición seleccionada.
-      Cada encuentro quedará programado con su fecha, el pabellón oficial del equipo local, el árbitro principal asignado y los dos oficiales de mesa (anotador y cronometrador).
-    </div>
-
-    <form method="post" action="">
-      {% csrf_token %}
+      <div class="generator-desc">
+        Este asistente creará de forma matemática e imparcial todas las jornadas de la competición seleccionada.
+        Cada encuentro quedará programado con su fecha, el pabellón oficial del equipo local, el árbitro principal asignado y los dos oficiales de mesa (anotador y cronometrador).
+      </div>
 
       <div class="form-grid">
         <!-- Temporada -->
@@ -270,7 +271,7 @@
           <label for="id_season_id">Competición / Temporada Deportiva *</label>
           <select name="season_id" id="id_season_id" class="form-control" required>
             {% for s_info in seasons_info %}
-              <option value="{{ s_info.season.id }}" {% if selected_season_id and s_info.season.id == selected_season_id %}selected{% elif not selected_season_id and s_info.season.is_current %}selected{% endif %}>
+              <option value="{{ s_info.season.id }}" {% if selected_season_id %}{% if s_info.season.id == selected_season_id %}selected{% endif %}{% else %}{% if s_info.season.is_current %}selected{% endif %}{% endif %}>
                 {{ s_info.season.league.name }} - {{ s_info.season.name }} ({{ s_info.teams_count }} equipos adscritos)
               </option>
             {% endfor %}
@@ -330,105 +331,117 @@
 
       <!-- Botones de Acción -->
       <div class="btn-actions">
-        <button type="submit" name="action" value="generate" class="btn-submit">
-          Generar y Guardar Calendario Oficial
-        </button>
         <button type="submit" name="action" value="preview" class="btn-preview">
-          Previsualizar Simulación
+          🎲 Previsualizar Simulación Aleatoria
         </button>
       </div>
-    </form>
-  </div>
+    </div>
 
-  <!-- Panel de Previsualización (si existe simulación) -->
-  {% if preview_data %}
-  <div class="generator-card">
-    <div class="generator-header">
-      <div>
-        <h2 class="generator-title" style="color: #2b6cb0;">Previsualización del Calendario Simulado</h2>
-        <div style="font-size: 0.85rem; color: #718096; margin-top: 4px;">
-          Competición: <strong>{{ preview_data.season.league.name }}</strong> ({{ preview_data.season.name }})
+    <!-- Panel de Previsualización (si existe simulación) -->
+    {% if preview_data %}
+    <div class="generator-card" style="border-top: 4px solid #2b6cb0;">
+      <div class="generator-header">
+        <div>
+          <h2 class="generator-title" style="color: #2b6cb0;">Previsualización del Calendario Simulado</h2>
+          <div style="font-size: 0.85rem; color: #718096; margin-top: 4px;">
+            Competición: <strong>{{ preview_data.season.league.name }}</strong> ({{ preview_data.season.name }})
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="stats-summary">
-      <div class="stat-badge">
-        <div class="stat-val">{{ preview_data.total_teams }}</div>
-        <div class="stat-label">Equipos Participantes</div>
+      {% if preview_data.already_played_rounds > 0 %}
+      <div style="background: #ebf8ff; border-left: 4px solid #3182ce; color: #2b6cb0; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.92rem; font-weight: 500;">
+        ℹ️ <strong>Competición en curso detectada:</strong> Se han detectado <strong>{{ preview_data.already_played_rounds }} jornadas previas</strong> ya disputadas o finalizadas ({{ preview_data.already_played_matches_count }} partidos) que se mantienen intactas. A continuación se muestran los partidos que se programarán para las jornadas restantes (<strong>Jornadas {{ preview_data.start_round_idx }} a {{ preview_data.total_rounds }}</strong>).
       </div>
-      <div class="stat-badge">
-        <div class="stat-val">{{ preview_data.total_rounds }}</div>
-        <div class="stat-label">Jornadas Totales</div>
+      {% endif %}
+
+      <div class="stats-summary">
+        <div class="stat-badge">
+          <div class="stat-val">{{ preview_data.total_teams }}</div>
+          <div class="stat-label">Equipos Participantes</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-val">{{ preview_data.total_rounds }}</div>
+          <div class="stat-label">Jornadas Totales</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-val">{{ preview_data.total_matches }}</div>
+          <div class="stat-label">Partidos a Programar</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-val">{{ preview_data.start_date|date:"d/m/Y" }}</div>
+          <div class="stat-label">Fecha {% if preview_data.already_played_rounds > 0 %}Próxima Jornada{% else %}1ª Jornada{% endif %}</div>
+        </div>
       </div>
-      <div class="stat-badge">
-        <div class="stat-val">{{ preview_data.total_matches }}</div>
-        <div class="stat-label">Partidos Programados</div>
+
+      <div style="overflow-x: auto;">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>Jornada</th>
+              <th>Fecha y Hora</th>
+              <th>Equipo Local</th>
+              <th>Equipo Visitante</th>
+              <th>Pabellón / Sede</th>
+              <th>1er Árbitro (Principal)</th>
+              <th>2º Árbitro (Auxiliar)</th>
+              <th>Mesa (Anotador)</th>
+              <th>Mesa (Cronómetro)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for match in preview_data.matches %}
+            <tr>
+              <td><span class="tag-round">Jornada {{ match.round_number }}</span></td>
+              <td><strong>{{ match.scheduled_at|date:"d/m/Y H:i" }}</strong></td>
+              <td><strong>{{ match.home_team.name }}</strong> ({{ match.home_team.acronym }})</td>
+              <td><strong>{{ match.away_team.name }}</strong> ({{ match.away_team.acronym }})</td>
+              <td style="color: #4a5568;">{{ match.location }}</td>
+              <td>
+                {% if match.referee %}
+                  <span class="tag-official">{{ match.referee.get_full_name|default:match.referee.username }}</span>
+                {% else %}
+                  <span style="color: #a0aec0;">Pendiente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if match.second_referee %}
+                  <span class="tag-official">{{ match.second_referee.get_full_name|default:match.second_referee.username }}</span>
+                {% else %}
+                  <span style="color: #a0aec0;">Pendiente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if match.table_official %}
+                  <span class="tag-official">{{ match.table_official.get_full_name|default:match.table_official.username }}</span>
+                {% else %}
+                  <span style="color: #a0aec0;">Pendiente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if match.timekeeper %}
+                  <span class="tag-official">{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}</span>
+                {% else %}
+                  <span style="color: #a0aec0;">Pendiente</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="stat-badge">
-        <div class="stat-val">{{ preview_data.start_date|date:"d/m/Y" }}</div>
-        <div class="stat-label">Fecha 1ª Jornada</div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="submit" name="action" value="re_preview" class="btn-preview">
+          🎲 Probar Otra Combinación Aleatoria
+        </button>
+        <button type="submit" name="action" value="generate" class="btn-submit">
+          ✓ Confirmar y Guardar Este Calendario Previsualizado
+        </button>
       </div>
     </div>
+    {% endif %}
 
-    <div style="overflow-x: auto;">
-      <table class="preview-table">
-        <thead>
-          <tr>
-            <th>Jornada</th>
-            <th>Fecha y Hora</th>
-            <th>Equipo Local</th>
-            <th>Equipo Visitante</th>
-            <th>Pabellón / Sede</th>
-            <th>1er Árbitro (Principal)</th>
-            <th>2º Árbitro (Auxiliar)</th>
-            <th>Mesa (Anotador)</th>
-            <th>Mesa (Cronómetro)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for match in preview_data.matches %}
-          <tr>
-            <td><span class="tag-round">Jornada {{ match.round_number }}</span></td>
-            <td><strong>{{ match.scheduled_at|date:"d/m/Y H:i" }}</strong></td>
-            <td><strong>{{ match.home_team.name }}</strong> ({{ match.home_team.acronym }})</td>
-            <td><strong>{{ match.away_team.name }}</strong> ({{ match.away_team.acronym }})</td>
-            <td style="color: #4a5568;">{{ match.location }}</td>
-            <td>
-              {% if match.referee %}
-                <span class="tag-official">{{ match.referee.get_full_name|default:match.referee.username }}</span>
-              {% else %}
-                <span style="color: #a0aec0;">Pendiente</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if match.second_referee %}
-                <span class="tag-official">{{ match.second_referee.get_full_name|default:match.second_referee.username }}</span>
-              {% else %}
-                <span style="color: #a0aec0;">Pendiente</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if match.table_official %}
-                <span class="tag-official">{{ match.table_official.get_full_name|default:match.table_official.username }}</span>
-              {% else %}
-                <span style="color: #a0aec0;">Pendiente</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if match.timekeeper %}
-                <span class="tag-official">{{ match.timekeeper.get_full_name|default:match.timekeeper.username }}</span>
-              {% else %}
-                <span style="color: #a0aec0;">Pendiente</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% endif %}
-
+  </form>
 </div>
 {% endblock %}

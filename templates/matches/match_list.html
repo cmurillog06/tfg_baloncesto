@@ -13,6 +13,19 @@
       <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0;">Consulta los resultados oficiales, el calendario de juego y sigue los encuentros en directo</p>
     </div>
     <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+      {% if all_seasons %}
+        <form method="get" action="" style="margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+          <label for="match-season-select" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Temporada:</label>
+          <select id="match-season-select" name="season" onchange="this.form.submit()" class="form-control" style="font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: var(--radius-full); font-weight: 600; color: var(--obsidian-dark); border-color: var(--gold-primary); background-color: #FFFFFF; cursor: pointer;">
+            <option value="all" {% if season_id == 'all' %}selected{% endif %}>Todas las competiciones y temporadas</option>
+            {% for s in all_seasons %}
+              <option value="{{ s.id }}" {% if selected_season and s.id == selected_season.id and season_id != 'all' %}selected{% endif %}>
+                {{ s.league.name }} - {{ s.name }} {% if s.is_current %}(Actual){% else %}(Histórico){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      {% endif %}
       {% if user.is_authenticated and user.role == 'ADMIN' or user.is_superuser or user.is_staff %}
         <a href="{% url 'admin:matches_match_generate_schedule' %}" 
           style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; font-weight: 600; color: var(--text-title); background: #FFFFFF; padding: 0.38rem 0.85rem; border-radius: var(--radius-full); border: 1px solid var(--platinum-border); text-decoration: none; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);"

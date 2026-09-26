@@ -27,12 +27,11 @@ class Command(BaseCommand):
 
         # 1. Partido en Directo Principal (Real Madrid vs Unicaja)
         match_live, _ = Match.objects.get_or_create(
-            id=3,
+            season=season,
+            round_number=2,
+            home_team=madrid,
+            away_team=unicaja,
             defaults={
-                "season": season,
-                "round_number": 2,
-                "home_team": madrid,
-                "away_team": unicaja,
                 "scheduled_at": timezone.now(),
                 "location": "WiZink Center, Madrid",
                 "status": Match.Status.LIVE,

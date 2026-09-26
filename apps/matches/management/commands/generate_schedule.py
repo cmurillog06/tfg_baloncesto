@@ -80,8 +80,12 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"✓ Formato: {'Ida y Vuelta (Doble Vuelta)' if double_round else 'Solo Ida'}"))
         self.stdout.write(self.style.SUCCESS(f"✓ Total de Equipos: {result['total_teams']}"))
-        self.stdout.write(self.style.SUCCESS(f"✓ Total de Jornadas: {result['total_rounds']}"))
-        self.stdout.write(self.style.SUCCESS(f"✓ Total de Partidos: {result['total_matches']}"))
+        self.stdout.write(self.style.SUCCESS(f"✓ Total de Jornadas del Torneo: {result['total_rounds']}"))
+        if result.get("already_played_rounds", 0) > 0:
+            self.stdout.write(self.style.NOTICE(f"✓ Jornadas Previas Preservadas: {result['already_played_rounds']} ({result['already_played_matches_count']} partidos disputados/en curso)"))
+            self.stdout.write(self.style.SUCCESS(f"✓ Partidos Nuevos Programados: {result['total_matches']} (Jornadas {result['start_round_idx']} a {result['total_rounds']})"))
+        else:
+            self.stdout.write(self.style.SUCCESS(f"✓ Total de Partidos Programados: {result['total_matches']}"))
         self.stdout.write(self.style.SUCCESS(f"✓ Fecha de Inicio: {result['start_date']}"))
 
         if dry_run:

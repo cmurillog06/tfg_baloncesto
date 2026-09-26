@@ -104,10 +104,10 @@ class Command(BaseCommand):
 
         season_euro, _ = Season.objects.get_or_create(
             league=euroleague,
-            name="2025/2026",
+            name="Temporada 2026/2027",
             defaults={
-                "start_date": "2025-10-01",
-                "end_date": "2026-05-30",
+                "start_date": "2026-10-01",
+                "end_date": "2027-05-28",
                 "is_current": True,
             }
         )
@@ -158,10 +158,13 @@ class Command(BaseCommand):
         fnb = created_teams["FNB"]
         asm = created_teams["ASM"]
 
+        rmb = Team.objects.filter(slug="real-madrid-baloncesto").first()
+        bar = Team.objects.filter(slug="fc-barcelona-basket").first()
+
         now = timezone.now()
 
-        # 3. Crear Partidos de EuroLeague (Jornada 1, 2 y 3)
-        # Jornada 1
+        # 3. Crear Partidos de EuroLeague (Jornada 1 y 2 completas para los 6 equipos)
+        # Jornada 1 (3 partidos)
         m1, _ = Match.objects.update_or_create(
             home_team=pao,
             away_team=oly,
@@ -169,7 +172,7 @@ class Command(BaseCommand):
             round_number=1,
             defaults={
                 "scheduled_at": now - timedelta(days=14),
-                "location": f"{pao.arena or 'OAKA Altion'}, {pao.city or 'Atenas'}",
+                "location": f"{pao.arena_name or 'OAKA Altion'}, {pao.city or 'Atenas'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -184,7 +187,7 @@ class Command(BaseCommand):
             round_number=1,
             defaults={
                 "scheduled_at": now - timedelta(days=13),
-                "location": f"{fnb.arena or 'Ülker Sports Arena'}, {fnb.city or 'Estambul'}",
+                "location": f"{fnb.arena_name or 'Ülker Sports Arena'}, {fnb.city or 'Estambul'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -192,8 +195,24 @@ class Command(BaseCommand):
                 "away_score": 84,
             }
         )
+        if rmb and bar:
+            m_extra1, _ = Match.objects.update_or_create(
+                home_team=rmb,
+                away_team=bar,
+                season=season_euro,
+                round_number=1,
+                defaults={
+                    "scheduled_at": now - timedelta(days=13),
+                    "location": f"{rmb.arena_name or 'WiZink Center'}, {rmb.city or 'Madrid'}",
+                    "status": Match.Status.FINISHED,
+                    "current_period": Match.Period.FINISHED,
+                    "game_clock": "00:00",
+                    "home_score": 89,
+                    "away_score": 83,
+                }
+            )
 
-        # Jornada 2
+        # Jornada 2 (3 partidos)
         m3, _ = Match.objects.update_or_create(
             home_team=pao,
             away_team=fnb,
@@ -201,7 +220,7 @@ class Command(BaseCommand):
             round_number=2,
             defaults={
                 "scheduled_at": now - timedelta(days=7),
-                "location": f"{pao.arena or 'OAKA Altion'}, {pao.city or 'Atenas'}",
+                "location": f"{pao.arena_name or 'OAKA Altion'}, {pao.city or 'Atenas'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -216,7 +235,7 @@ class Command(BaseCommand):
             round_number=2,
             defaults={
                 "scheduled_at": now - timedelta(days=6),
-                "location": f"{oly.arena or 'Peace and Friendship Stadium'}, {oly.city or 'El Pireo'}",
+                "location": f"{oly.arena_name or 'Peace and Friendship Stadium'}, {oly.city or 'El Pireo'}",
                 "status": Match.Status.FINISHED,
                 "current_period": Match.Period.FINISHED,
                 "game_clock": "00:00",
@@ -224,23 +243,22 @@ class Command(BaseCommand):
                 "away_score": 82,
             }
         )
-
-        # Jornada 3 (Próximo gran partido programado)
-        m5, _ = Match.objects.update_or_create(
-            home_team=asm,
-            away_team=pao,
-            season=season_euro,
-            round_number=3,
-            defaults={
-                "scheduled_at": now + timedelta(days=3),
-                "location": f"{asm.arena or 'Salle Gaston Médecin'}, {asm.city or 'Mónaco'}",
-                "status": Match.Status.SCHEDULED,
-                "current_period": Match.Period.NOT_STARTED,
-                "game_clock": "10:00",
-                "home_score": 0,
-                "away_score": 0,
-            }
-        )
+        if rmb and bar:
+            m_extra2, _ = Match.objects.update_or_create(
+                home_team=bar,
+                away_team=rmb,
+                season=season_euro,
+                round_number=2,
+                defaults={
+                    "scheduled_at": now - timedelta(days=6),
+                    "location": f"{bar.arena_name or 'Palau Blaugrana'}, {bar.city or 'Barcelona'}",
+                    "status": Match.Status.FINISHED,
+                    "current_period": Match.Period.FINISHED,
+                    "game_clock": "00:00",
+                    "home_score": 92,
+                    "away_score": 87,
+                }
+            )
 
         # 4. Generar Estadísticas de Jugadores de EuroLeague
         for match, t_home, t_away in [(m1, pao, oly), (m2, fnb, asm), (m3, pao, fnb), (m4, oly, asm)]:

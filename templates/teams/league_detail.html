@@ -28,12 +28,24 @@
             {% else %}
               Competición Oficial
             {% endif %}
-            &bull; Temporada {{ active_season.name|default:"2025/2026" }}
+            &bull; {{ active_season.name|default:"Temporada 2025/2026" }}
           </span>
         </div>
       </div>
 
-      <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        {% if all_seasons %}
+          <form method="get" action="" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <label for="season-select" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Temporada:</label>
+            <select id="season-select" name="season" onchange="this.form.submit()" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: var(--radius-md); font-weight: 600; color: var(--obsidian-dark); border-color: var(--gold-primary); background-color: #FFFFFF; cursor: pointer;">
+              {% for s in all_seasons %}
+                <option value="{{ s.id }}" {% if s.id == active_season.id %}selected{% endif %}>
+                  {{ s.name }} {% if s.is_current %}(Actual){% else %}(Histórico){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+        {% endif %}
         <a href="{% url 'teams:league_list' %}" class="btn btn-secondary btn-sm">
           &larr; Volver a Ligas
         </a>

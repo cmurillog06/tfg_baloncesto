@@ -637,6 +637,12 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
 
             server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
 
+            if match.status == Match.Status.SCHEDULED:
+                match.status = Match.Status.LIVE
+            if match.current_period == Match.Period.NOT_STARTED:
+                match.current_period = Match.Period.Q1
+            match.save(update_fields=["status", "current_period"])
+
             event = MatchEvent.objects.create(
                 match=match,
                 period=match.current_period,
@@ -772,6 +778,12 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
 
             server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
 
+            if match.status == Match.Status.SCHEDULED:
+                match.status = Match.Status.LIVE
+            if match.current_period == Match.Period.NOT_STARTED:
+                match.current_period = Match.Period.Q1
+            match.save(update_fields=["status", "current_period"])
+
             # Mapeo de tipos de estadísticas a modelos de EventType y descripciones
             stat_meta = {
                 "REBOUND": (MatchEvent.EventType.REBOUND_DEF, "Rebote capturado"),
@@ -883,6 +895,11 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 match.current_period = period
             if status:
                 match.status = status
+            if is_running:
+                if match.status == Match.Status.SCHEDULED:
+                    match.status = Match.Status.LIVE
+                if match.current_period == Match.Period.NOT_STARTED:
+                    match.current_period = Match.Period.Q1
             match.save()
 
             return {
@@ -900,6 +917,9 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
     def update_period_state(self, match_id, period, clock_str):
         try:
             match = Match.objects.get(id=match_id)
+            # Acumular minutos jugados del cuarto que finaliza
+            match.accumulate_period_minutes()
+
             match.current_period = period
             match.game_clock = clock_str
             if period == Match.Period.FINISHED:
@@ -1116,10 +1136,73 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
         try:
             match = Match.objects.get(id=match_id)
             team = Team.objects.get(id=team_id)
+
+            server_clock_str, is_running = get_server_clock(match_id, match.game_clock)
+            match.game_clock = server_clock_str
+            match.save(update_fields=["game_clock"])
+
             event = match.substitute_player(team, player_out_id, player_in_id)
 
             home_on_court = match.get_on_court_player_ids(match.home_team)
             away_on_court = match.get_on_court_player_ids(match.away_team)
+
+            from apps.analytics.models import PlayerMatchStat
+            stat_out = PlayerMatchStat.objects.filter(match=match, player_id=player_out_id).first()
+            stat_in = PlayerMatchStat.objects.filter(match=match, player_id=player_in_id).first()
+
+            if stat_out:
+                calc_mins_out = match.calculate_player_minutes(player_out_id)
+                stat_out.minutes_played = max(stat_out.minutes_played, calc_mins_out)
+                stat_out.compute_pir()
+                stat_out.save(update_fields=["minutes_played", "valuation_pir"])
+
+            if stat_in:
+                calc_mins_in = match.calculate_player_minutes(player_in_id)
+                stat_in.minutes_played = max(stat_in.minutes_played, calc_mins_in)
+                stat_in.compute_pir()
+                stat_in.save(update_fields=["minutes_played", "valuation_pir"])
+
+            stat_out_data = {
+                "player_id": player_out_id,
+                "player_name": stat_out.player.full_name if stat_out else None,
+                "team_id": team.id,
+                "minutes_played": stat_out.minutes_played if stat_out else 0,
+                "points": stat_out.points if stat_out else 0,
+                "two_points_made": stat_out.two_points_made if stat_out else 0,
+                "two_points_attempted": stat_out.two_points_attempted if stat_out else 0,
+                "three_points_made": stat_out.three_points_made if stat_out else 0,
+                "three_points_attempted": stat_out.three_points_attempted if stat_out else 0,
+                "free_throws_made": stat_out.free_throws_made if stat_out else 0,
+                "free_throws_attempted": stat_out.free_throws_attempted if stat_out else 0,
+                "total_rebounds": stat_out.total_rebounds if stat_out else 0,
+                "assists": stat_out.assists if stat_out else 0,
+                "steals": stat_out.steals if stat_out else 0,
+                "turnovers": stat_out.turnovers if stat_out else 0,
+                "blocks_made": stat_out.blocks_made if stat_out else 0,
+                "fouls_committed": stat_out.fouls_committed if stat_out else 0,
+                "valuation_pir": stat_out.valuation_pir if stat_out else 0,
+            } if stat_out else None
+
+            stat_in_data = {
+                "player_id": player_in_id,
+                "player_name": stat_in.player.full_name if stat_in else None,
+                "team_id": team.id,
+                "minutes_played": stat_in.minutes_played if stat_in else 0,
+                "points": stat_in.points if stat_in else 0,
+                "two_points_made": stat_in.two_points_made if stat_in else 0,
+                "two_points_attempted": stat_in.two_points_attempted if stat_in else 0,
+                "three_points_made": stat_in.three_points_made if stat_in else 0,
+                "three_points_attempted": stat_in.three_points_attempted if stat_in else 0,
+                "free_throws_made": stat_in.free_throws_made if stat_in else 0,
+                "free_throws_attempted": stat_in.free_throws_attempted if stat_in else 0,
+                "total_rebounds": stat_in.total_rebounds if stat_in else 0,
+                "assists": stat_in.assists if stat_in else 0,
+                "steals": stat_in.steals if stat_in else 0,
+                "turnovers": stat_in.turnovers if stat_in else 0,
+                "blocks_made": stat_in.blocks_made if stat_in else 0,
+                "fouls_committed": stat_in.fouls_committed if stat_in else 0,
+                "valuation_pir": stat_in.valuation_pir if stat_in else 0,
+            } if stat_in else None
 
             return {
                 "match_id": match.id,
@@ -1127,6 +1210,8 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
                 "team_name": team.name,
                 "player_out_id": player_out_id,
                 "player_in_id": player_in_id,
+                "player_out_stat": stat_out_data,
+                "player_in_stat": stat_in_data,
                 "home_on_court": home_on_court,
                 "away_on_court": away_on_court,
                 "home_has_five": match.has_valid_five_on_court(match.home_team),

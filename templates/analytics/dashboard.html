@@ -32,10 +32,22 @@
 
   <!-- SECCIÓN 1: LÍDERES DE LA TEMPORADA (PODIO DE 4 PILARES) -->
   <div style="margin-bottom: 3.5rem;">
-    <div style="margin-bottom: 1.5rem;">
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
       <h2 style="font-size: 1.4rem; font-weight: 600; margin: 0;">
         Líderes Individuales de la Liga
       </h2>
+      {% if seasons %}
+        <form method="get" action="" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+          <label for="dashboard-season-select" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Temporada:</label>
+          <select id="dashboard-season-select" name="season" onchange="this.form.submit()" class="form-control" style="font-size: 0.85rem; padding: 0.35rem 0.8rem; border-radius: var(--radius-md); font-weight: 600; color: var(--obsidian-dark); border-color: var(--gold-primary); background-color: #FFFFFF; cursor: pointer;">
+            {% for s in seasons %}
+              <option value="{{ s.id }}" {% if s.id == selected_season.id %}selected{% endif %}>
+                {{ s.league.name }} - {{ s.name }} {% if s.is_current %}(Actual){% else %}(Histórico){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      {% endif %}
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.5rem;">

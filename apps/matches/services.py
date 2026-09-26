@@ -34,6 +34,7 @@ def restore_canonical_matches():
     canonical_match_ids = []
     for home_acr, away_acr, round_num, status, period, clock, h_score, a_score in CANONICAL_MATCH_SCORES:
         matches = Match.objects.filter(
+            season__is_current=True,
             home_team__acronym=home_acr,
             away_team__acronym=away_acr,
             round_number=round_num,
@@ -41,6 +42,7 @@ def restore_canonical_matches():
         if not matches.exists():
             # Intentar búsqueda con acrónimos alternativos (por ejemplo FCB / BAR, VAL / VBC)
             matches = Match.objects.filter(
+                season__is_current=True,
                 home_team__acronym__in=[home_acr, f"{home_acr}C", "FCB" if home_acr == "BAR" else home_acr],
                 away_team__acronym__in=[away_acr, f"{away_acr}C", "FCB" if away_acr == "BAR" else away_acr],
                 round_number=round_num,
@@ -186,9 +188,9 @@ def restore_canonical_matches():
                 # Generar eventos jugada a jugada acordes
                 generate_match_events_from_stats(match)
 
-    # Eliminar cualquier partido de prueba no canónico creado durante tests
+    # Eliminar cualquier partido de prueba no canónico creado durante tests en la temporada actual
     if canonical_match_ids:
-        Match.objects.exclude(id__in=canonical_match_ids).delete()
+        Match.objects.filter(season__is_current=True).exclude(id__in=canonical_match_ids).delete()
 
     # Recalcular clasificaciones de todas las temporadas
     for season in Season.objects.all():

@@ -245,7 +245,7 @@
                         {{ stat.player.full_name }}
                       </a>
                     </td>
-                    <td class="stat-min">{{ stat.minutes_played }}'</td>
+                    <td class="stat-min">{{ stat.live_minutes_played|default:stat.minutes_played }}'</td>
                     <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
                     <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
                     <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
@@ -309,7 +309,7 @@
                         {{ stat.player.full_name }}
                       </a>
                     </td>
-                    <td class="stat-min">{{ stat.minutes_played }}'</td>
+                    <td class="stat-min">{{ stat.live_minutes_played|default:stat.minutes_played }}'</td>
                     <td><strong class="stat-pts" style="color: var(--obsidian-dark); font-size: 0.92rem;">{{ stat.points }}</strong></td>
                     <td class="stat-t2" style="color: var(--text-secondary);">{{ stat.two_points_made }}/{{ stat.two_points_attempted }}</td>
                     <td class="stat-t3" style="color: var(--text-secondary);">{{ stat.three_points_made }}/{{ stat.three_points_attempted }}</td>
@@ -757,6 +757,8 @@ function connectMatchWebSocket() {
       if (data.home_on_court) updateLiveOnCourt('home', data.home_on_court);
       if (data.away_on_court) updateLiveOnCourt('away', data.away_on_court);
       if (data.new_event) addEventToTimeline(data.new_event);
+      if (data.player_out_stat) updatePlayerBoxScore(data.player_out_stat);
+      if (data.player_in_stat) updatePlayerBoxScore(data.player_in_stat);
     } else if (payload.type === 'timeout_update' && data) {
       if (data.home_timeouts) renderLiveTimeouts('home', data.home_timeouts);
       if (data.away_timeouts) renderLiveTimeouts('away', data.away_timeouts);

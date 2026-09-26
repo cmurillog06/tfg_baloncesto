@@ -227,13 +227,41 @@ class Match(models.Model):
             ).values_list("player_id", flat=True)
         )
 
+    def get_team_roster(self, team):
+        """
+        Obtiene la plantilla activa única y ordenada de un equipo para esta temporada/partido,
+        garantizando que ningún jugador aparezca duplicado aunque tenga membresías en múltiples temporadas o competiciones.
+        """
+        from apps.teams.models import TeamMembership
+        memberships_qs = TeamMembership.objects.filter(
+            team=team, season=self.season, is_active=True
+        ).select_related("player").order_by("jersey_number")
+
+        if not memberships_qs.exists():
+            memberships_qs = TeamMembership.objects.filter(
+                team=team, is_active=True
+            ).select_related("player").order_by("jersey_number")
+
+        if not memberships_qs.exists():
+            memberships_qs = TeamMembership.objects.filter(
+                team=team
+            ).select_related("player").order_by("jersey_number")
+
+        seen_players = set()
+        unique_memberships = []
+        for m in memberships_qs:
+            if m.player_id not in seen_players:
+                seen_players.add(m.player_id)
+                unique_memberships.append(m)
+
+        return unique_memberships
+
     def has_valid_five_on_court(self, team):
         """
         Comprueba si el equipo tiene exactamente 5 jugadores marcados en pista (requisito y restricción de memoria).
         Si la plantilla total disponible es menor a 5, comprueba que todos los disponibles estén en pista.
         """
-        from apps.teams.models import TeamMembership
-        total_roster_count = TeamMembership.objects.filter(team=team, is_active=True).count()
+        total_roster_count = len(self.get_team_roster(team))
         required_count = min(5, total_roster_count) if total_roster_count > 0 else 5
         on_court_count = len(self.get_on_court_player_ids(team))
         return on_court_count == required_count and on_court_count > 0
@@ -247,8 +275,7 @@ class Match(models.Model):
         from apps.teams.models import Player
 
         if len(player_ids) != 5:
-            from apps.teams.models import TeamMembership
-            total_roster = TeamMembership.objects.filter(team=team, is_active=True).count()
+            total_roster = len(self.get_team_roster(team))
             if total_roster >= 5 or len(player_ids) != total_roster:
                 raise ValueError("Se deben seleccionar exactamente 5 jugadores para el quinteto inicial.")
 
@@ -269,9 +296,15 @@ class Match(models.Model):
         starter_players = Player.objects.filter(id__in=player_ids)
         names = ", ".join([f"#{getattr(p, 'jersey_number', '')} {p.last_name or p.first_name}" for p in starter_players])
 
+        if self.current_period == self.Period.NOT_STARTED:
+            self.current_period = self.Period.Q1
+        if self.status == self.Status.SCHEDULED:
+            self.status = self.Status.LIVE
+        self.save(update_fields=["current_period", "status"])
+
         event = MatchEvent.objects.create(
             match=self,
-            period=self.current_period if self.current_period != self.Period.NOT_STARTED else self.Period.Q1,
+            period=self.current_period,
             game_clock=self.game_clock,
             team=team,
             event_type=MatchEvent.EventType.STARTING_FIVE,
@@ -280,10 +313,24 @@ class Match(models.Model):
         )
         return event
 
+    def _parse_clock_to_seconds(self, clock_str, default=600):
+        if not clock_str:
+            return default
+        try:
+            parts = str(clock_str).strip().split(":")
+            if len(parts) == 2:
+                return int(parts[0]) * 60 + int(parts[1])
+            elif len(parts) == 3:
+                return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+        except Exception:
+            pass
+        return default
+
     def substitute_player(self, team, player_out_id, player_in_id):
         """
         Ejecuta una sustitución de jugadores entre el banquillo y la pista para un equipo.
         Valida que player_out esté en pista y player_in en banquillo (y no expulsado por 5 faltas).
+        Calcula y acumula los minutos disputados por el jugador que sale según el reloj de juego.
         """
         from apps.analytics.models import PlayerMatchStat
         from apps.teams.models import Player
@@ -302,8 +349,37 @@ class Match(models.Model):
         if stat_in.fouls_committed >= 5:
             raise ValueError("El jugador que entra está eliminado del partido por acumulación de 5 faltas.")
 
+        if self.current_period == self.Period.NOT_STARTED:
+            self.current_period = self.Period.Q1
+        if self.status == self.Status.SCHEDULED:
+            self.status = self.Status.LIVE
+        self.save(update_fields=["current_period", "status"])
+
+        # Calcular tiempo disputado en el stint actual por el jugador que sale
+        period_start_sec = 300 if "OT" in str(self.current_period) else 600
+        current_clock_sec = self._parse_clock_to_seconds(self.game_clock, default=period_start_sec)
+
+        # Buscar la última entrada a pista de este jugador en el periodo actual
+        last_sub_in = self.events.filter(
+            period=self.current_period,
+            player_id=player_out_id,
+            event_type=MatchEvent.EventType.SUBSTITUTION
+        ).order_by("-created_at").first()
+
+        if last_sub_in and last_sub_in.game_clock:
+            entry_sec = self._parse_clock_to_seconds(last_sub_in.game_clock, default=period_start_sec)
+        else:
+            entry_sec = period_start_sec
+
+        # En baloncesto el reloj cuenta hacia atrás (entry_sec >= current_clock_sec)
+        elapsed_sec = max(0, entry_sec - current_clock_sec)
+        if elapsed_sec > 0:
+            stint_mins = max(1, round(elapsed_sec / 60)) if elapsed_sec >= 30 else (1 if stat_out.minutes_played == 0 else 0)
+            stat_out.minutes_played += stint_mins
+
         stat_out.is_on_court = False
-        stat_out.save(update_fields=["is_on_court"])
+        stat_out.compute_pir()
+        stat_out.save()
 
         stat_in.is_on_court = True
         stat_in.save(update_fields=["is_on_court"])
@@ -325,6 +401,123 @@ class Match(models.Model):
             description=f"Sustitución: Entra {in_name}, Sale {out_name}"
         )
         return event
+
+    def accumulate_period_minutes(self, target_period=None):
+        """
+        Acumula los minutos disputados en el periodo que concluye para todos los jugadores en pista.
+        """
+        from apps.analytics.models import PlayerMatchStat
+        period_to_use = target_period or self.current_period
+        period_start_sec = 300 if "OT" in str(period_to_use) else 600
+
+        on_court_stats = PlayerMatchStat.objects.filter(match=self, is_on_court=True)
+        for stat in on_court_stats:
+            last_sub_in = self.events.filter(
+                period=period_to_use,
+                player_id=stat.player_id,
+                event_type=MatchEvent.EventType.SUBSTITUTION
+            ).order_by("-created_at").first()
+
+            if last_sub_in and last_sub_in.game_clock:
+                entry_sec = self._parse_clock_to_seconds(last_sub_in.game_clock, default=period_start_sec)
+            else:
+                entry_sec = period_start_sec
+
+            elapsed_sec = max(0, entry_sec - 0)
+            if elapsed_sec > 0:
+                mins = max(1, round(elapsed_sec / 60)) if elapsed_sec >= 30 else (1 if stat.minutes_played == 0 else 0)
+                stat.minutes_played += mins
+                stat.compute_pir()
+                stat.save()
+
+    def calculate_player_minutes(self, player_id):
+        """
+        Calcula con total exactitud los minutos disputados por un jugador en el partido,
+        reconstruyendo la cronología de titularidades, sustituciones y tiempo transcurrido en el reloj.
+        """
+        from apps.analytics.models import PlayerMatchStat
+        from apps.teams.models import Player
+
+        stat = PlayerMatchStat.objects.filter(match=self, player_id=player_id).first()
+        player = Player.objects.filter(id=player_id).first()
+        if not stat or not player:
+            return 0
+
+        effective_current_period = self.current_period
+        if effective_current_period in [self.Period.NOT_STARTED, None, ""]:
+            effective_current_period = self.Period.Q1
+
+        events = list(self.events.all().order_by("created_at"))
+        periods_order = [self.Period.Q1, self.Period.Q2, self.Period.Q3, self.Period.Q4, self.Period.OT1, self.Period.OT2]
+        total_seconds_played = 0
+
+        p_name = player.last_name or player.first_name
+        p_full = player.full_name
+        jersey = str(getattr(player, "jersey_number", ""))
+
+        for p in periods_order:
+            period_events = [e for e in events if e.period == p]
+            # Si no hay eventos en este periodo y no es el periodo actual en curso, continuar
+            if not period_events and p != effective_current_period:
+                continue
+
+            period_max_sec = 300 if "OT" in str(p) else 600
+            is_period_in_progress = (p == effective_current_period) and (self.status != self.Status.FINISHED)
+
+            # Comprobar si el jugador comenzó este cuarto en pista
+            started_on_court = False
+            if p == self.Period.Q1 and stat.is_starter:
+                started_on_court = True
+
+            for e in period_events:
+                if e.event_type == MatchEvent.EventType.STARTING_FIVE:
+                    desc = e.description or ""
+                    if (jersey and f"#{jersey}" in desc) or (p_name and p_name in desc) or (p_full and p_full in desc):
+                        started_on_court = True
+
+            # Si el jugador está actualmente marcado como en pista y es el periodo actual
+            if is_period_in_progress and stat.is_on_court:
+                # Comprobar si entró por sustitución en este cuarto
+                sub_in_events = [e for e in period_events if e.event_type == MatchEvent.EventType.SUBSTITUTION and e.player_id == player_id]
+                if not sub_in_events:
+                    # No entró por sustitución, significa que comenzó el cuarto en pista
+                    started_on_court = True
+
+            is_active = started_on_court
+            stint_entry_sec = period_max_sec if started_on_court else None
+
+            for e in period_events:
+                if e.event_type == MatchEvent.EventType.SUBSTITUTION:
+                    event_clock_sec = self._parse_clock_to_seconds(e.game_clock, default=period_max_sec)
+                    desc = e.description or ""
+
+                    # Comprobar si este jugador ENTRA
+                    is_sub_in = (e.player_id == player_id) or (jersey and f"Entra #{jersey}" in desc) or (p_name and f"Entra {p_name}" in desc)
+                    # Comprobar si este jugador SALE
+                    is_sub_out = (jersey and f"Sale #{jersey}" in desc) or (p_name and f"Sale #{jersey} {p_name}" in desc) or (p_full and f"Sale {p_full}" in desc) or (p_name and f"Sale {p_name}" in desc)
+
+                    if is_sub_in and not is_active:
+                        is_active = True
+                        stint_entry_sec = event_clock_sec
+                    elif is_sub_out and is_active and stint_entry_sec is not None:
+                        elapsed = max(0, stint_entry_sec - event_clock_sec)
+                        total_seconds_played += elapsed
+                        is_active = False
+                        stint_entry_sec = None
+
+            # Al final del cuarto o tiempo transcurrido en el cuarto actual:
+            if is_active and stint_entry_sec is not None:
+                if is_period_in_progress:
+                    current_clock_sec = self._parse_clock_to_seconds(self.game_clock, default=period_max_sec)
+                    elapsed = max(0, stint_entry_sec - current_clock_sec)
+                    total_seconds_played += elapsed
+                else:
+                    elapsed = max(0, stint_entry_sec - 0)
+                    total_seconds_played += elapsed
+
+        if total_seconds_played >= 30:
+            return int((total_seconds_played + 30) // 60)
+        return 0
 
     def get_quarters_breakdown(self):
         """
