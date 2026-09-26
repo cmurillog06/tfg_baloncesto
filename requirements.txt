@@ -20,7 +20,7 @@ gunicorn>=23.0.0
 # Procesamiento de imágenes (escudos de equipos, fotos de jugadores)
 Pillow>=10.4.0
 
-# Testing automatizado para CI/CD en Render (438 tests)
+# Testing automatizado para CI/CD en Render (452 tests)
 pytest>=8.3.0
 pytest-django>=4.9.0
 pytest-asyncio>=0.24.0
