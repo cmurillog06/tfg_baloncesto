@@ -185,6 +185,11 @@ class Command(BaseCommand):
         self.stdout.write("\n👥 [2/4] Generando fichas e historial de plantillas para todos los 80 jugadores...")
         all_teams = {t.slug: t for t in Team.objects.all()}
 
+        # Limpiar las membresías de las temporadas que se van a reconstruir.
+        # Evita conflictos de dorsal o jugador con datos creados por otros seeds.
+        seasons_to_rebuild = [season for season, cfg in created_seasons.values()]
+        TeamMembership.objects.filter(season__in=seasons_to_rebuild).delete()
+
         # Limpiar membresías erróneas donde equipos nacionales/europeos exclusivos estuvieran en ligas erróneas
         TeamMembership.objects.filter(
             team__slug__in=["unicaja-malaga", "valencia-basket"],
@@ -234,7 +239,8 @@ class Command(BaseCommand):
             Match.objects.filter(season=season, status=Match.Status.SCHEDULED).delete()
             season_teams = [all_teams[s] for s in cfg["teams_slugs"] if s in all_teams]
             rng = random.Random(cfg["seed"])
-            rounds_pairings = generate_berger_rounds(season_teams, rng=rng)
+            #rounds_pairings = generate_berger_rounds(season_teams, rng=rng)
+            rounds_pairings = generate_berger_rounds(season_teams)
 
             total_matches_created = 0
             start_d = season.start_date

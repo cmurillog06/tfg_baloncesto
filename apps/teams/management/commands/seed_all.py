@@ -80,8 +80,8 @@ class Command(BaseCommand):
         call_command("seed_acb_matches")
 
         # 8. Membresías Históricas
-        self.stdout.write("\n📜 [7/8] Registrando historial deportivo pasado de jugadores...")
-        call_command("seed_history")
+        #self.stdout.write("\n📜 [7/8] Registrando historial deportivo pasado de jugadores...")
+        #call_command("seed_history")
 
         # 9. Generar histórico de 2 temporadas completas y estadísticas para todos los jugadores
         self.stdout.write("\n📚 [8/8] Generando histórico completo de temporadas (2023/2024, 2024/2025 y 2025/2026)...")
