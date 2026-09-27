@@ -11,6 +11,9 @@ def sync_standings_on_match_change(sender, instance, **kwargs):
     Sincroniza automáticamente la clasificación de la liga cada vez que un
     partido se crea, finaliza, modifica o elimina en cualquier parte del sistema.
     """
+    if kwargs.get("raw", False):
+        return
+
     if instance.season:
         recalculate_season_standings(instance.season)
 
@@ -20,6 +23,9 @@ def sync_standings_on_scoresheet_change(sender, instance, **kwargs):
     """
     Sincroniza la clasificación cuando un acta oficial se cierra o modifica.
     """
+    if kwargs.get("raw", False):
+        return
+
     if instance.match and instance.match.season:
         recalculate_season_standings(instance.match.season)
 

@@ -49,3 +49,8 @@ htmlcov/
 # Scripts temporales / scratch
 scratch*.py
 scratch/
+
+datos_locales.json
+db_backup_27-09-2026.sqlite3
+datos_produccion.json
+render_backup_27-09-2026.dump
