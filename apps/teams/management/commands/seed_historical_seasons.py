@@ -235,11 +235,19 @@ class Command(BaseCommand):
         self.stdout.write("\n📊 [3/4] Generando partidos y estadísticas completas para todas las jornadas...")
 
         for (league_slug, season_name), (season, cfg) in created_seasons.items():
-            # Limpiar partidos programados previos para garantizar idempotencia exacta
-            Match.objects.filter(season=season, status=Match.Status.SCHEDULED).delete()
+            # Este comando reconstruye únicamente los calendarios históricos.
+            # La temporada actual conserva íntegramente su estado (partidos
+            # finalizados, en directo y programados), ya que su calendario se
+            # gestiona mediante los seeds específicos y el generador oficial.
+            if season.is_current:
+                continue
+
+            # Las temporadas históricas se reconstruyen por completo para que
+            # ejecutar nuevamente el seed no acumule partidos de ejecuciones previas.
+            Match.objects.filter(season=season).delete()
+
             season_teams = [all_teams[s] for s in cfg["teams_slugs"] if s in all_teams]
             rng = random.Random(cfg["seed"])
-            #rounds_pairings = generate_berger_rounds(season_teams, rng=rng)
             rounds_pairings = generate_berger_rounds(season_teams)
 
             total_matches_created = 0

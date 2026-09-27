@@ -752,6 +752,117 @@ class TestScheduleGenerator:
             assert len(teams_in_r) == 6, f"La jornada {r} debe involucrar a 6 equipos"
             assert len(set(teams_in_r)) == 6, f"La jornada {r} contiene equipos duplicados: {teams_in_r}"
 
+    def test_euroleague_partially_played_second_round_preserves_existing_matches(self, season):
+        """
+        Verifica que una EuroLeague en curso con J1 completa y J2 parcialmente
+        disputada conserve todos los partidos existentes y complete el calendario.
+        """
+        from apps.matches.generator import generate_season_schedule
+        from apps.analytics.models import Standing
+
+        season.is_current = True
+        season.save()
+
+        teams = [
+            Team.objects.create(name=f"Partial EuroTeam {i}", acronym=f"PET{i}")
+            for i in range(1, 7)
+        ]
+
+        for team in teams:
+            Standing.objects.get_or_create(
+                season=season,
+                team=team,
+                defaults={"points_for": 0, "points_against": 0},
+            )
+
+        # J1 completa
+        played_matches = [
+            Match.objects.create(
+                season=season,
+                round_number=1,
+                home_team=teams[0],
+                away_team=teams[1],
+                status=Match.Status.FINISHED,
+                scheduled_at=timezone.now() - datetime.timedelta(days=14),
+            ),
+            Match.objects.create(
+                season=season,
+                round_number=1,
+                home_team=teams[2],
+                away_team=teams[3],
+                status=Match.Status.FINISHED,
+                scheduled_at=timezone.now() - datetime.timedelta(days=14),
+            ),
+            Match.objects.create(
+                season=season,
+                round_number=1,
+                home_team=teams[4],
+                away_team=teams[5],
+                status=Match.Status.FINISHED,
+                scheduled_at=timezone.now() - datetime.timedelta(days=14),
+            ),
+
+            # J2 parcial: quedan libres teams[0] y teams[1],
+            # que necesariamente deben enfrentarse para completar la jornada.
+            Match.objects.create(
+                season=season,
+                round_number=2,
+                home_team=teams[0],
+                away_team=teams[2],
+                status=Match.Status.FINISHED,
+                scheduled_at=timezone.now() - datetime.timedelta(days=7),
+            ),
+            Match.objects.create(
+                season=season,
+                round_number=2,
+                home_team=teams[1],
+                away_team=teams[4],
+                status=Match.Status.FINISHED,
+                scheduled_at=timezone.now() - datetime.timedelta(days=7),
+            ),
+        ]
+
+        result = generate_season_schedule(
+            season,
+            double_round=True,
+            dry_run=False,
+            clear_existing=True,
+            random_seed=42,
+        )
+
+        assert result["already_played_matches_count"] == 5
+
+        # Los cinco partidos disputados deben seguir exactamente
+        # en la misma jornada y con el mismo local/visitante.
+        for original in played_matches:
+            assert Match.objects.filter(
+                pk=original.pk,
+                season=season,
+                round_number=original.round_number,
+                home_team=original.home_team,
+                away_team=original.away_team,
+                status=Match.Status.FINISHED,
+            ).exists()
+
+        all_matches = Match.objects.filter(season=season)
+        assert all_matches.count() == 30
+
+        # Las 10 jornadas deben quedar completas y ningún equipo
+        # puede jugar dos veces en una misma jornada.
+        for round_number in range(1, 11):
+            round_matches = list(all_matches.filter(round_number=round_number))
+
+            assert len(round_matches) == 3
+
+            teams_in_round = [
+                team_id
+                for match in round_matches
+                for team_id in (match.home_team_id, match.away_team_id)
+            ]
+
+            assert len(teams_in_round) == 6
+            assert len(set(teams_in_round)) == 6
+
     def test_get_team_roster_deduplication_across_multiple_seasons(self, season, home_team):
         """Verifica que un jugador con membresías en múltiples temporadas (ej. ACB y EuroLeague) solo aparezca 1 vez en el acta del partido."""
         from apps.teams.models import Player, TeamMembership, Season, League

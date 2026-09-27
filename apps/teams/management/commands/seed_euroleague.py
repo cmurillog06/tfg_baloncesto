@@ -212,7 +212,7 @@ class Command(BaseCommand):
                 }
             )
 
-        # Jornada 2 (3 partidos)
+        # Partidos disputados de las jornadas siguientes
         m3, _ = Match.objects.update_or_create(
             home_team=pao,
             away_team=fnb,
@@ -232,7 +232,7 @@ class Command(BaseCommand):
             home_team=oly,
             away_team=asm,
             season=season_euro,
-            round_number=2,
+            round_number=3,
             defaults={
                 "scheduled_at": now - timedelta(days=6),
                 "location": f"{oly.arena_name or 'Peace and Friendship Stadium'}, {oly.city or 'El Pireo'}",
@@ -243,22 +243,6 @@ class Command(BaseCommand):
                 "away_score": 82,
             }
         )
-        if rmb and bar:
-            m_extra2, _ = Match.objects.update_or_create(
-                home_team=bar,
-                away_team=rmb,
-                season=season_euro,
-                round_number=2,
-                defaults={
-                    "scheduled_at": now - timedelta(days=6),
-                    "location": f"{bar.arena_name or 'Palau Blaugrana'}, {bar.city or 'Barcelona'}",
-                    "status": Match.Status.FINISHED,
-                    "current_period": Match.Period.FINISHED,
-                    "game_clock": "00:00",
-                    "home_score": 92,
-                    "away_score": 87,
-                }
-            )
 
         # 4. Generar Estadísticas de Jugadores de EuroLeague
         for match, t_home, t_away in [(m1, pao, oly), (m2, fnb, asm), (m3, pao, fnb), (m4, oly, asm)]:
