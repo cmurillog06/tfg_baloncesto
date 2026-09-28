@@ -2188,7 +2188,6 @@ function toggleClock() {
       if (currentSeconds > 0) {
         currentSeconds--;
         updateClockDisplay();
-        syncClockToWebSocket(true);
         updateSignatureButtonState();
       } else {
         clearInterval(clockInterval);

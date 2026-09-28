@@ -1096,13 +1096,28 @@ function submitChatMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+  const sendMessage = () => {
+    if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) return false;
     chatSocket.send(JSON.stringify({
       action: 'send_message',
       message: text
     }));
     input.value = '';
     document.getElementById('chat-char-counter').innerText = '0 / 500';
+    return true;
+  };
+
+  if (!sendMessage()) {
+    const waitForConnection = setInterval(() => {
+      if (sendMessage()) {
+        clearInterval(waitForConnection);
+        clearTimeout(connectionTimeout);
+      }
+    }, 200);
+
+    const connectionTimeout = setTimeout(() => {
+      clearInterval(waitForConnection);
+    }, 5000);
   }
 }
 
