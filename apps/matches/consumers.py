@@ -119,6 +119,11 @@ class MatchLiveConsumer(AsyncJsonWebsocketConsumer):
             )
             return
 
+        # Mantener activa la conexion WebSocket sin modificar el estado del partido
+        if action == "ping":
+            await self.send_json({"type": "pong"})
+            return
+
         # 1. Registro de Puntos / Canastas
         if action == "score_point":
             team_id = content.get("team_id")

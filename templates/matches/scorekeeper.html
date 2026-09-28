@@ -1215,8 +1215,19 @@ function updateRosterOnCourtStatus(side, onCourtIds) {
   }
 }
 
+let websocketHeartbeat = null;
+
 function connectWebSocket() {
   socket = new WebSocket(wsUrl);
+
+  socket.onopen = function() {
+    if (websocketHeartbeat) clearInterval(websocketHeartbeat);
+    websocketHeartbeat = setInterval(() => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'ping' }));
+      }
+    }, 15000);
+  };
 
   socket.onmessage = function(e) {
     const payload = JSON.parse(e.data);
@@ -1242,10 +1253,12 @@ function connectWebSocket() {
 
       if (data.home_on_court) {
         homeOnCourtState = data.home_on_court;
+        homePeriodQuintetoConfirmed = homeOnCourtState.length === 5;
         updateRosterOnCourtStatus('home', homeOnCourtState);
       }
       if (data.away_on_court) {
         awayOnCourtState = data.away_on_court;
+        awayPeriodQuintetoConfirmed = awayOnCourtState.length === 5;
         updateRosterOnCourtStatus('away', awayOnCourtState);
       }
 
@@ -1296,7 +1309,10 @@ function connectWebSocket() {
     } else if (payload.type === 'match_update' && data) {
       document.getElementById('score-home').innerText = data.home_score;
       document.getElementById('score-away').innerText = data.away_score;
-      if (data.clock) document.getElementById('clock-display').innerText = data.clock;
+      if (data.clock) {
+        document.getElementById('clock-display').innerText = data.clock;
+        parseClockStringToSeconds(data.clock);
+      }
       if (data.period) highlightActivePeriod(data.period);
       if (data.new_event) prependTimelineEvent(data.new_event);
 
@@ -1427,6 +1443,10 @@ function connectWebSocket() {
   };
 
   socket.onclose = function() {
+    if (websocketHeartbeat) {
+      clearInterval(websocketHeartbeat);
+      websocketHeartbeat = null;
+    }
     setTimeout(connectWebSocket, 2500);
   };
 }
