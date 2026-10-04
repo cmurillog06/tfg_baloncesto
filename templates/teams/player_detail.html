@@ -65,14 +65,14 @@
         {% endif %}
 
         <!-- Metadatos Básicos -->
-        <div style="border-top: 1px solid var(--platinum-border); padding-top: 1rem; text-align: left; font-size: 0.85rem; color: var(--text-secondary); line-height: 2;">
-          <div style="display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-            <span>Fecha Nacimiento:</span>
-            <strong style="color: var(--text-title); font-weight: 600;">{{ player.birth_date|date:"d M Y"|default:"01 Ene 1995" }}</strong>
+        <div style="border-top: 1px solid var(--platinum-border); padding-top: 1rem; text-align: left; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.8;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+            <span style="white-space: nowrap;">Fecha Nacimiento:</span>
+            <strong style="color: var(--text-title); font-weight: 600; text-align: right;">{{ player.birth_date|date:"d M Y"|default:"01 Ene 1995" }}</strong>
           </div>
-          <div style="display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
-            <span>Estado Ficha:</span>
-            <strong style="color: var(--state-green); font-weight: 600;">{% if player.is_active %}En Activo{% else %}Inactivo{% endif %}</strong>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="white-space: nowrap;">Estado Ficha:</span>
+            <strong style="color: var(--state-green); font-weight: 600; text-align: right;">{% if player.is_active %}En Activo{% else %}Inactivo{% endif %}</strong>
           </div>
         </div>
 
@@ -255,22 +255,22 @@
         {% if memberships %}
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             {% for m in memberships %}
-              <div class="history-item-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); gap: 0.75rem; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0; flex: 1 1 200px;">
-                  <span style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border); flex-shrink: 0;">
+              <div class="history-item-row" style="background: var(--bg-subtle); padding: 0.85rem 1.15rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 1 1 auto;">
+                  <span style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 700; color: var(--obsidian-dark); background: #FFFFFF; padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--platinum-border); flex-shrink: 0;">
                     #{{ m.jersey_number }}
                   </span>
-                  <div style="min-width: 0;">
-                    <a href="{% url 'teams:team_detail' m.team.slug %}" style="font-weight: 600; font-size: 0.98rem; color: var(--text-title); text-decoration: none; word-break: break-word;">
+                  <div style="min-width: 0; flex: 1;">
+                    <a href="{% url 'teams:team_detail' m.team.slug %}" style="font-weight: 700; font-size: 0.96rem; color: var(--text-title); text-decoration: none; word-break: break-word; display: block;">
                       {{ m.team.name }}
                     </a>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-top: 0.1rem; word-break: break-word;">
+                    <span style="font-size: 0.78rem; color: var(--text-secondary); display: block; margin-top: 0.1rem; word-break: break-word;">
                       {{ m.season.name }} &bull; {{ m.season.league.name }}
                     </span>
                   </div>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap;">
+                <div class="history-item-badges" style="display: flex; align-items: center; gap: 0.45rem; flex-shrink: 0; flex-wrap: wrap;">
                   {% if m.is_captain %}
                     <span class="badge badge-admin" style="font-size: 0.72rem; padding: 0.2rem 0.6rem;">★ Capitán</span>
                   {% endif %}
@@ -295,9 +295,20 @@
 </div>
 
 <style>
+.history-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 @media (max-width: 640px) {
   .card {
     padding: 1.15rem 0.85rem !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .grid-responsive-3 {
     gap: 0.5rem !important;
@@ -309,7 +320,17 @@
     padding: 0.75rem 0.4rem !important;
   }
   .history-item-row {
-    padding: 0.75rem 0.85rem !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    padding: 0.85rem 0.75rem !important;
+  }
+  .history-item-badges {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
   }
   .table-responsive table {
     min-width: 520px;

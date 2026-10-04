@@ -16,6 +16,9 @@
 
 <body>
 
+  <!-- Barra de Carga Dinámica Global (Feedback instantáneo al interactuar) -->
+  <div id="global-page-loader" aria-hidden="true"></div>
+
   <!-- Fondo Ambiental Dinámico en Movimiento (Aura Glow 60 FPS) -->
   <div class="ambient-background" aria-hidden="true">
     <div class="ambient-orb orb-gold"></div>
@@ -198,7 +201,7 @@
       </div>
     </div>
     {% else %}
-    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-top: 1rem; border-top: 1px solid var(--platinum-border);">
+    <div class="mobile-nav-guest-actions">
       <a href="{% url 'accounts:login' %}" class="btn btn-secondary" style="width: 100%; text-align: center;">Iniciar Sesión</a>
       <a href="{% url 'accounts:register' %}" class="btn btn-primary" style="width: 100%; text-align: center;">Registrarse</a>
     </div>
@@ -270,6 +273,72 @@
         }
       }
     }
+
+    // =========================================================================
+    // BARRA DE CARGA GLOBAL AL NAVEGAR O ENVIAR FORMULARIOS (FEEDBACK INMEDIATO)
+    // =========================================================================
+    (function() {
+      const loader = document.getElementById('global-page-loader');
+      if (!loader) return;
+
+      let progressInterval = null;
+
+      function startLoading() {
+        if (progressInterval) clearInterval(progressInterval);
+        loader.classList.add('active');
+        loader.style.width = '30%';
+        loader.style.opacity = '1';
+
+        let cur = 30;
+        progressInterval = setInterval(() => {
+          if (cur < 85) {
+            cur += Math.random() * 10;
+            loader.style.width = Math.min(cur, 85) + '%';
+          }
+        }, 120);
+      }
+
+      function finishLoading() {
+        if (progressInterval) clearInterval(progressInterval);
+        loader.style.width = '100%';
+        setTimeout(() => {
+          loader.style.opacity = '0';
+          setTimeout(() => {
+            loader.classList.remove('active');
+            loader.style.width = '0%';
+          }, 220);
+        }, 180);
+      }
+
+      // Detener cargador cuando la página está completamente cargada
+      window.addEventListener('load', finishLoading);
+      window.addEventListener('pageshow', finishLoading);
+
+      // Escuchar clics en enlaces estándar
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+
+        const href = link.getAttribute('href');
+        const target = link.getAttribute('target');
+        const isDownload = link.hasAttribute('download');
+        const isJs = href && (href.startsWith('javascript:') || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:'));
+
+        if (!href || isJs || target === '_blank' || isDownload) {
+          return;
+        }
+
+        startLoading();
+        setTimeout(finishLoading, 8000); // Límite de seguridad
+      });
+
+      // Escuchar envíos de formularios
+      document.addEventListener('submit', function(e) {
+        if (e.defaultPrevented) return;
+        startLoading();
+        setTimeout(finishLoading, 10000); // Límite de seguridad
+      });
+    })();
   </script>
 
   {% block extra_js %}{% endblock %}
