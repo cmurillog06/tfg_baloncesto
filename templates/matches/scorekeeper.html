@@ -762,6 +762,39 @@
   }
 }
 
+@media (max-width: 768px) {
+  .card {
+    padding: 1rem !important;
+  }
+  [id^="modal-"][style*="position: fixed"] {
+    z-index: 2000 !important;
+    padding: 0.5rem !important;
+  }
+  [id^="modal-"][style*="position: fixed"] .card {
+    padding: 1.25rem 0.85rem !important;
+    max-height: 94vh !important;
+    max-width: 96vw !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #score-home, #score-away {
+    font-size: 2rem !important;
+    min-width: 52px !important;
+    padding: 0.15rem 0.4rem !important;
+  }
+  .btn-period {
+    flex: 1 1 auto;
+    min-width: 40px;
+    padding: 0.35rem 0.45rem !important;
+    font-size: 0.78rem !important;
+    text-align: center;
+  }
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .player-action-card {
   display: flex;
   align-items: center;

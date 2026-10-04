@@ -29,7 +29,12 @@
         <!-- Avatar Flotante con Borde Blanco y Sombra Fina -->
         <div style="margin-top: -50px; margin-bottom: 1rem;">
           {% if profile.avatar %}
-            <img src="{{ profile.avatar.url }}" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 3.5px solid #FFFFFF; box-shadow: 0 4px 14px rgba(140, 88, 3, 0.12);">
+            <img src="{{ profile.avatar.url }}" alt="Avatar"
+              onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
+              style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 3.5px solid #FFFFFF; box-shadow: 0 4px 14px rgba(140, 88, 3, 0.12); display: block;">
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: #FFFFFF; border: 3.5px solid #FFFFFF; display: none; align-items: center; justify-content: center; font-size: 2.6rem; margin: 0 auto; box-shadow: 0 4px 14px rgba(140, 88, 3, 0.12);">
+              👤
+            </div>
           {% else %}
             <div style="width: 100px; height: 100px; border-radius: 50%; background: #FFFFFF; border: 3.5px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; margin: 0 auto; box-shadow: 0 4px 14px rgba(140, 88, 3, 0.12);">
               👤
@@ -128,6 +133,14 @@
             <label for="id_avatar" class="form-label" style="font-weight: 600; font-size: 0.95rem; color: var(--text-title); margin-bottom: 0.35rem; display: block;">Foto de Perfil</label>
             {{ profile_form.avatar }}
             <small style="display: block; font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">Formatos admitidos: PNG o JPG (máx. 5 MB)</small>
+            {% if profile.avatar %}
+              <div style="margin-top: 0.45rem; display: flex; align-items: center; gap: 0.4rem;">
+                <input type="checkbox" name="remove_avatar" id="remove_avatar" value="1" style="cursor: pointer;">
+                <label for="remove_avatar" style="font-size: 0.8rem; color: var(--state-red); cursor: pointer; font-weight: 600; margin: 0;">
+                  Quitar foto actual de perfil
+                </label>
+              </div>
+            {% endif %}
             {% if profile_form.avatar.errors %}
               <div class="form-error" style="font-size: 0.85rem;">{% for error in profile_form.avatar.errors %}{{ error }}{% endfor %}</div>
             {% endif %}

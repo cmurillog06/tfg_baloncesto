@@ -520,5 +520,29 @@
     grid-template-columns: 1fr !important;
   }
 }
+@media (max-width: 640px) {
+  .scoreboard-grid {
+    gap: 0.5rem !important;
+  }
+  .scoreboard-grid strong {
+    font-size: 0.88rem !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
+  }
+  .scoreboard-grid img, .scoreboard-grid [style*="border-radius: 50%"] {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .scoreboard-grid [style*="font-size: 2.75rem"] {
+    font-size: 1.85rem !important;
+    gap: 0.35rem !important;
+  }
+  .card, [style*="border-radius: var(--radius-md)"][style*="padding: 1.5rem"] {
+    padding: 1.15rem 0.85rem !important;
+  }
+  .table-responsive table {
+    min-width: 480px;
+  }
+}
 </style>
 {% endblock %}

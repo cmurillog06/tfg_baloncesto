@@ -18,9 +18,9 @@
 
     <!-- Selector de Temporada -->
     {% if all_seasons %}
-      <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
-        <label for="season-select" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Temporada:</label>
-        <select name="season" id="season-select" onchange="this.form.submit()" class="form-control" style="font-size: 0.88rem; width: auto;">
+      <form method="get" class="season-filter-form" style="display: flex; align-items: center; gap: 0.5rem; max-width: 100%;">
+        <label for="season-select" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Temporada:</label>
+        <select name="season" id="season-select" onchange="this.form.submit()" class="form-control" style="font-size: 0.88rem; width: auto; max-width: 100%;">
           {% for s in all_seasons %}
             <option value="{{ s.id }}" {% if current_season and current_season.id == s.id %}selected{% endif %}>
               {{ s.league.name }} ({{ s.name }})
@@ -265,4 +265,24 @@
   </div>
 
 </div>
+
+<style>
+@media (max-width: 640px) {
+  .season-filter-form {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+  }
+  .season-filter-form select {
+    width: 100% !important;
+  }
+  .card {
+    padding: 1.15rem 0.85rem !important;
+  }
+  .table-responsive table {
+    min-width: 440px;
+  }
+}
+</style>
 {% endblock %}

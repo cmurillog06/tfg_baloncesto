@@ -161,7 +161,7 @@
           {% csrf_token %}
           <input type="hidden" name="action" value="create_player">
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-row-2col">
             <div class="form-group">
               <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Nombre *</label>
               {{ player_create_form.first_name }}
@@ -178,7 +178,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-row-2col">
             <div class="form-group">
               <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Posición FIBA *</label>
               {{ player_create_form.position }}
@@ -196,7 +196,7 @@
           </div>
 
           <!-- Datos Biométricos -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="form-row-2col">
             <div class="form-group">
               <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Altura (cm)</label>
               {{ player_create_form.height_cm }}
@@ -303,8 +303,8 @@
 <!-- ========================================================================= -->
 <!-- MODAL DE EDICIÓN DE DATOS BIOMÉTRICOS, DORSAL, POSICIÓN Y FOTOGRAFÍA -->
 <!-- ========================================================================= -->
-<div id="modal-edit-player-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
-  <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto;">
+<div id="modal-edit-player-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; padding: 0.75rem;">
+  <div class="card" style="max-width: 540px; width: 100%; padding: 2rem; border-top: 4px solid var(--gold-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1); max-height: 92vh; overflow-y: auto;">
     
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--platinum-border); padding-bottom: 0.85rem;">
       <div>
@@ -322,18 +322,18 @@
       <input type="hidden" name="membership_id" id="edit-membership-id" value="">
 
       <!-- Vista previa de foto actual -->
-      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border);">
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--platinum-border); flex-wrap: wrap;">
         <div id="edit-photo-preview-container" style="width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: #FFFFFF; border: 1.5px solid var(--gold-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
           <img id="edit-player-photo-img" src="" alt="Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
           <span id="edit-player-photo-placeholder" style="font-size: 1.4rem;">👤</span>
         </div>
-        <div style="flex: 1;">
+        <div style="flex: 1; min-width: 200px;">
           <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.25rem; display: block;">Cambiar Fotografía (JPG, PNG, WebP &bull; Máx 5 MB)</label>
-          <input type="file" name="photo" id="edit-player-photo" class="form-control-file" accept="image/jpeg,image/png,image/webp,image/*" style="font-size: 0.82rem;" onchange="validateAndPreviewImage(this, 'edit-player-photo-img', 'edit-player-photo-placeholder')">
+          <input type="file" name="photo" id="edit-player-photo" class="form-control-file" accept="image/jpeg,image/png,image/webp,image/*" style="font-size: 0.82rem; width: 100%; max-width: 100%;" onchange="validateAndPreviewImage(this, 'edit-player-photo-img', 'edit-player-photo-placeholder')">
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+      <div class="form-row-2col">
         <div class="form-group">
           <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Nombre *</label>
           <input type="text" name="first_name" id="edit-player-firstname" class="form-control" minlength="2" required>
@@ -344,7 +344,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+      <div class="form-row-2col">
         <div class="form-group">
           <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Posición FIBA *</label>
           <select name="position" id="edit-player-position" class="form-control" required>
@@ -362,7 +362,7 @@
       </div>
 
       <!-- Biometría -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+      <div class="form-row-2col">
         <div class="form-group">
           <label class="form-label" style="font-weight: 600; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Altura (cm)</label>
           <input type="number" name="height_cm" id="edit-player-height" class="form-control" placeholder="ej. 198" min="120" max="245">
@@ -402,7 +402,7 @@
 <!-- ========================================================================= -->
 <!-- MODAL DE CONFIRMACIÓN DE BAJA -->
 <!-- ========================================================================= -->
-<div id="modal-baja-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1.5rem;">
+<div id="modal-baja-container" style="display: none; position: fixed; inset: 0; background: rgba(9, 13, 22, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; padding: 0.75rem;">
   <div class="card" style="max-width: 460px; width: 100%; padding: 2rem; border-top: 4px solid var(--state-red); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); text-align: center; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
     
     <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--state-red-light); color: var(--state-red); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; border: 1px solid rgba(220, 38, 38, 0.2);">
@@ -440,6 +440,21 @@
 @keyframes modalPop {
   from { opacity: 0; transform: scale(0.94) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+@media (max-width: 600px) {
+  .form-row-2col {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+  .card {
+    padding: 1.15rem 0.9rem !important;
+  }
 }
 </style>
 

@@ -110,7 +110,12 @@ class ProfileView(LoginRequiredMixin, View):
 
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
-            profile_form.save()
+            updated_profile = profile_form.save(commit=False)
+            if request.POST.get("remove_avatar") == "1" and not request.FILES.get("avatar"):
+                if updated_profile.avatar:
+                    updated_profile.avatar.delete(save=False)
+                updated_profile.avatar = None
+            updated_profile.save()
             messages.success(
                 request, "Tu perfil ha sido actualizado satisfactoriamente."
             )

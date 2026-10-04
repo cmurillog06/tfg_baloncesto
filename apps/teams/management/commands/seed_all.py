@@ -56,6 +56,9 @@ class Command(BaseCommand):
             user.last_name = last_name
             user.set_password(password)
             user.save()
+            if hasattr(user, "profile"):
+                user.profile.avatar = None
+                user.profile.save()
             action = "creado" if created else "actualizado"
             self.stdout.write(f"   ✓ Usuario '{username}' ({user.get_role_display()} - {user.get_full_name()}) {action} - Contraseña: {password}")
 
